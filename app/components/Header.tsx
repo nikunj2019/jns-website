@@ -8,7 +8,7 @@ import Logo from "./Logo";
 import Button from "./Button";
 
 const NAV = [
-  { label: "Work We Do", href: "/#work-we-do" },
+  { label: "Services", href: "/services" },
   { label: "Process", href: "/#process" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },

@@ -22,7 +22,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://jns.consulting"),
+  metadataBase: new URL("https://jnsconsulting.ai"),
   title: {
     default: "JNS Consulting — Smart Solutions, Built for You.",
     template: "%s · JNS Consulting",
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     title: "JNS Consulting",
     description:
       "Smart Solutions, Built for You. Custom business-performance command centers for small businesses.",
-    url: "https://jns.consulting",
+    url: "https://jnsconsulting.ai",
     siteName: "JNS Consulting",
     type: "website",
     locale: "en_US",

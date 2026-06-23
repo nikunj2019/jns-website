@@ -47,7 +47,7 @@ export default function ContactForm() {
       message,
     ].join("\n");
 
-    const mailto = `mailto:hello@jns.consulting?subject=${encodeURIComponent(
+    const mailto = `mailto:hello@jnsconsulting.ai?subject=${encodeURIComponent(
       subject
     )}&body=${encodeURIComponent(body)}`;
 
@@ -148,7 +148,7 @@ export default function ContactForm() {
         <p className="text-sm text-navy bg-cream border border-slate-line px-4 py-3">
           Your email client should have opened with the message pre-filled.
           If it didn&apos;t, write us directly at{" "}
-          <a className="underline" href="mailto:hello@jns.consulting">
+          <a className="underline" href="mailto:hello@jnsconsulting.ai">
             hello@jns.consulting
           </a>
           .

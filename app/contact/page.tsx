@@ -38,10 +38,10 @@ export default function ContactPage() {
               <div>
                 <SectionLabel>Email</SectionLabel>
                 <a
-                  href="mailto:hello@jns.consulting"
+                  href="mailto:hello@jnsconsulting.ai"
                   className="font-display mt-5 block text-2xl lg:text-3xl text-navy hover:text-navy-700 transition-colors break-words"
                 >
-                  hello@jns.consulting
+                  hello@jnsconsulting.ai
                 </a>
               </div>
 

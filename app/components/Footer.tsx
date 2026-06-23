@@ -21,8 +21,7 @@ const COLS = [
   {
     heading: "Connect",
     links: [
-      { label: "Email", href: "mailto:hello@jns.consulting" },
-      { label: "LinkedIn", href: "#" },
+      { label: "Email us", href: "mailto:hello@jnsconsulting.ai" },
     ],
   },
 ];

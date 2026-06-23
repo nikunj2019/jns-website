@@ -112,11 +112,6 @@ export default function AboutPage() {
             ))}
           </RevealGroup>
 
-          <Reveal>
-            <p className="mt-8 text-sm text-slate italic">
-              Founder portraits coming soon — until then, the JNS monogram stands in.
-            </p>
-          </Reveal>
         </Container>
       </section>
 
