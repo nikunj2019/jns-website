@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand palette — JNS Brand Guidelines Vol. 01 */
+  --color-navy: #1e2a3a;
+  --color-navy-700: #2a3848;
+  --color-navy-600: #3a4858;
+  --color-slate: #8a95a5;
+  --color-slate-soft: #b5bcc7;
+  --color-slate-line: #d6dae0;
+  --color-ivory: #f7f5f0;
+  --color-cream: #efebe2;
+  --color-cream-dark: #e5dfd2;
+
+  /* Surface aliases */
+  --color-background: var(--color-ivory);
+  --color-foreground: var(--color-navy);
+
+  /* Typography */
+  --font-display: var(--font-playfair), "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-inter), Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+html,
+body {
+  background-color: var(--color-ivory);
+  color: var(--color-navy);
+}
+
+body {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-feature-settings: "kern", "liga", "calt";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Display typography helper — Playfair Display, tight tracking, optical balance */
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+}
+
+/* Brand eyebrow style — echoes the chapter labels in the brand guide ("I C H A P T E R O N E") */
+.brand-eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-slate);
+}
+
+/* The signature dot — recurring motif from the logo */
+.brand-dot {
+  display: inline-block;
+  width: 0.3125rem;
+  height: 0.3125rem;
+  border-radius: 9999px;
+  background-color: var(--color-navy);
+  vertical-align: 0.18em;
+}
+
+/* Thin hairline divider, slate */
+.brand-rule {
+  border: 0;
+  border-top: 1px solid var(--color-slate-line);
+}
+
+::selection {
+  background-color: var(--color-navy);
+  color: var(--color-ivory);
+}
+
+/* Smooth scrolling for anchor links */
+html {
+  scroll-behavior: smooth;
+}
