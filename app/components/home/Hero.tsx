@@ -5,7 +5,6 @@ import { motion } from "motion/react";
 import Button from "../Button";
 import Container from "../Container";
 import CommandCenter from "./CommandCenter";
-import ScrollTilt from "../ScrollTilt";
 import AuroraGlow from "../AuroraGlow";
 
 const PROOF = [
@@ -117,21 +116,13 @@ export default function Hero() {
             ))}
           </motion.div>
 
-          {/* Command center demo — Apple-style 3D reveal */}
+          {/* Command center demo */}
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.95, delay: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            className="relative"
           >
-            {/* Soft floor glow beneath the panel */}
-            <div
-              aria-hidden="true"
-              className="absolute inset-x-8 -bottom-6 h-24 rounded-[50%] bg-black/40 blur-3xl"
-            />
-            <ScrollTilt className="relative">
-              <CommandCenter />
-            </ScrollTilt>
+            <CommandCenter />
           </motion.div>
         </div>
       </Container>
