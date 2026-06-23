@@ -6,7 +6,7 @@ import Button from "../components/Button";
 const SERVICES = [
   { id: "ai-voice", label: "AI Voice Agents" },
   { id: "custom-builds", label: "Custom Software" },
-  { id: "security", label: "Security & Compliance" },
+  { id: "automation", label: "Workflow Automation" },
   { id: "not-sure", label: "Not sure yet" },
 ];
 

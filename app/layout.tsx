@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     template: "%s · JNS Consulting",
   },
   description:
-    "AI voice agents, custom dashboards, CRM workflows, automations, and security systems for small businesses ready to operate with clarity.",
+    "AI voice agents, custom dashboards, CRM workflows, and automations for small businesses ready to operate with clarity.",
   openGraph: {
     title: "JNS Consulting",
     description:

@@ -7,7 +7,7 @@ import Reveal, { RevealGroup, RevealItem } from "../components/Reveal";
 export const metadata: Metadata = {
   title: "Services",
   description:
-    "AI voice agents, custom software, and security built for small businesses. Phone agents that book on their own, command centers you actually run on, and security you can act on.",
+    "AI voice agents, custom software, and workflow automation built for small businesses. Phone agents that book on their own, command centers you actually run on, and automations that run in the background.",
 };
 
 type Included = { term: string; desc: string };
@@ -93,35 +93,39 @@ const SERVICES: Service[] = [
   },
   {
     number: "03",
-    slug: "security",
-    title: "Security & Compliance",
-    lede: "Security visibility small businesses can act on.",
+    slug: "automation",
+    title: "Workflow Automation",
+    lede: "The work that runs while you are not looking.",
     summary:
-      "Web application and infrastructure reviews written for owners, not auditors. We find the holes, rank them by impact, and turn them into a plain-language plan with remediation status and clear next actions.",
+      "The invisible layer that ties your business together. Invoices go out automatically. Overdue clients get a nudge. Lapsed customers come back. Your tools stop needing a human in the middle. We design, build, and test the sequences so they run without you.",
     included: [
       {
-        term: "Application review",
-        desc: "OWASP Top 10, authentication flows, and data handling",
+        term: "Automated invoicing",
+        desc: "monthly or per-service billing sent on schedule, no manual work",
       },
       {
-        term: "Infrastructure review",
-        desc: "cloud configuration, access controls, and secrets management",
+        term: "SMS and email reminders",
+        desc: "appointment confirmations, day-before reminders, and no-show follow-ups",
       },
       {
-        term: "Vendor and SaaS audit",
-        desc: "who can see what, and whether they should",
+        term: "Re-engagement sequences",
+        desc: "targeted outreach to clients who have not been back in 30, 60, or 90 days",
       },
       {
-        term: "Security dashboard",
-        desc: "risk score, open findings, patch status, and remediation tracking",
+        term: "Overdue alerts",
+        desc: "escalating reminders for unpaid invoices with automatic follow-up",
       },
       {
-        term: "Optional retainer",
-        desc: "quarterly review and incident response on call",
+        term: "Tool integrations",
+        desc: "your POS, booking system, payments, and CRM connected so data moves without you",
+      },
+      {
+        term: "Monitoring and updates",
+        desc: "we watch the sequences and adjust them as your business changes",
       },
     ],
     goodFor:
-      "You handle customer data, payment information, or PII; you need to answer client security questions; or nobody has reviewed the system yet.",
+      "You are sending reminders by hand, copying data between tools, or losing revenue because follow-up does not happen consistently.",
   },
 ];
 
@@ -136,13 +140,14 @@ export default function ServicesPage() {
           </Reveal>
           <Reveal delay={0.05}>
             <h1 className="font-display mt-8 text-[2.5rem] leading-[1.05] tracking-tight sm:text-[3.5rem] lg:text-[4.5rem] max-w-4xl">
-              Answer. Operate. Protect.
+              Answer. Operate. Automate.
             </h1>
           </Reveal>
           <Reveal delay={0.1}>
             <p className="mt-8 max-w-2xl text-lg leading-relaxed text-navy/75 sm:text-xl">
               AI voice agents that never miss a call, custom software your
-              business runs on, and security you can actually act on.
+              business runs on, and automations that handle the repetitive work
+              in the background.
             </p>
           </Reveal>
         </Container>

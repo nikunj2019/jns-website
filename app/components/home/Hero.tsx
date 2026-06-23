@@ -4,7 +4,7 @@ import Image from "next/image";
 import { motion } from "motion/react";
 import Button from "../Button";
 import Container from "../Container";
-import CommandCenter from "./CommandCenter";
+import HeroShowcase from "./HeroShowcase";
 import AuroraGlow from "../AuroraGlow";
 
 const PROOF = [
@@ -116,13 +116,13 @@ export default function Hero() {
             ))}
           </motion.div>
 
-          {/* Command center demo */}
+          {/* Metric showcase */}
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.95, delay: 0.28, ease: [0.22, 1, 0.36, 1] }}
           >
-            <CommandCenter />
+            <HeroShowcase />
           </motion.div>
         </div>
       </Container>

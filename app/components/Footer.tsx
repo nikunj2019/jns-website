@@ -8,7 +8,7 @@ const COLS = [
     links: [
       { label: "AI Voice Agents", href: "/services#ai-voice" },
       { label: "Custom Software", href: "/services#custom-builds" },
-      { label: "Security", href: "/services#security" },
+      { label: "Workflow Automation", href: "/services#automation" },
     ],
   },
   {

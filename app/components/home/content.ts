@@ -70,17 +70,17 @@ export const commandModules = [
     ],
   },
   {
-    id: "security",
-    label: "Security",
-    eyebrow: "Protected",
-    title: "Risk you can see and act on.",
+    id: "automation",
+    label: "Automation",
+    eyebrow: "Set and forget",
+    title: "The invisible layer that runs the business.",
     description:
-      "Application and infrastructure reviews turned into a plain-language security posture, with findings ranked by impact and a clear path to fixing them.",
+      "Invoicing, reminders, re-engagement sequences, and tool integrations designed, built, and running in the background so nothing slips through the cracks.",
     stats: [
-      { label: "Risk score", value: "Low", delta: "stable" },
-      { label: "Open findings", value: "4", delta: "down 11" },
-      { label: "Patched", value: "96%", delta: "up 8 pts" },
-      { label: "Last review", value: "Done", delta: "this quarter" },
+      { label: "Hours saved", value: "38", delta: "per month avg" },
+      { label: "SMS open rate", value: "61%", delta: "last campaign" },
+      { label: "On-time payments", value: "94%", delta: "+19 pts" },
+      { label: "Invoices sent", value: "48", delta: "fully automated" },
     ],
   },
 ];

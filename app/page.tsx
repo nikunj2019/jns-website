@@ -1,6 +1,6 @@
 import Hero from "./components/home/Hero";
 import ProblemCards from "./components/home/ProblemCards";
-import CommandCenterSection from "./components/home/CommandCenterSection";
+import ServiceCards from "./components/home/ServiceCards";
 import WorkShowcase from "./components/home/WorkShowcase";
 import AICalling from "./components/home/AICalling";
 import ProcessStrip from "./components/home/ProcessStrip";
@@ -13,7 +13,7 @@ export default function HomePage() {
     <>
       <Hero />
       <ProblemCards />
-      <CommandCenterSection />
+      <ServiceCards />
       <WorkShowcase />
       <AICalling />
       <ProcessStrip />
