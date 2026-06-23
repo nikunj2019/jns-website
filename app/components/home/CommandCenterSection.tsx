@@ -7,7 +7,7 @@ const modules = [
     title: "AI Voice Agent",
     value: "Answers every call. Books every appointment. 24/7.",
     detail:
-      "An AI receptionist that handles inbound calls, matches each caller to the right service, and writes confirmed bookings straight into your system — including the calls that come in at 2 a.m. Two of our clients run this in production today.",
+      "An AI receptionist that handles inbound calls, matches each caller to the right service, and writes confirmed bookings straight into your system, including the calls that come in at 2 a.m. Two of our clients run this in production today.",
     tag: "Flagship",
   },
   {
@@ -15,28 +15,28 @@ const modules = [
     title: "Owner Dashboard",
     value: "The whole business in one calm view.",
     detail:
-      "Revenue, occupancy, outstanding balances, and today's schedule — surfaced the way you actually think about the business, not buried in a generic reporting tool.",
+      "Revenue, occupancy, outstanding balances, and today's schedule, surfaced the way you actually think about the business, not buried in a generic reporting tool.",
   },
   {
     no: "03",
     title: "Booking & CRM",
     value: "Every client tracked. Every follow-up scheduled.",
     detail:
-      "Appointments, service history, staff availability, and automated reminders, all connected — so leads don't go cold and regulars don't slip away unnoticed.",
+      "Appointments, service history, staff availability, and automated reminders, all connected so leads don't go cold and regulars don't slip away unnoticed.",
   },
   {
     no: "04",
     title: "Automations",
     value: "The work that runs without you.",
     detail:
-      "Monthly invoicing, SMS campaigns, overdue alerts, and re-engagement sequences — scheduled, tested, and running quietly in the background while you focus on the work.",
+      "Monthly invoicing, SMS reminders, overdue alerts, and re-engagement sequences, scheduled, tested, and running quietly in the background while you focus on the work.",
   },
   {
     no: "05",
     title: "Analytics",
     value: "Clarity across every location.",
     detail:
-      "Revenue, staff utilization, and customer retention aggregated from your POS and operations data into a single view — whether you run one location or ten.",
+      "Revenue, staff utilization, and customer retention aggregated from your POS and operations data into a single view, whether you run one location or ten.",
   },
 ];
 
@@ -58,7 +58,7 @@ export default function CommandCenterSection() {
           <Reveal delay={0.08} className="lg:pt-4">
             <p className="text-lg leading-relaxed text-navy/75">
               We don&apos;t sell a template dashboard. We design and build the
-              modules your business runs on — wired together, branded to you,
+              modules your business runs on, wired together, branded to you,
               and shaped around how you actually operate.
             </p>
             <p className="mt-5 text-[0.9375rem] leading-relaxed text-navy/60">
@@ -75,14 +75,19 @@ export default function CommandCenterSection() {
         >
           {modules.map((m) => (
             <RevealItem key={m.no}>
-              <article className="group grid grid-cols-1 gap-6 border-b border-slate-line py-9 transition-colors hover:bg-ivory/60 lg:grid-cols-[auto_0.9fr_1.1fr] lg:items-baseline lg:gap-12 lg:px-2">
-                <p className="font-display text-3xl text-slate-soft tabular-nums lg:text-4xl">
+              <article className="group relative grid grid-cols-1 gap-6 border-b border-slate-line py-9 transition-colors duration-300 hover:bg-ivory/60 lg:grid-cols-[auto_0.9fr_1.1fr] lg:items-baseline lg:gap-12 lg:px-6">
+                {/* Animated left accent bar */}
+                <span
+                  aria-hidden="true"
+                  className="absolute left-0 top-9 bottom-9 w-0.5 origin-top scale-y-0 bg-navy transition-transform duration-500 ease-out group-hover:scale-y-100"
+                />
+                <p className="font-display text-3xl tabular-nums text-slate-soft transition-colors duration-300 group-hover:text-navy lg:text-4xl">
                   {m.no}
                 </p>
 
                 <div>
                   <div className="flex items-center gap-3">
-                    <h3 className="font-display text-2xl tracking-tight lg:text-[1.75rem]">
+                    <h3 className="font-display text-2xl tracking-tight transition-transform duration-300 group-hover:translate-x-1 lg:text-[1.75rem]">
                       {m.title}
                     </h3>
                     {m.tag && (

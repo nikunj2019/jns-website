@@ -5,7 +5,7 @@ export const commandModules = [
     eyebrow: "Always on",
     title: "Every call answered. Every booking captured.",
     description:
-      "An AI receptionist that handles inbound calls, matches callers to the right person or service, and writes confirmed bookings directly to your system — 24/7, no staff needed.",
+      "An AI receptionist that handles inbound calls, matches callers to the right person or service, and writes confirmed bookings directly to your system, 24/7, with no staff needed.",
     stats: [
       { label: "Calls handled", value: "847", delta: "this month" },
       { label: "Bookings by AI", value: "312", delta: "auto-confirmed" },
@@ -19,7 +19,7 @@ export const commandModules = [
     eyebrow: "See everything",
     title: "Your whole business in one calm view.",
     description:
-      "Revenue, bookings, occupancy, outstanding balances, and operational health — built around how your specific business actually runs, not a generic template.",
+      "Revenue, bookings, occupancy, outstanding balances, and operational health, built around how your specific business actually runs, not a generic template.",
     stats: [
       { label: "Revenue", value: "$84.2k", delta: "+18% vs last mo" },
       { label: "Occupancy", value: "94%", delta: "+7 pts" },
@@ -33,7 +33,7 @@ export const commandModules = [
     eyebrow: "Manage customers",
     title: "Every client has a next step.",
     description:
-      "Appointment scheduling, service history, staff availability, and automated follow-up reminders — all connected so nothing slips and no client goes cold.",
+      "Appointment scheduling, service history, staff availability, and automated follow-up reminders, all connected so nothing slips and no client goes cold.",
     stats: [
       { label: "Booked", value: "147", delta: "this week" },
       { label: "Pending confirm", value: "23", delta: "needs action" },
@@ -47,7 +47,7 @@ export const commandModules = [
     eyebrow: "Set and forget",
     title: "The work that runs without you.",
     description:
-      "Monthly invoicing, SMS reminders, overdue alerts, campaign triggers, and re-engagement sequences — scheduled, tested, and running in the background.",
+      "Monthly invoicing, SMS reminders, overdue alerts, and re-engagement sequences, scheduled, tested, and running in the background.",
     stats: [
       { label: "Invoices sent", value: "48", delta: "fully automated" },
       { label: "SMS this month", value: "1.2k", delta: "61% open rate" },
@@ -61,7 +61,7 @@ export const commandModules = [
     eyebrow: "Multi-location",
     title: "Across every location, in one place.",
     description:
-      "Revenue, staff utilization, customer retention, and campaign performance — aggregated from your POS, booking system, and ops data into a single view.",
+      "Revenue, staff utilization, customer retention, and service mix, aggregated from your POS, booking system, and ops data into a single view.",
     stats: [
       { label: "Locations", value: "3", delta: "all tracked" },
       { label: "Staff utilization", value: "81%", delta: "avg" },
@@ -73,8 +73,12 @@ export const commandModules = [
 
 export const problems = [
   {
-    title: "No KPI visibility",
-    body: "Revenue, leads, jobs, ad spend, and customer activity live in different places.",
+    title: "Missed calls",
+    body: "Every unanswered call after hours is a booking, and the revenue behind it, gone for good.",
+  },
+  {
+    title: "No visibility",
+    body: "Revenue, bookings, occupancy, and customer activity live in different places.",
   },
   {
     title: "Weak follow-up",
@@ -82,36 +86,11 @@ export const problems = [
   },
   {
     title: "Manual work",
-    body: "Your team copies data between emails, spreadsheets, CRMs, and old software.",
-  },
-  {
-    title: "Wasted ad spend",
-    body: "Campaigns run without trustworthy attribution or a clear path to booked revenue.",
+    body: "Your team copies data between calls, spreadsheets, calendars, and old software.",
   },
   {
     title: "Hidden risk",
     body: "Permissions, apps, cloud settings, and customer data are rarely reviewed until something breaks.",
-  },
-];
-
-export const pillars = [
-  {
-    title: "Operate",
-    subtitle: "Dashboards, CRM, workflows, AI actions.",
-    body: "We build custom tools that show performance, manage customers, automate repeated work, and surface the next best action.",
-    examples: ["KPI dashboards", "CRM pipeline", "Customer portals", "AI workflow assistants"],
-  },
-  {
-    title: "Grow",
-    subtitle: "Google Ads, Meta Ads, tracking, landing pages.",
-    body: "We connect marketing to operations so ad spend turns into visible pipeline, booked work, and revenue.",
-    examples: ["Campaign setup", "GA4 + pixels", "Attribution", "Landing-page tests"],
-  },
-  {
-    title: "Protect",
-    subtitle: "Application security, infrastructure review, access controls.",
-    body: "We find the risks small businesses usually miss and turn them into a short remediation plan people can act on.",
-    examples: ["OWASP review", "Cloud hardening", "Access audit", "Remediation tracker"],
   },
 ];
 

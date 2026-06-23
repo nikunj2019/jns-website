@@ -4,8 +4,8 @@ import { useState, type FormEvent } from "react";
 import Button from "../components/Button";
 
 const SERVICES = [
-  { id: "custom-builds", label: "Custom Builds" },
-  { id: "marketing", label: "Performance Marketing" },
+  { id: "ai-voice", label: "AI Voice Agents" },
+  { id: "custom-builds", label: "Custom Software" },
   { id: "security", label: "Security & Compliance" },
   { id: "not-sure", label: "Not sure yet" },
 ];
@@ -33,13 +33,13 @@ export default function ContactForm() {
     const serviceLabel =
       SERVICES.find((s) => s.id === service)?.label ?? "Not sure";
     const timeframeLabel =
-      TIMEFRAMES.find((t) => t.id === timeframe)?.label ?? "—";
+      TIMEFRAMES.find((t) => t.id === timeframe)?.label ?? "Not specified";
 
-    const subject = `New project enquiry — ${name}${company ? ` (${company})` : ""}`;
+    const subject = `New project enquiry from ${name}${company ? ` (${company})` : ""}`;
     const body = [
       `Name: ${name}`,
       `Email: ${email}`,
-      `Company: ${company || "—"}`,
+      `Company: ${company || "Not specified"}`,
       `Service: ${serviceLabel}`,
       `Timeframe: ${timeframeLabel}`,
       "",

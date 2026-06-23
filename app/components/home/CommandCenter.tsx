@@ -8,14 +8,14 @@ const appointmentRows = [
   ["Taylor M.", "Haircut + Color", "$145", "Today 2 pm"],
   ["Jordan K.", "Full Grooming Set", "$85", "Tomorrow 10 am"],
   ["Casey R.", "Blowout", "$55", "Fri 4 pm"],
-  ["Alex T.", "Consultation", "—", "Pending"],
+  ["Alex T.", "Consultation", "Quote", "Pending"],
 ];
 
 const actions = [
-  "AI booked 3 appointments overnight — review confirmations.",
+  "AI booked 3 appointments overnight. Review confirmations.",
   "Invoice overdue: Suite 4, 12 days past due. Send reminder.",
   "Re-engage 14 clients not seen in 60+ days via SMS.",
-  "Staff utilization below 70% Thursday — adjust schedule.",
+  "Staff utilization below 70% Thursday. Adjust the schedule.",
 ];
 
 const health = [

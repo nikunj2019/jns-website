@@ -50,7 +50,7 @@ export default function ContactPage() {
                 <ol className="mt-6 space-y-5">
                   {[
                     "We read your note (a person, not a bot).",
-                    "We reply within one business day — yes, no, or a few clarifying questions.",
+                    "We reply within one business day with a yes, a no, or a few clarifying questions.",
                     "If it's a fit, we book a 30-minute discovery call. Free, no pitch deck.",
                     "If it isn't, we tell you who is. Often it's a referral.",
                   ].map((step) => (
@@ -68,7 +68,7 @@ export default function ContactPage() {
                 <SectionLabel>Response time</SectionLabel>
                 <p className="mt-5 text-[0.9375rem] leading-relaxed text-navy/80">
                   Monday through Friday, US business hours. We don&apos;t reply
-                  on weekends — we want our team rested and yours respected.
+                  on weekends, because we want our team rested and yours respected.
                 </p>
               </div>
             </aside>

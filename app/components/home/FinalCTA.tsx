@@ -4,7 +4,7 @@ import Reveal from "../Reveal";
 import Button from "../Button";
 
 const SIGNALS = [
-  "30-minute discovery call — free",
+  "30-minute discovery call, free",
   "Written proposal within 3 days",
   "Fixed fee, no surprises",
   "Founders on every engagement",
@@ -37,7 +37,7 @@ export default function FinalCTA() {
           </h2>
           <p className="mt-8 max-w-2xl text-lg leading-relaxed text-slate-soft">
             If the right answer is a dashboard, CRM, workflow automation, ad
-            system, security review, or nothing yet — we&apos;ll say that plainly.
+            system, security review, or nothing yet, we&apos;ll say that plainly.
           </p>
         </Reveal>
 

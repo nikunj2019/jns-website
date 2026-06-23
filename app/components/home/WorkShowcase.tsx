@@ -10,12 +10,12 @@ const projects = [
     description:
       "The owner was managing rent collection, bookings, contractor schedules, and client communication manually. We replaced the entire stack.",
     built: [
-      "AI voice receptionist — answers every call, books appointments 24/7",
-      "Owner dashboard — revenue, suite occupancy, overdue rent, today's schedule",
-      "Contractor portals — availability, appointments, client notes, photo uploads",
-      "Client portal — booking history, upcoming appointments, rebooking",
-      "Automated monthly rent invoicing — runs on the 1st, no manual work",
-      "Square payments — connected directly to invoicing and booking",
+      { term: "AI voice receptionist", desc: "answers every call, books appointments 24/7" },
+      { term: "Owner dashboard", desc: "revenue, suite occupancy, overdue rent, today's schedule" },
+      { term: "Contractor portals", desc: "availability, appointments, client notes, photo uploads" },
+      { term: "Client portal", desc: "booking history, upcoming appointments, rebooking" },
+      { term: "Automated monthly rent invoicing", desc: "runs on the 1st, no manual work" },
+      { term: "Square payments", desc: "connected directly to invoicing and booking" },
     ],
     outcome: "The AI now handles every inbound call. Bookings appear in the dashboard automatically, including calls that come in at 2 am.",
     stack: ["Next.js", "Firebase", "Retell AI", "Square", "Cloud Functions"],
@@ -27,12 +27,12 @@ const projects = [
     description:
       "Three stores, one POS system, and no visibility into what was actually happening. The owner was flying blind on utilization, retention, and marketing performance.",
     built: [
-      "AI phone agent — books grooming appointments end-to-end via voice",
-      "Self-improving AI coach — reviews every call transcript, patches the phone agent to get better automatically",
-      "Multi-location analytics — revenue, groomer utilization, retention per store",
-      "Breed-aware SMS campaigns — re-engagement timed to each dog's grooming cycle",
-      "FranPOS integration — live appointment and sales data, no manual exports",
-      "Multi-role portal — platform admin, franchisee owner, and store associate views",
+      { term: "AI phone agent", desc: "books grooming appointments end-to-end via voice" },
+      { term: "Self-improving AI coach", desc: "reviews every call transcript and patches the phone agent to get better automatically" },
+      { term: "Multi-location analytics", desc: "revenue, groomer utilization, and retention per store" },
+      { term: "Breed-aware reminders", desc: "re-engagement timed to each dog's grooming cycle" },
+      { term: "POS integration", desc: "live appointment and sales data, no manual exports" },
+      { term: "Multi-role portal", desc: "platform admin, franchisee owner, and store associate views" },
     ],
     outcome: "The AI coach analyzes every call and rewrites the phone agent's own script to fix what didn't work. It improves itself with zero human input.",
     stack: ["React", "Node.js", "Claude AI", "Retell AI", "PostgreSQL", "Stripe"],
@@ -76,19 +76,18 @@ export default function WorkShowcase() {
                 <div className="mt-8">
                   <p className="brand-eyebrow text-slate">What we built</p>
                   <ul className="mt-4 space-y-3">
-                    {project.built.map((item) => {
-                      const [head, ...rest] = item.split(" — ");
-                      const tail = rest.join(" — ");
-                      return (
-                        <li key={item} className="flex gap-3 text-sm">
-                          <span className="mt-2 h-px w-4 shrink-0 bg-slate" aria-hidden="true" />
-                          <span className="leading-relaxed text-navy/80">
-                            <span className="font-medium text-navy">{head}</span>
-                            {tail && <span className="text-navy/65"> — {tail}</span>}
-                          </span>
-                        </li>
-                      );
-                    })}
+                    {project.built.map((item) => (
+                      <li key={item.term} className="group flex gap-3 text-sm">
+                        <span
+                          className="mt-2 h-px w-4 shrink-0 bg-slate transition-all duration-300 group-hover:w-7 group-hover:bg-navy"
+                          aria-hidden="true"
+                        />
+                        <span className="leading-relaxed text-navy/80">
+                          <span className="font-medium text-navy">{item.term}</span>
+                          <span className="text-navy/65">: {item.desc}</span>
+                        </span>
+                      </li>
+                    ))}
                   </ul>
                 </div>
 

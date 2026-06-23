@@ -56,7 +56,7 @@ export default function Logo({
   );
 
   return href ? (
-    <Link href={href} aria-label="JNS Consulting — Home" className="inline-block">
+    <Link href={href} aria-label="JNS Consulting, Home" className="inline-block">
       {content}
     </Link>
   ) : (

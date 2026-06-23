@@ -4,11 +4,11 @@ import Logo from "./Logo";
 
 const COLS = [
   {
-    heading: "Work",
+    heading: "Services",
     links: [
-      { label: "Operate", href: "/services#custom-builds" },
-      { label: "Grow", href: "/services#marketing" },
-      { label: "Protect", href: "/services#security" },
+      { label: "AI Voice Agents", href: "/services#ai-voice" },
+      { label: "Custom Software", href: "/services#custom-builds" },
+      { label: "Security", href: "/services#security" },
     ],
   },
   {

@@ -8,7 +8,7 @@ import Button from "../Button";
 const capabilities = [
   {
     title: "Always on",
-    body: "Answers every call — evenings, weekends, holidays. No voicemail, no missed bookings.",
+    body: "Answers every call, evenings, weekends, and holidays. No voicemail, no missed bookings.",
   },
   {
     title: "Self-improving",
@@ -20,17 +20,17 @@ const capabilities = [
   },
   {
     title: "Sounds human",
-    body: "Callers ask questions, change their mind, give the wrong name. The agent handles it — naturally.",
+    body: "Callers ask questions, change their mind, give the wrong name. The agent handles it, naturally.",
   },
 ];
 
 const callLog = [
-  { time: "11:42 pm", label: "Inbound call", note: "New client — asked about availability Saturday" },
-  { time: "11:43 pm", label: "Booking created", note: "Saturday 10 am — auto-confirmed, added to CRM" },
-  { time: "11:43 pm", label: "SMS sent", note: "Confirmation + reminder link sent to caller" },
-  { time: "12:04 am", label: "Inbound call", note: "Existing client — reschedule request" },
-  { time: "12:05 am", label: "Booking updated", note: "Moved to Monday 2 pm — calendar updated" },
-  { time: "2:17 am", label: "Inbound call", note: "General inquiry — hours, pricing, location" },
+  { time: "11:42 pm", label: "Inbound call", note: "New client asked about availability Saturday" },
+  { time: "11:43 pm", label: "Booking created", note: "Saturday 10 am, auto-confirmed and added to CRM" },
+  { time: "11:43 pm", label: "SMS sent", note: "Confirmation and reminder link sent to caller" },
+  { time: "12:04 am", label: "Inbound call", note: "Existing client, reschedule request" },
+  { time: "12:05 am", label: "Booking updated", note: "Moved to Monday 2 pm, calendar updated" },
+  { time: "2:17 am", label: "Inbound call", note: "General inquiry: hours, pricing, location" },
 ];
 
 export default function AICalling() {
@@ -50,7 +50,7 @@ export default function AICalling() {
               </h2>
               <p className="mt-7 text-lg leading-relaxed text-slate-soft">
                 We build AI voice agents that answer calls, match callers to
-                the right person or service, and create confirmed bookings —
+                the right person or service, and create confirmed bookings
                 with no human in the loop. Two of our clients are running these
                 in production today.
               </p>
@@ -86,7 +86,7 @@ export default function AICalling() {
             <div className="border border-ivory/15 bg-ivory/5">
               <div className="border-b border-ivory/15 px-5 py-4">
                 <p className="text-[0.65rem] uppercase tracking-[0.22em] text-slate-soft">
-                  AI Receptionist — Live call log
+                  AI Receptionist · Live call log
                 </p>
                 <div className="mt-1 flex items-center gap-2">
                   <motion.span

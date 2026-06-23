@@ -24,7 +24,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL("https://jnsconsulting.ai"),
   title: {
-    default: "JNS Consulting — Smart Solutions, Built for You.",
+    default: "JNS Consulting · Smart Solutions, Built for You.",
     template: "%s · JNS Consulting",
   },
   description:

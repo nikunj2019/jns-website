@@ -7,8 +7,10 @@ import Reveal, { RevealGroup, RevealItem } from "../components/Reveal";
 export const metadata: Metadata = {
   title: "Services",
   description:
-    "Operate, grow, and protect your small business with custom command centers, CRM workflows, marketing systems, and security reviews.",
+    "AI voice agents, custom software, and security built for small businesses. Phone agents that book on their own, command centers you actually run on, and security you can act on.",
 };
+
+type Included = { term: string; desc: string };
 
 type Service = {
   number: string;
@@ -16,58 +18,107 @@ type Service = {
   title: string;
   lede: string;
   summary: string;
-  included: string[];
+  included: Included[];
   goodFor: string;
 };
 
 const SERVICES: Service[] = [
   {
     number: "01",
-    slug: "custom-builds",
-    title: "Operate",
-    lede: "KPI dashboards, CRM workflows, and AI actions.",
+    slug: "ai-voice",
+    title: "AI Voice Agents",
+    lede: "Phone agents that answer, qualify, and book on their own.",
     summary:
-      "We build the command center your business runs on: KPI dashboards, CRM pipelines, customer portals, booking systems, internal tools, and AI workflows for follow-up, email triage, document extraction, reporting, and task routing.",
+      "An AI receptionist that handles inbound calls around the clock, matches each caller to the right service, and writes confirmed bookings straight into your system. No voicemail, no missed revenue, no human in the loop. Two of our clients run this in production today.",
     included: [
-      "Performance dashboard — revenue, leads, bookings, work status, and operational KPIs",
-      "CRM pipeline — lead source, deal value, owner, probability, next step, notes",
-      "Action center — recommended follow-ups, automations, invoice reminders, and workflow fixes",
-      "AI workflows — summaries, draft replies, lead scoring, document extraction, routing",
-      "Handoff — source code, documentation, admin access, and a clean operations runbook",
+      {
+        term: "AI receptionist",
+        desc: "answers inbound calls day and night, never sends a caller to voicemail",
+      },
+      {
+        term: "Smart booking",
+        desc: "matches callers to the right service and writes confirmed appointments automatically",
+      },
+      {
+        term: "Self-improving coach",
+        desc: "reviews call transcripts and refines the agent on its own, with no manual tuning",
+      },
+      {
+        term: "Real-time CRM sync",
+        desc: "every call logged and every booking pushed into your system as it happens",
+      },
+      {
+        term: "Custom voice and script",
+        desc: "tuned to your business, your services, and the way you talk to customers",
+      },
     ],
     goodFor:
-      "You cannot see performance clearly, leads are slipping through cracks, or your team is copying data between tools that should already talk to each other.",
+      "You miss calls after hours, your team is buried on the phone, or you are losing bookings you never even hear about.",
   },
   {
     number: "02",
-    slug: "marketing",
-    title: "Grow",
-    lede: "Paid growth connected to real business outcomes.",
+    slug: "custom-builds",
+    title: "Custom Software",
+    lede: "The command center your business actually runs on.",
     summary:
-      "Google Ads and Meta Ads campaigns built around what you actually sell, then connected back to your command center. Spend, leads, conversion rates, booked work, ROAS, and weak campaigns become visible in one place.",
+      "Owner dashboards, booking systems, CRM pipelines, client and staff portals, and the automations that tie them together. Built around how your business operates and connected to the tools you already use.",
     included: [
-      "Account audit — what's running, what's working, what's bleeding",
-      "Tracking setup — pixels, conversions, GA4, and server-side events done correctly",
-      "Campaign architecture — search, performance max, Meta, retargeting, and tests",
-      "Landing-page experiments — message, offer, form, and conversion improvements",
-      "Growth dashboard — spend, leads, CPA, ROAS, revenue, and recommended actions",
+      {
+        term: "Owner dashboard",
+        desc: "revenue, occupancy, outstanding balances, and the day's schedule in one view",
+      },
+      {
+        term: "Booking and CRM",
+        desc: "appointments, client history, staff availability, and automated reminders",
+      },
+      {
+        term: "Client and staff portals",
+        desc: "self-serve scheduling, notes, approvals, and role-based access",
+      },
+      {
+        term: "Automations",
+        desc: "invoicing, SMS reminders, overdue alerts, and re-engagement that run on their own",
+      },
+      {
+        term: "Integrations",
+        desc: "your POS, payments, and existing tools connected into one system",
+      },
+      {
+        term: "Clean handoff",
+        desc: "source code, documentation, admin access, and an operations runbook",
+      },
     ],
     goodFor:
-      "You are spending on ads but cannot connect that spend to pipeline, bookings, signed deals, or revenue.",
+      "You cannot see performance clearly, work is slipping through the cracks, or your team copies data between tools that should already talk to each other.",
   },
   {
     number: "03",
     slug: "security",
-    title: "Protect",
+    title: "Security & Compliance",
     lede: "Security visibility small businesses can act on.",
     summary:
-      "Web application and infrastructure security reviews written for owners, not auditors. We find the holes, rank them by impact, and turn them into a plain-English security center with remediation status and next actions.",
+      "Web application and infrastructure reviews written for owners, not auditors. We find the holes, rank them by impact, and turn them into a plain-language plan with remediation status and clear next actions.",
     included: [
-      "Web application security review — OWASP Top 10, auth flows, data handling",
-      "Infrastructure review — cloud configuration, access controls, secrets management",
-      "Vendor and SaaS audit — who can see what, and should they?",
-      "Security dashboard — risk score, open findings, patches, access review, remediation",
-      "Optional retainer — quarterly review, incident response on call",
+      {
+        term: "Application review",
+        desc: "OWASP Top 10, authentication flows, and data handling",
+      },
+      {
+        term: "Infrastructure review",
+        desc: "cloud configuration, access controls, and secrets management",
+      },
+      {
+        term: "Vendor and SaaS audit",
+        desc: "who can see what, and whether they should",
+      },
+      {
+        term: "Security dashboard",
+        desc: "risk score, open findings, patch status, and remediation tracking",
+      },
+      {
+        term: "Optional retainer",
+        desc: "quarterly review and incident response on call",
+      },
     ],
     goodFor:
       "You handle customer data, payment information, or PII; you need to answer client security questions; or nobody has reviewed the system yet.",
@@ -85,13 +136,13 @@ export default function ServicesPage() {
           </Reveal>
           <Reveal delay={0.05}>
             <h1 className="font-display mt-8 text-[2.5rem] leading-[1.05] tracking-tight sm:text-[3.5rem] lg:text-[4.5rem] max-w-4xl">
-              Operate. Grow. Protect.
+              Answer. Operate. Protect.
             </h1>
           </Reveal>
           <Reveal delay={0.1}>
             <p className="mt-8 max-w-2xl text-lg leading-relaxed text-navy/75 sm:text-xl">
-              The command center, growth engine, and security posture your small
-              business needs to see performance clearly and act faster.
+              AI voice agents that never miss a call, custom software your
+              business runs on, and security you can actually act on.
             </p>
           </Reveal>
         </Container>
@@ -109,8 +160,8 @@ export default function ServicesPage() {
               {/* Left: heading */}
               <Reveal direction="up" className="lg:col-span-5">
                 <div className="lg:sticky lg:top-28">
-                  <p className="text-xs uppercase tracking-[0.22em] text-slate">
-                    {s.title}
+                  <p className="font-display text-5xl text-slate-soft tabular-nums">
+                    {s.number}
                   </p>
                   <h2 className="font-display mt-6 text-4xl sm:text-5xl lg:text-[3.5rem] leading-[1.05] tracking-tight">
                     {s.title}
@@ -137,26 +188,23 @@ export default function ServicesPage() {
                     className="mt-6 divide-y divide-slate-line/70 border-y border-slate-line/70"
                     stagger={0.06}
                   >
-                    {s.included.map((item) => {
-                      const [head, ...rest] = item.split(" — ");
-                      const tail = rest.join(" — ");
-                      return (
-                        <RevealItem key={item}>
-                          <div className="py-4 flex gap-4">
-                            <span className="mt-3 h-px w-4 shrink-0 bg-slate" aria-hidden="true" />
-                            <p className="text-[0.9375rem] leading-relaxed text-navy/85">
-                              <span className="font-medium text-navy">{head}</span>
-                              {tail && (
-                                <>
-                                  <span className="text-slate"> — </span>
-                                  {tail}
-                                </>
-                              )}
-                            </p>
-                          </div>
-                        </RevealItem>
-                      );
-                    })}
+                    {s.included.map((item) => (
+                      <RevealItem key={item.term}>
+                        <div className="group py-4 flex gap-4">
+                          <span
+                            className="mt-3 h-px w-4 shrink-0 bg-slate transition-all duration-300 group-hover:w-7 group-hover:bg-navy"
+                            aria-hidden="true"
+                          />
+                          <p className="text-[0.9375rem] leading-relaxed text-navy/85">
+                            <span className="font-medium text-navy">
+                              {item.term}
+                            </span>
+                            <span className="text-slate">: </span>
+                            {item.desc}
+                          </p>
+                        </div>
+                      </RevealItem>
+                    ))}
                   </RevealGroup>
                 </div>
 
@@ -212,10 +260,10 @@ export default function ServicesPage() {
               { t: "Discovery call", b: "30 minutes. We listen, you describe the problem. Free." },
               { t: "Written proposal", b: "Scope, deliverables, timeline, fixed fee. Usually within 3 days." },
               { t: "Build", b: "Weekly written updates. No surprises. You always know where it stands." },
-              { t: "Handoff", b: "Source code, docs, access. We're available — never needed." },
+              { t: "Handoff", b: "Source code, docs, access. We stay available, never required." },
             ].map((step) => (
               <RevealItem key={step.t}>
-                <div className="bg-navy p-8 lg:p-10 h-full">
+                <div className="bg-navy p-8 lg:p-10 h-full transition-colors hover:bg-navy-700">
                   <h3 className="font-display text-xl leading-tight">{step.t}</h3>
                   <p className="mt-3 text-sm leading-relaxed text-slate-soft">{step.b}</p>
                 </div>

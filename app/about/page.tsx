@@ -7,7 +7,7 @@ import Reveal, { RevealGroup, RevealItem } from "../components/Reveal";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "JNS Consulting was founded by Nikunj Jadawala, Jiten Patel, and Shayar Patel — an application security engineer, a financial auditor, and a hospitality operator.",
+    "JNS Consulting was founded by Nikunj Jadawala, Jiten Patel, and Shayar Patel: an application security engineer, a financial auditor, and a hospitality operator.",
 };
 
 const FOUNDERS = [
@@ -30,7 +30,7 @@ const FOUNDERS = [
     name: "Shayar Patel",
     role: "Sales & Client Relationships",
     background: "Hospitality · IT",
-    bio: "Shayar has been the small business operator on the other side of the table — running a hotel, managing the IT that holds it together. He translates business pain into technical scope and keeps engagements grounded in operational reality.",
+    bio: "Shayar has been the small business operator on the other side of the table, running a hotel and managing the IT that holds it together. He translates business pain into technical scope and keeps engagements grounded in operational reality.",
   },
 ];
 
@@ -58,7 +58,7 @@ export default function AboutPage() {
             <Reveal delay={0.15} className="lg:col-span-5 lg:pl-8">
               <p className="text-lg leading-relaxed text-navy/75">
                 JNS Consulting was founded in 2026 by Nikunj Jadawala, Jiten
-                Patel, and Shayar Patel — an application security engineer, a
+                Patel, and Shayar Patel: an application security engineer, a
                 financial auditor, and a hospitality operator. We
                 kept watching small businesses get sold the wrong things by the
                 wrong people. We started JNS to be the right people.
@@ -141,7 +141,7 @@ export default function AboutPage() {
                 the code and patched the breaches. Jiten audited the books. Shayar
                 ran the business that was paying for all of it. We started JNS
                 because we knew a smaller, more honest version of this work was
-                possible — and we were tired of waiting for someone else to build
+                possible, and we were tired of waiting for someone else to build
                 the firm.
               </p>
             </RevealItem>
