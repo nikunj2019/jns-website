@@ -36,7 +36,14 @@ const modules = [
     title: "Analytics",
     value: "Clarity across every location.",
     detail:
-      "Revenue, staff utilization, and customer retention aggregated from your POS and operations data into a single view, whether you run one location or ten.",
+      "Revenue, staff utilization, and customer retention aggregated from your POS and operations data into a single view, across every location you run.",
+  },
+  {
+    no: "06",
+    title: "Security & Compliance",
+    value: "Risk you can see, ranked, and act on.",
+    detail:
+      "Application and infrastructure reviews written for owners, not auditors. We find the holes, rank them by impact, and turn them into a plain-language plan with remediation status you can track.",
   },
 ];
 

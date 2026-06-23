@@ -35,9 +35,9 @@ export default function Footer() {
           <div className="md:col-span-5">
             <Logo size={84} showWordmark={false} />
             <p className="mt-6 max-w-sm text-[0.9375rem] leading-relaxed text-navy/75">
-              Smart Solutions, Built for You. We build custom command centers
-              for small businesses: KPI visibility, CRM workflows, growth
-              tracking, and security in one place.
+              Smart Solutions, Built for You. We build AI voice agents, custom
+              dashboards, booking and CRM systems, automations, and security for
+              small businesses, all in one place.
             </p>
           </div>
 

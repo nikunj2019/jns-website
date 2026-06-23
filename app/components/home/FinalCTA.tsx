@@ -2,6 +2,7 @@ import Image from "next/image";
 import Container from "../Container";
 import Reveal from "../Reveal";
 import Button from "../Button";
+import AuroraGlow from "../AuroraGlow";
 
 const SIGNALS = [
   "30-minute discovery call, free",
@@ -13,6 +14,7 @@ const SIGNALS = [
 export default function FinalCTA() {
   return (
     <section className="relative overflow-hidden bg-navy text-ivory">
+      <AuroraGlow />
       <div
         aria-hidden="true"
         className="absolute -bottom-36 -right-24 h-[560px] w-[560px] opacity-[0.055]"

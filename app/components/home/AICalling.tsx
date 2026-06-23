@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import Container from "../Container";
 import Reveal, { RevealGroup, RevealItem } from "../Reveal";
 import Button from "../Button";
+import AuroraGlow from "../AuroraGlow";
 
 const capabilities = [
   {
@@ -35,8 +36,9 @@ const callLog = [
 
 export default function AICalling() {
   return (
-    <section className="bg-navy py-24 text-ivory sm:py-28 lg:py-36">
-      <Container size="wide">
+    <section className="relative overflow-hidden bg-navy py-24 text-ivory sm:py-28 lg:py-36">
+      <AuroraGlow />
+      <Container size="wide" className="relative">
         <div className="grid gap-12 lg:grid-cols-[1fr_1fr] lg:gap-20 lg:items-start">
           {/* Left */}
           <div>
@@ -83,7 +85,7 @@ export default function AICalling() {
 
           {/* Right — live call log mock */}
           <Reveal delay={0.14} direction="up" distance={32}>
-            <div className="border border-ivory/15 bg-ivory/5">
+            <div className="border border-ivory/15 bg-ivory/5 shadow-[0_30px_80px_-40px_rgba(0,0,0,0.7)] backdrop-blur-sm">
               <div className="border-b border-ivory/15 px-5 py-4">
                 <p className="text-[0.65rem] uppercase tracking-[0.22em] text-slate-soft">
                   AI Receptionist · Live call log

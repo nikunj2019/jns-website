@@ -63,10 +63,24 @@ export const commandModules = [
     description:
       "Revenue, staff utilization, customer retention, and service mix, aggregated from your POS, booking system, and ops data into a single view.",
     stats: [
-      { label: "Locations", value: "3", delta: "all tracked" },
+      { label: "Locations", value: "All", delta: "in sync" },
       { label: "Staff utilization", value: "81%", delta: "avg" },
       { label: "Network revenue", value: "$214k", delta: "+22%" },
       { label: "Client retention", value: "73%", delta: "+9 pts" },
+    ],
+  },
+  {
+    id: "security",
+    label: "Security",
+    eyebrow: "Protected",
+    title: "Risk you can see and act on.",
+    description:
+      "Application and infrastructure reviews turned into a plain-language security posture, with findings ranked by impact and a clear path to fixing them.",
+    stats: [
+      { label: "Risk score", value: "Low", delta: "stable" },
+      { label: "Open findings", value: "4", delta: "down 11" },
+      { label: "Patched", value: "96%", delta: "up 8 pts" },
+      { label: "Last review", value: "Done", delta: "this quarter" },
     ],
   },
 ];

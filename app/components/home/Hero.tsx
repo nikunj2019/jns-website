@@ -5,6 +5,8 @@ import { motion } from "motion/react";
 import Button from "../Button";
 import Container from "../Container";
 import CommandCenter from "./CommandCenter";
+import ScrollTilt from "../ScrollTilt";
+import AuroraGlow from "../AuroraGlow";
 
 const PROOF = [
   { value: "3", label: "specialists at the table" },
@@ -16,6 +18,8 @@ const PROOF = [
 export default function Hero() {
   return (
     <section className="relative overflow-hidden bg-navy text-ivory">
+      <AuroraGlow />
+
       {/* Watermark logo */}
       <div
         aria-hidden="true"
@@ -63,8 +67,8 @@ export default function Hero() {
                 transition={{ duration: 0.75, delay: 0.22, ease: [0.22, 1, 0.36, 1] }}
                 className="max-w-2xl text-base leading-relaxed text-slate-soft sm:text-lg"
               >
-                JNS builds custom KPI dashboards, CRM workflows, AI automations,
-                ad tracking, and security systems for small businesses ready to
+                JNS builds AI voice agents, custom dashboards, CRM workflows,
+                automations, and security systems for small businesses ready to
                 operate with clarity.
               </motion.p>
 
@@ -113,13 +117,21 @@ export default function Hero() {
             ))}
           </motion.div>
 
-          {/* Command center demo */}
+          {/* Command center demo — Apple-style 3D reveal */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.97, y: 24 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.95, delay: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            className="relative"
           >
-            <CommandCenter />
+            {/* Soft floor glow beneath the panel */}
+            <div
+              aria-hidden="true"
+              className="absolute inset-x-8 -bottom-6 h-24 rounded-[50%] bg-black/40 blur-3xl"
+            />
+            <ScrollTilt className="relative">
+              <CommandCenter />
+            </ScrollTilt>
           </motion.div>
         </div>
       </Container>

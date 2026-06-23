@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     template: "%s · JNS Consulting",
   },
   description:
-    "Custom KPI dashboards, CRM workflows, AI automations, growth tracking, and security systems for small businesses ready to operate with clarity.",
+    "AI voice agents, custom dashboards, CRM workflows, automations, and security systems for small businesses ready to operate with clarity.",
   openGraph: {
     title: "JNS Consulting",
     description:
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "JNS Consulting",
     description:
-      "Custom KPI dashboards, CRM workflows, AI automations, growth tracking, and security systems for small businesses.",
+      "AI voice agents, custom dashboards, CRM workflows, automations, and security systems for small businesses.",
   },
   robots: { index: true, follow: true },
 };

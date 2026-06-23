@@ -42,7 +42,7 @@ export default function CommandCenter() {
             Built around your business, not a template.
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
           {commandModules.map((module) => (
             <button
               key={module.id}

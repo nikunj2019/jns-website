@@ -5,37 +5,35 @@ import Button from "../Button";
 const projects = [
   {
     industry: "Beauty & Wellness",
-    type: "Suite-rental salon, single location",
+    type: "Independent suite-rental salon",
     headline: "A full operating system for an independent beauty studio.",
     description:
-      "The owner was managing rent collection, bookings, contractor schedules, and client communication manually. We replaced the entire stack.",
+      "The owner was managing rent collection, bookings, contractor schedules, and client communication by hand. We replaced the entire patchwork with one system.",
     built: [
       { term: "AI voice receptionist", desc: "answers every call, books appointments 24/7" },
       { term: "Owner dashboard", desc: "revenue, suite occupancy, overdue rent, today's schedule" },
       { term: "Contractor portals", desc: "availability, appointments, client notes, photo uploads" },
       { term: "Client portal", desc: "booking history, upcoming appointments, rebooking" },
-      { term: "Automated monthly rent invoicing", desc: "runs on the 1st, no manual work" },
-      { term: "Square payments", desc: "connected directly to invoicing and booking" },
+      { term: "Automated monthly invoicing", desc: "runs on the 1st, no manual work" },
+      { term: "Integrated payments", desc: "connected directly to invoicing and booking" },
     ],
     outcome: "The AI now handles every inbound call. Bookings appear in the dashboard automatically, including calls that come in at 2 am.",
-    stack: ["Next.js", "Firebase", "Retell AI", "Square", "Cloud Functions"],
   },
   {
     industry: "Pet Services Franchise",
-    type: "Grooming network, 3 locations",
-    headline: "Analytics, AI calling, and automated campaigns across every store.",
+    type: "Multi-location grooming franchise",
+    headline: "Analytics, AI calling, and automated reminders across every location.",
     description:
-      "Three stores, one POS system, and no visibility into what was actually happening. The owner was flying blind on utilization, retention, and marketing performance.",
+      "Multiple stores, one POS system, and no visibility into what was actually happening. The owner was flying blind on utilization, retention, and day-to-day performance.",
     built: [
       { term: "AI phone agent", desc: "books grooming appointments end-to-end via voice" },
-      { term: "Self-improving AI coach", desc: "reviews every call transcript and patches the phone agent to get better automatically" },
+      { term: "Self-improving AI coach", desc: "reviews every call transcript and refines the phone agent automatically" },
       { term: "Multi-location analytics", desc: "revenue, groomer utilization, and retention per store" },
       { term: "Breed-aware reminders", desc: "re-engagement timed to each dog's grooming cycle" },
       { term: "POS integration", desc: "live appointment and sales data, no manual exports" },
-      { term: "Multi-role portal", desc: "platform admin, franchisee owner, and store associate views" },
+      { term: "Multi-role portal", desc: "owner, manager, and associate views with role-based access" },
     ],
     outcome: "The AI coach analyzes every call and rewrites the phone agent's own script to fix what didn't work. It improves itself with zero human input.",
-    stack: ["React", "Node.js", "Claude AI", "Retell AI", "PostgreSQL", "Stripe"],
   },
 ];
 
@@ -96,17 +94,6 @@ export default function WorkShowcase() {
                     &ldquo;{project.outcome}&rdquo;
                   </p>
                 </blockquote>
-
-                <div className="mt-8 flex flex-wrap gap-2">
-                  {project.stack.map((tag) => (
-                    <span
-                      key={tag}
-                      className="border border-slate-line bg-cream/50 px-2.5 py-1 text-[0.7rem] uppercase tracking-[0.14em] text-slate"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
               </article>
             </RevealItem>
           ))}

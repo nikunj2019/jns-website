@@ -3,6 +3,7 @@
 import Container from "../Container";
 import CountUp from "../CountUp";
 import { RevealGroup, RevealItem } from "../Reveal";
+import AuroraGlow from "../AuroraGlow";
 
 const metrics = [
   {
@@ -33,8 +34,9 @@ const metrics = [
 
 export default function TrustMetrics() {
   return (
-    <section className="bg-navy text-ivory">
-      <Container size="wide" className="py-24 sm:py-28 lg:py-32">
+    <section className="relative overflow-hidden bg-navy text-ivory">
+      <AuroraGlow />
+      <Container size="wide" className="relative py-24 sm:py-28 lg:py-32">
         <RevealGroup
           className="grid grid-cols-2 gap-px bg-ivory/10 border border-ivory/10 lg:grid-cols-4"
           stagger={0.1}
