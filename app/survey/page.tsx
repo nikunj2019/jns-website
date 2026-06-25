@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
-import { collection, addDoc, getDoc, doc } from "firebase/firestore";
+import { collection, addDoc, getDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { DEFAULT_QUESTIONS, STEP_LABELS, type SurveyQuestion } from "../lib/survey-questions";
 import Button from "../components/Button";
@@ -12,13 +13,17 @@ import Button from "../components/Button";
 const INPUT_CLASS =
   "w-full border border-slate-line bg-ivory px-4 py-3 text-sm text-navy placeholder-slate/60 focus:border-navy focus:outline-none transition-colors";
 
-export default function SurveyPage() {
+function SurveyContent() {
+  const searchParams = useSearchParams();
+  const inviteId = searchParams.get("c");
+
   const [step, setStep] = useState(1);
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
   const [questions, setQuestions] = useState<SurveyQuestion[]>(DEFAULT_QUESTIONS);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [inviteClientName, setInviteClientName] = useState("");
 
   useEffect(() => {
     async function loadQuestions() {
@@ -36,6 +41,27 @@ export default function SurveyPage() {
     }
     loadQuestions();
   }, []);
+
+  useEffect(() => {
+    if (!inviteId) return;
+    async function loadInvite() {
+      try {
+        const snap = await getDoc(doc(db, "survey-invites", inviteId!));
+        if (snap.exists()) {
+          const data = snap.data();
+          setInviteClientName(data.clientName || "");
+          setAnswers((prev) => ({
+            ...prev,
+            ...(data.clientName ? { contact_name: data.clientName } : {}),
+            ...(data.clientEmail ? { email: data.clientEmail } : {}),
+          }));
+        }
+      } catch {
+        // continue without invite data
+      }
+    }
+    loadInvite();
+  }, [inviteId]);
 
   const stepQuestions = questions.filter((q) => q.step === step);
   const totalSteps = STEP_LABELS.length;
@@ -89,11 +115,26 @@ export default function SurveyPage() {
     if (!validate()) return;
     setSubmitting(true);
     try {
-      await addDoc(collection(db, "survey-submissions"), {
+      const payload: Record<string, unknown> = {
         ...answers,
         submittedAt: new Date().toISOString(),
         step_completed: 3,
-      });
+      };
+      if (inviteId) payload.inviteId = inviteId;
+
+      const docRef = await addDoc(collection(db, "survey-submissions"), payload);
+
+      if (inviteId) {
+        try {
+          await updateDoc(doc(db, "survey-invites", inviteId), {
+            status: "completed",
+            submissionId: docRef.id,
+          });
+        } catch {
+          // non-critical — submission is already saved
+        }
+      }
+
       setSubmitted(true);
     } catch (err) {
       console.error("Submission error:", err);
@@ -102,7 +143,7 @@ export default function SurveyPage() {
     }
   }
 
-  const businessName = (answers["business_name"] as string) || "there";
+  const businessName = (answers["business_name"] as string) || inviteClientName || "there";
 
   return (
     <div className="min-h-screen bg-ivory flex flex-col">
@@ -155,7 +196,13 @@ export default function SurveyPage() {
                           >
                             {isComplete ? (
                               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                                <path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                <path
+                                  d="M2.5 7L5.5 10L11.5 4"
+                                  stroke="currentColor"
+                                  strokeWidth="1.5"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
                               </svg>
                             ) : (
                               n
@@ -216,7 +263,12 @@ export default function SurveyPage() {
                         className="text-sm text-slate hover:text-navy transition-colors flex items-center gap-2"
                       >
                         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                          <path d="M12 7H2M2 7L6.5 2.5M2 7L6.5 11.5" stroke="currentColor" strokeWidth="1.25" strokeLinecap="square" />
+                          <path
+                            d="M12 7H2M2 7L6.5 2.5M2 7L6.5 11.5"
+                            stroke="currentColor"
+                            strokeWidth="1.25"
+                            strokeLinecap="square"
+                          />
                         </svg>
                         Back
                       </button>
@@ -328,9 +380,7 @@ function QuestionField({
                       selected ? "border-navy" : "border-slate-line"
                     }`}
                   >
-                    {selected && (
-                      <span className="w-2 h-2 rounded-full bg-navy" />
-                    )}
+                    {selected && <span className="w-2 h-2 rounded-full bg-navy" />}
                   </span>
                   {opt}
                 </span>
@@ -363,7 +413,13 @@ function QuestionField({
                   >
                     {selected && (
                       <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                        <path d="M1.5 5L4 7.5L8.5 2.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        <path
+                          d="M1.5 5L4 7.5L8.5 2.5"
+                          stroke="white"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
                       </svg>
                     )}
                   </span>
@@ -375,9 +431,7 @@ function QuestionField({
         </div>
       )}
 
-      {error && (
-        <p className="mt-2 text-xs text-red-600">{error}</p>
-      )}
+      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
     </div>
   );
 }
@@ -392,15 +446,19 @@ function SuccessScreen({ businessName }: { businessName: string }) {
     >
       <div className="mx-auto mb-8 w-16 h-16 rounded-full bg-navy flex items-center justify-center">
         <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-          <path d="M5 14L11 20L23 8" stroke="#f7f5f0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d="M5 14L11 20L23 8"
+            stroke="#f7f5f0"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       </div>
-      <h2 className="font-display text-3xl text-navy mb-4">
-        Thank you, {businessName}!
-      </h2>
+      <h2 className="font-display text-3xl text-navy mb-4">Thank you, {businessName}!</h2>
       <p className="text-slate max-w-md mx-auto mb-10 leading-relaxed">
-        We&apos;ve received your answers and will review them before your discovery
-        call. We&apos;ll be in touch shortly.
+        We&apos;ve received your answers and will review them before your discovery call.
+        We&apos;ll be in touch shortly.
       </p>
       <Link
         href="/"
@@ -409,5 +467,19 @@ function SuccessScreen({ businessName }: { businessName: string }) {
         Return to JNS Consulting
       </Link>
     </motion.div>
+  );
+}
+
+export default function SurveyPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-ivory flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-navy border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <SurveyContent />
+    </Suspense>
   );
 }
