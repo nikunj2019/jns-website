@@ -20,31 +20,29 @@ Rules:
 - Return ONLY a valid JSON array — no markdown fences, no explanation, no extra text`;
 
 export async function generateQuestionsWithAI(prompt: string): Promise<SurveyQuestion[]> {
-  const apiKey = process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("NEXT_PUBLIC_ANTHROPIC_API_KEY is not set");
+  const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+  if (!apiKey) throw new Error("NEXT_PUBLIC_GEMINI_API_KEY is not set");
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 2048,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: prompt }],
-    }),
-  });
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: 2048, temperature: 0.7 },
+      }),
+    }
+  );
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    throw new Error(`Anthropic API ${res.status}: ${body.slice(0, 120)}`);
+    throw new Error(`Gemini API ${res.status}: ${body.slice(0, 120)}`);
   }
 
   const data = await res.json();
-  const text: string = data?.content?.[0]?.text ?? "";
+  const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 
   // Strip any accidental markdown fences
   const cleaned = text.replace(/^```[a-z]*\n?/i, "").replace(/```$/i, "").trim();
@@ -55,4 +53,4 @@ export async function generateQuestionsWithAI(prompt: string): Promise<SurveyQue
   return parsed as SurveyQuestion[];
 }
 
-export const AI_AVAILABLE = !!process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY;
+export const AI_AVAILABLE = !!process.env.NEXT_PUBLIC_GEMINI_API_KEY;

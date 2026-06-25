@@ -185,7 +185,7 @@ function AIGeneratorPanel({ onApply }: { onApply: (qs: SurveyQuestion[], mode: "
   if (!AI_AVAILABLE) {
     return (
       <div className="text-xs text-slate bg-cream rounded-lg p-3 border border-slate-line">
-        Add <code className="font-mono bg-white px-1 rounded">NEXT_PUBLIC_ANTHROPIC_API_KEY</code> to GitHub secrets to enable AI generation.
+        Add <code className="font-mono bg-white px-1 rounded">NEXT_PUBLIC_GEMINI_API_KEY</code> to GitHub secrets to enable AI generation (free at aistudio.google.com).
       </div>
     );
   }

@@ -327,7 +327,7 @@ export default function SurveyBuilderPage() {
             </>
           ) : (
             <p className="text-sm text-slate">
-              Add <code className="font-mono bg-white px-1 rounded border border-slate-line">NEXT_PUBLIC_ANTHROPIC_API_KEY</code> to GitHub secrets, then redeploy to enable AI question generation.
+              Add <code className="font-mono bg-white px-1 rounded border border-slate-line">NEXT_PUBLIC_GEMINI_API_KEY</code> to GitHub secrets (free key at aistudio.google.com), then redeploy.
             </p>
           )}
         </div>
