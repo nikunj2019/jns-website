@@ -17,10 +17,9 @@ export default function FounderTrust() {
           </Reveal>
           <Reveal delay={0.08} className="lg:pt-8">
             <p className="text-lg leading-relaxed text-navy/75">
-              JNS is not a generic template shop. The founding team brings the
-              lanes a small business owner actually cares about: client
-              relationships, application delivery, cyber security, financial
-              discipline, and day-to-day operations.
+              Three founders. Each owns a lane: software delivery, financial
+              discipline, and day-to-day operations. The work has our names on
+              it — so does the accountability.
             </p>
           </Reveal>
         </div>
