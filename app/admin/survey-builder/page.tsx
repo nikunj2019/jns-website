@@ -165,14 +165,19 @@ export default function SurveyBuilderPage() {
     if (authed) loadQuestions();
   }, [authed, loadQuestions]);
 
+  const [saveError, setSaveError] = useState("");
+
   async function saveToFirestore(qs: SurveyQuestion[]) {
     setSaving(true);
     setSaved(false);
+    setSaveError("");
     try {
       await setDoc(doc(db, "survey-config", "questions"), { questions: qs });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
+      const msg = (err as { code?: string; message?: string }).code ?? (err as Error).message ?? "Save failed";
+      setSaveError(msg);
       console.error("Failed to save:", err);
     } finally {
       setSaving(false);
@@ -270,6 +275,9 @@ export default function SurveyBuilderPage() {
             )}
             {saving && (
               <span className="text-sm text-slate">Saving…</span>
+            )}
+            {saveError && (
+              <span className="text-sm text-red-600 max-w-xs truncate" title={saveError}>Error: {saveError}</span>
             )}
             <button
               onClick={handleReset}

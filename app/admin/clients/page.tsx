@@ -264,15 +264,19 @@ function CustomSurveyEditor({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   async function save(qs: SurveyQuestion[]) {
     setSaving(true);
     setSaved(false);
+    setSaveError("");
     try {
       await updateDoc(doc(db, "survey-invites", inviteId), { customQuestions: qs });
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (err) {
+      const msg = (err as { code?: string; message?: string }).code ?? (err as Error).message ?? "Save failed";
+      setSaveError(msg);
       console.error("Failed to save custom questions:", err);
     } finally {
       setSaving(false);
@@ -328,6 +332,7 @@ function CustomSurveyEditor({
         <div className="flex items-center gap-3">
           {saved && <span className="text-xs text-green-700 font-medium">Saved!</span>}
           {saving && <span className="text-xs text-slate">Saving…</span>}
+          {saveError && <span className="text-xs text-red-600 max-w-[200px] truncate" title={saveError}>Error: {saveError}</span>}
           <button onClick={handleReset} className="text-xs text-slate hover:text-navy transition-colors underline underline-offset-2">
             Reset to defaults
           </button>
@@ -397,6 +402,8 @@ export default function ClientsPage() {
   const [editingQuestionsId, setEditingQuestionsId] = useState<string | null>(null);
   const [customQuestionsCache, setCustomQuestionsCache] = useState<Record<string, SurveyQuestion[]>>({});
   const [siteUrl, setSiteUrl] = useState("");
+  const [pageError, setPageError] = useState("");
+  const [createError, setCreateError] = useState("");
 
   useEffect(() => {
     setSiteUrl(window.location.origin);
@@ -444,6 +451,7 @@ export default function ClientsPage() {
     e.preventDefault();
     if (!form.clientName.trim()) return;
     setCreating(true);
+    setCreateError("");
     try {
       await addDoc(collection(db, "survey-invites"), {
         clientName: form.clientName.trim(),
@@ -457,6 +465,8 @@ export default function ClientsPage() {
       setShowForm(false);
       await loadInvites();
     } catch (err) {
+      const msg = (err as { code?: string; message?: string }).code ?? (err as Error).message ?? "Failed to create client";
+      setCreateError(msg);
       console.error("Failed to create invite:", err);
     } finally {
       setCreating(false);
@@ -464,12 +474,15 @@ export default function ClientsPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Delete this invite link?")) return;
+    if (!confirm("Delete this client and their survey link?")) return;
+    setPageError("");
     try {
       await deleteDoc(doc(db, "survey-invites", id));
       setInvites((prev) => prev.filter((i) => i.id !== id));
       if (editingQuestionsId === id) setEditingQuestionsId(null);
     } catch (err) {
+      const msg = (err as { code?: string; message?: string }).code ?? (err as Error).message ?? "Delete failed";
+      setPageError(msg);
       console.error("Failed to delete:", err);
     }
   }
@@ -479,6 +492,7 @@ export default function ClientsPage() {
       setEditingQuestionsId(null);
       return;
     }
+    setPageError("");
     if (!customQuestionsCache[invite.id]) {
       try {
         const snap = await getDoc(doc(db, "survey-invites", invite.id));
@@ -488,7 +502,9 @@ export default function ClientsPage() {
             ? (data.customQuestions as SurveyQuestion[])
             : DEFAULT_QUESTIONS;
         setCustomQuestionsCache((prev) => ({ ...prev, [invite.id]: qs }));
-      } catch {
+      } catch (err) {
+        const msg = (err as { code?: string; message?: string }).code ?? (err as Error).message ?? "Failed to load questions";
+        setPageError(msg);
         setCustomQuestionsCache((prev) => ({ ...prev, [invite.id]: DEFAULT_QUESTIONS }));
       }
     }
@@ -497,10 +513,17 @@ export default function ClientsPage() {
 
   function copyLink(id: string) {
     const url = `${siteUrl}/survey?c=${id}`;
-    navigator.clipboard.writeText(url).then(() => {
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
-    });
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url).then(() => {
+        setCopiedId(id);
+        setTimeout(() => setCopiedId(null), 2000);
+      }).catch(() => {
+        // Clipboard API blocked — show the URL in a prompt so it can be manually copied
+        window.prompt("Copy this survey link:", url);
+      });
+    } else {
+      window.prompt("Copy this survey link:", url);
+    }
   }
 
   function formatDate(iso: string) {
@@ -598,6 +621,11 @@ export default function ClientsPage() {
                 className={`${INPUT_CLASS} resize-y`}
               />
             </div>
+            {createError && (
+              <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                Error: {createError}
+              </p>
+            )}
             <div className="flex gap-3 pt-1">
               <button
                 type="submit"
@@ -608,13 +636,21 @@ export default function ClientsPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setShowForm(false)}
+                onClick={() => { setShowForm(false); setCreateError(""); }}
                 className="text-sm text-slate hover:text-navy transition-colors"
               >
                 Cancel
               </button>
             </div>
           </form>
+        )}
+
+        {pageError && (
+          <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3 flex items-start gap-2">
+            <span className="shrink-0 font-bold">!</span>
+            <span>{pageError}</span>
+            <button onClick={() => setPageError("")} className="ml-auto text-red-400 hover:text-red-600">✕</button>
+          </div>
         )}
 
         {dataLoading ? (
