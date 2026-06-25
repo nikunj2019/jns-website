@@ -319,18 +319,22 @@ function CustomSurveyEditor({
   }
 
   return (
-    <div className="mt-4 border border-slate-line rounded-xl bg-ivory p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-display text-base text-navy">Custom Survey Questions</h3>
+    <div className="bg-ivory">
+      <div className="flex items-center justify-between px-5 py-3 bg-navy/5 border-b border-navy/10">
+        <div>
+          <h3 className="font-display text-base text-navy">Survey Builder</h3>
+          <p className="text-xs text-slate mt-0.5">Questions for this client only — AI generation available below</p>
+        </div>
         <div className="flex items-center gap-3">
           {saved && <span className="text-xs text-green-700 font-medium">Saved!</span>}
           {saving && <span className="text-xs text-slate">Saving…</span>}
           <button onClick={handleReset} className="text-xs text-slate hover:text-navy transition-colors underline underline-offset-2">
             Reset to defaults
           </button>
-          <button onClick={onClose} className="text-xs text-slate hover:text-navy transition-colors">Done</button>
+          <button onClick={onClose} className="text-xs text-slate hover:text-navy transition-colors font-medium">✕ Close</button>
         </div>
       </div>
+      <div className="p-4">
 
       <AIGeneratorPanel onApply={handleAI} />
 
@@ -374,6 +378,7 @@ function CustomSurveyEditor({
           </div>
         );
       })}
+      </div>
       </div>
     </div>
   );
@@ -525,10 +530,10 @@ export default function ClientsPage() {
       <AdminNav />
 
       <div className="mx-auto max-w-4xl px-6 py-10">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-2">
           <div>
-            <h1 className="font-display text-3xl text-navy">Client Invites</h1>
-            <p className="text-slate text-sm mt-1">Generate unique survey links per client</p>
+            <h1 className="font-display text-3xl text-navy">Client Surveys</h1>
+            <p className="text-slate text-sm mt-1">Each client gets their own unique survey link with custom questions</p>
           </div>
           <button
             onClick={() => setShowForm((v) => !v)}
@@ -537,8 +542,19 @@ export default function ClientsPage() {
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
-            New Invite
+            New Client
           </button>
+        </div>
+
+        <div className="mb-8 mt-4 bg-cream border border-slate-line rounded-xl px-5 py-4 text-sm text-navy/70 flex gap-3">
+          <svg className="shrink-0 mt-0.5" width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.2"/>
+            <path d="M8 7v5M8 5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+          <p>
+            Create a client, then click <strong className="text-navy">Edit Survey</strong> to build custom questions for that client — with AI generation.
+            Copy their unique link and send it. The Survey Builder tab sets the <em>global default</em> used when no client link is shared.
+          </p>
         </div>
 
         {showForm && (
@@ -613,14 +629,14 @@ export default function ClientsPage() {
             <p className="text-sm mt-2">Create one to generate a unique survey link for a client.</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {invites.map((invite) => (
-              <div key={invite.id} className="bg-white border border-slate-line rounded-xl px-5 py-4">
+              <div key={invite.id} className="bg-white border border-slate-line rounded-xl overflow-hidden">
                 {/* Invite row */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 px-5 py-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-medium text-navy text-sm">{invite.clientName}</p>
+                      <p className="font-medium text-navy">{invite.clientName}</p>
                       <span
                         className={`text-xs px-2 py-0.5 rounded-full ${
                           invite.status === "completed"
@@ -631,8 +647,8 @@ export default function ClientsPage() {
                         {invite.status}
                       </span>
                       {invite.customQuestions && invite.customQuestions.length > 0 && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-navy/10 text-navy">
-                          custom survey
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-navy/10 text-navy font-medium">
+                          {invite.customQuestions.length} custom questions
                         </span>
                       )}
                     </div>
@@ -648,40 +664,56 @@ export default function ClientsPage() {
                   <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
                     <button
                       onClick={() => openSurveyEditor(invite)}
-                      className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                      className={`text-sm px-4 py-2 rounded-full font-medium transition-colors ${
                         editingQuestionsId === invite.id
-                          ? "border-navy bg-navy text-ivory"
-                          : "border-slate-line text-slate hover:border-navy hover:text-navy"
+                          ? "bg-navy text-ivory"
+                          : "bg-navy/10 text-navy hover:bg-navy hover:text-ivory"
                       }`}
                     >
-                      {editingQuestionsId === invite.id ? "Close editor" : "Customize survey"}
+                      {editingQuestionsId === invite.id ? "▲ Close Survey Editor" : "✎ Edit Survey"}
                     </button>
                     <button
                       onClick={() => copyLink(invite.id)}
-                      className={`text-sm px-4 py-1.5 rounded-full border transition-colors ${
+                      className={`text-sm px-4 py-2 rounded-full border transition-colors ${
                         copiedId === invite.id
                           ? "border-green-500 text-green-700 bg-green-50"
                           : "border-slate-line text-slate hover:border-navy hover:text-navy"
                       }`}
                     >
-                      {copiedId === invite.id ? "Copied!" : "Copy link"}
+                      {copiedId === invite.id ? "✓ Copied!" : "Copy survey link"}
                     </button>
                     <button
                       onClick={() => handleDelete(invite.id)}
-                      className="text-xs text-slate hover:text-red-600 transition-colors"
+                      className="text-xs text-slate hover:text-red-600 transition-colors px-1"
                     >
                       Delete
                     </button>
                   </div>
                 </div>
 
+                {/* Survey link preview */}
+                {!editingQuestionsId || editingQuestionsId !== invite.id ? (
+                  <div className="border-t border-slate-line/50 bg-cream/50 px-5 py-2.5 flex items-center gap-3">
+                    <span className="text-xs text-slate shrink-0">Survey link:</span>
+                    <code className="text-xs text-navy/70 truncate flex-1">{siteUrl}/survey?c={invite.id}</code>
+                    <button
+                      onClick={() => copyLink(invite.id)}
+                      className="text-xs text-slate hover:text-navy shrink-0 transition-colors"
+                    >
+                      {copiedId === invite.id ? "Copied!" : "Copy"}
+                    </button>
+                  </div>
+                ) : null}
+
                 {/* Inline survey editor */}
                 {editingQuestionsId === invite.id && customQuestionsCache[invite.id] && (
-                  <CustomSurveyEditor
-                    inviteId={invite.id}
-                    initialQuestions={customQuestionsCache[invite.id]}
-                    onClose={() => setEditingQuestionsId(null)}
-                  />
+                  <div className="border-t border-navy/20">
+                    <CustomSurveyEditor
+                      inviteId={invite.id}
+                      initialQuestions={customQuestionsCache[invite.id]}
+                      onClose={() => setEditingQuestionsId(null)}
+                    />
+                  </div>
                 )}
               </div>
             ))}

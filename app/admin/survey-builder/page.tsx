@@ -259,7 +259,10 @@ export default function SurveyBuilderPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="font-display text-3xl text-navy">Survey Builder</h1>
-            <p className="text-slate text-sm mt-1">Edit the questions shown on the public survey</p>
+            <p className="text-slate text-sm mt-1">
+              Default questions used when no client-specific link is shared.{" "}
+              <a href="/admin/clients" className="underline hover:text-navy transition-colors">Per-client surveys →</a>
+            </p>
           </div>
           <div className="flex items-center gap-4">
             {saved && (

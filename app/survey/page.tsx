@@ -26,6 +26,7 @@ function SurveyContent() {
   const [inviteClientName, setInviteClientName] = useState("");
 
   useEffect(() => {
+    if (inviteId) return; // invite-specific questions take priority; skip global load
     async function loadQuestions() {
       try {
         const snap = await getDoc(doc(db, "survey-config", "questions"));
@@ -40,7 +41,7 @@ function SurveyContent() {
       }
     }
     loadQuestions();
-  }, []);
+  }, [inviteId]);
 
   useEffect(() => {
     if (!inviteId) return;
@@ -52,6 +53,19 @@ function SurveyContent() {
           setInviteClientName(data.clientName || "");
           if (Array.isArray(data.customQuestions) && data.customQuestions.length > 0) {
             setQuestions(data.customQuestions as SurveyQuestion[]);
+          } else {
+            // No custom questions on invite — load global config
+            try {
+              const globalSnap = await getDoc(doc(db, "survey-config", "questions"));
+              if (globalSnap.exists()) {
+                const gd = globalSnap.data();
+                if (Array.isArray(gd.questions) && gd.questions.length > 0) {
+                  setQuestions(gd.questions as SurveyQuestion[]);
+                }
+              }
+            } catch {
+              // stay on defaults
+            }
           }
           setAnswers((prev) => ({
             ...prev,
