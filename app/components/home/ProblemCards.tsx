@@ -26,16 +26,19 @@ export default function ProblemCards() {
         </div>
 
         <RevealGroup
-          className="mt-14 grid gap-px border border-slate-line bg-slate-line sm:grid-cols-2 lg:grid-cols-5"
+          className="mt-14 grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-5"
           stagger={0.07}
         >
-          {problems.map((problem) => (
+          {problems.map((problem, index) => (
             <RevealItem key={problem.title}>
-              <article className="min-h-full bg-cream/45 p-6 transition-colors hover:bg-ivory lg:p-7">
+              <article className="bg-cream/50 rounded-xl border border-slate-line/70 p-6 lg:p-7 transition-all duration-300 hover:bg-ivory hover:-translate-y-1 hover:border-slate/40 hover:shadow-lg relative overflow-hidden">
+                <span className="absolute top-4 right-4 font-display text-4xl text-slate-line select-none" aria-hidden="true">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
                 <h3 className="font-display text-2xl leading-tight tracking-tight">
                   {problem.title}
                 </h3>
-                <p className="mt-4 text-sm leading-relaxed text-navy/72">
+                <p className="mt-4 text-sm leading-relaxed text-navy/75">
                   {problem.body}
                 </p>
               </article>
