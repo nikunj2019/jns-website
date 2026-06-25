@@ -12,34 +12,31 @@ export const metadata: Metadata = {
 
 const FOUNDERS = [
   {
-    initial: "N",
-    name: "Nikunj Jadawala",
-    role: "Delivery Lead",
-    background: "Application Development · Security",
-    bio: "Nikunj writes the code, runs the security work, and owns whether what we shipped actually works. Background in production web applications and application security across multiple stacks.",
-  },
-  {
     initial: "J",
     name: "Jiten Patel",
-    role: "Sales & Client Relationships",
-    background: "Financial Audit",
-    bio: "Jiten brings audit discipline to scoping, pricing, and ROI. If a project doesn't have a number attached, he asks why. Clients work with him through the proposal, the kickoff, and every quarterly review.",
+    role: "Co-Founder",
+    specialties: ["Operations", "Strategy", "Business Process Optimization"],
+  },
+  {
+    initial: "N",
+    name: "Nikunj Jadawala",
+    role: "Co-Founder",
+    specialties: ["Technology", "Product Development", "AI Solutions"],
   },
   {
     initial: "S",
     name: "Shayar Patel",
-    role: "Sales & Client Relationships",
-    background: "Hospitality · IT",
-    bio: "Shayar has been the small business operator on the other side of the table, running a hotel and managing the IT that holds it together. He translates business pain into technical scope and keeps engagements grounded in operational reality.",
+    role: "Co-Founder",
+    specialties: ["Growth", "Client Success", "Business Development"],
   },
 ];
 
-const PRINCIPLES = [
-  { t: "Considered.", b: "Direct. Says what it means in fewer words." },
-  { t: "Confident.", b: "Doesn't hedge." },
-  { t: "Warm.", b: "Speaks to people, not titles." },
-  { t: "Specific.", b: "Names the actual thing." },
-  { t: "Calm.", b: "Trusts the reader." },
+const WHY_JNS = [
+  { n: "01", label: "Practical AI Solutions" },
+  { n: "02", label: "Custom Web & Mobile Development" },
+  { n: "03", label: "Process Automation" },
+  { n: "04", label: "Affordable Small Business Technology" },
+  { n: "05", label: "Long-Term Partnership" },
 ];
 
 export default function AboutPage() {
@@ -52,16 +49,18 @@ export default function AboutPage() {
             <Reveal className="lg:col-span-7">
               <SectionLabel>About JNS</SectionLabel>
               <h1 className="font-display mt-8 text-[2.5rem] leading-[1.05] tracking-tight sm:text-[3.5rem] lg:text-[4.5rem]">
-                Three operators, building the firm we always wanted to hire.
+                The Team Behind JNS
               </h1>
             </Reveal>
             <Reveal delay={0.15} className="lg:col-span-5 lg:pl-8">
               <p className="text-lg leading-relaxed text-navy/75">
-                JNS Consulting was founded in 2026 by Nikunj Jadawala, Jiten
-                Patel, and Shayar Patel: an application security engineer, a
-                financial auditor, and a hospitality operator. We
-                kept watching small businesses get sold the wrong things by the
-                wrong people. We started JNS to be the right people.
+                JNS was founded to help small businesses operate smarter, grow
+                faster, and solve real-world challenges through practical
+                technology, automation, and AI solutions.
+              </p>
+              <p className="mt-4 text-lg leading-relaxed text-navy/75">
+                We believe technology should fit the way you already work — not
+                force you to change everything.
               </p>
             </Reveal>
           </div>
@@ -71,122 +70,63 @@ export default function AboutPage() {
       {/* FOUNDERS */}
       <section className="py-28 sm:py-36">
         <Container size="wide">
-          <Reveal>
-            <SectionLabel>Founding Partners</SectionLabel>
-            <h2 className="font-display mt-6 text-4xl sm:text-5xl leading-[1.05] tracking-tight">
-              The three letters in the logo.
-            </h2>
+          <Reveal className="text-center mb-16">
+            <SectionLabel className="tracking-[0.3em]">Three Founders. One Mission.</SectionLabel>
           </Reveal>
 
           <RevealGroup
-            className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-px bg-slate-line border border-slate-line"
+            className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-14"
             stagger={0.12}
           >
             {FOUNDERS.map((f) => (
               <RevealItem key={f.name}>
-                <article className="bg-ivory p-8 lg:p-10 flex flex-col h-full">
-                {/* Initial-as-avatar — clean, brand-appropriate, no fake stock photos */}
-                <div className="aspect-square bg-cream relative overflow-hidden border border-slate-line/60">
-                  <span className="absolute inset-0 flex items-center justify-center font-display text-[10rem] leading-none text-navy">
-                    {f.initial}
-                  </span>
-                  <span className="absolute top-4 left-4 brand-eyebrow text-slate">
-                    {f.name.split(" ")[1]}
-                  </span>
-                  <span className="absolute bottom-4 right-4 inline-block w-2 h-2 rounded-full bg-navy" />
-                </div>
+                <article className="flex flex-col items-center text-center">
+                  {/* Circular avatar */}
+                  <div className="relative w-44 h-44 rounded-full bg-cream border border-slate-line/60 overflow-hidden flex items-center justify-center">
+                    <span className="font-display text-[7rem] leading-none text-navy/20 select-none">
+                      {f.initial}
+                    </span>
+                  </div>
 
-                <h3 className="font-display mt-8 text-2xl leading-tight tracking-tight">
-                  {f.name}
-                </h3>
-                <p className="mt-2 text-xs uppercase tracking-[0.18em] text-slate">
-                  {f.role}
-                  <span className="mx-2 text-slate-line">·</span>
-                  {f.background}
-                </p>
-                <p className="mt-5 text-[0.9375rem] leading-relaxed text-navy/80 flex-1">
-                  {f.bio}
-                </p>
+                  <h3 className="font-display mt-7 text-2xl leading-tight tracking-tight">
+                    {f.name}
+                  </h3>
+                  <p className="mt-1 text-xs uppercase tracking-[0.22em] text-slate">
+                    {f.role}
+                  </p>
+
+                  <div className="mt-5 h-px w-10 bg-slate-line" />
+
+                  <ul className="mt-5 space-y-1">
+                    {f.specialties.map((s) => (
+                      <li key={s} className="text-sm text-navy/70">
+                        {s}
+                      </li>
+                    ))}
+                  </ul>
                 </article>
               </RevealItem>
             ))}
           </RevealGroup>
-
         </Container>
       </section>
 
-      {/* STORY */}
-      <section className="bg-cream py-28 sm:py-36">
-        <Container size="narrow">
-          <Reveal>
-            <SectionLabel>The story</SectionLabel>
-            <h2 className="font-display mt-6 text-4xl sm:text-5xl leading-[1.08] tracking-tight">
-              We started JNS because nobody else was doing this honestly.
-            </h2>
+      {/* WHY JNS */}
+      <section className="bg-cream py-20 sm:py-24">
+        <Container size="wide">
+          <Reveal className="text-center mb-14">
+            <SectionLabel className="tracking-[0.3em]">Why Businesses Choose JNS</SectionLabel>
           </Reveal>
 
-          <RevealGroup className="mt-12 space-y-7 text-lg leading-relaxed text-navy/85" stagger={0.1}>
-            <RevealItem>
-              <p>
-                Small businesses get sold software they don&apos;t need, ad campaigns
-                that report on the wrong metrics, and security reviews that
-                produce 80-page PDFs no one reads. The agencies that handle each
-                one don&apos;t talk to each other, and the bill at the end is more
-                than the result.
-              </p>
-            </RevealItem>
-            <RevealItem>
-              <p>
-                Between us, we&apos;ve sat on every side of that table. Nikunj wrote
-                the code and patched the breaches. Jiten audited the books. Shayar
-                ran the business that was paying for all of it. We started JNS
-                because we knew a smaller, more honest version of this work was
-                possible, and we were tired of waiting for someone else to build
-                the firm.
-              </p>
-            </RevealItem>
-            <RevealItem>
-              <p>
-                We named the firm after ourselves on purpose. The work has our
-                names on it. So does the accountability.
-              </p>
-            </RevealItem>
-          </RevealGroup>
-        </Container>
-      </section>
-
-      {/* PRINCIPLES — voice & tone, drawn directly from the brand guide */}
-      <section className="py-28 sm:py-36">
-        <Container size="wide">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-16">
-            <Reveal className="lg:col-span-5">
-              <SectionLabel>The voice</SectionLabel>
-              <h2 className="font-display mt-6 text-4xl sm:text-5xl leading-[1.05] tracking-tight">
-                How we talk is how we work.
-              </h2>
-            </Reveal>
-            <Reveal delay={0.1} className="lg:col-span-6 lg:col-start-7 flex items-end">
-              <p className="text-lg leading-relaxed text-navy/75">
-                The brand guide is short and the voice is enforced. Same
-                discipline goes into the software, the campaigns, and the
-                reports.
-              </p>
-            </Reveal>
-          </div>
-
           <RevealGroup
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-x-8 gap-y-12 border-t border-slate-line pt-12"
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8"
             stagger={0.08}
           >
-            {PRINCIPLES.map((p) => (
-              <RevealItem key={p.t}>
-                <div>
-                  <p className="font-display text-2xl leading-tight tracking-tight">
-                    {p.t}
-                  </p>
-                  <p className="mt-3 text-[0.9375rem] leading-relaxed text-navy/75">
-                    {p.b}
-                  </p>
+            {WHY_JNS.map((item) => (
+              <RevealItem key={item.n}>
+                <div className="flex flex-col items-center text-center gap-3">
+                  <p className="font-display text-3xl text-slate-line">{item.n}</p>
+                  <p className="text-sm leading-snug text-navy/80">{item.label}</p>
                 </div>
               </RevealItem>
             ))}
@@ -203,12 +143,16 @@ export default function AboutPage() {
                 Hire the firm. Talk to the founders.
               </h2>
               <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-soft">
-                We don&apos;t hand you off to a junior. The names on the door are
-                the names you&apos;ll be working with.
+                The names on the door are the names you&apos;ll be working with.
               </p>
             </Reveal>
             <Reveal delay={0.15} className="lg:col-span-4 flex lg:justify-end">
-              <Button href="/contact" size="lg" variant="secondary" className="bg-ivory text-navy border-ivory hover:bg-transparent hover:text-ivory">
+              <Button
+                href="/contact"
+                size="lg"
+                variant="secondary"
+                className="bg-ivory text-navy border-ivory hover:bg-transparent hover:text-ivory"
+              >
                 Start the conversation
               </Button>
             </Reveal>

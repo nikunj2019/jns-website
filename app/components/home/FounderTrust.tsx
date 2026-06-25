@@ -17,21 +17,22 @@ export default function FounderTrust() {
           </Reveal>
           <Reveal delay={0.08} className="lg:pt-8">
             <p className="text-lg leading-relaxed text-navy/75">
-              JNS is not a generic template shop. The founding team brings the
-              lanes a small business owner actually cares about: client
-              relationships, application delivery, cyber security, financial
-              discipline, and day-to-day operations.
+              Three founders. Each owns a lane: software delivery, financial
+              discipline, and day-to-day operations. The work has our names on
+              it — so does the accountability.
             </p>
           </Reveal>
         </div>
 
         <RevealGroup
-          className="mt-14 grid gap-px border border-slate-line bg-slate-line lg:grid-cols-3"
+          className="mt-14 grid gap-6 lg:grid-cols-3"
           stagger={0.1}
         >
           {founders.map((founder) => (
             <RevealItem key={founder.name}>
-              <article className="min-h-full bg-ivory p-7 lg:p-9">
+              <article className="bg-ivory rounded-2xl border border-slate-line p-7 lg:p-9 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-slate/40 overflow-hidden">
+                {/* Gradient accent bar */}
+                <div className="h-0.5 -mx-7 lg:-mx-9 -mt-7 lg:-mt-9 mb-7 bg-gradient-to-r from-navy/60 via-slate-soft/30 to-transparent" />
                 <p className="font-display text-5xl text-slate">
                   {founder.name.charAt(0)}
                 </p>

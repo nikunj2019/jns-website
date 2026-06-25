@@ -15,6 +15,7 @@ export default function FinalCTA() {
   return (
     <section className="relative overflow-hidden bg-navy text-ivory">
       <AuroraGlow />
+      <div className="dot-grid absolute inset-0" aria-hidden="true" />
       <div
         aria-hidden="true"
         className="absolute -bottom-36 -right-24 h-[560px] w-[560px] opacity-[0.055]"
@@ -34,7 +35,7 @@ export default function FinalCTA() {
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-ivory" aria-hidden="true" />
             Start here
           </p>
-          <h2 className="font-display mt-6 max-w-4xl text-[2.8rem] leading-[1.02] tracking-tight sm:text-[3.8rem] lg:text-[5rem]">
+          <h2 className="text-gradient font-display mt-6 max-w-4xl text-[2.8rem] leading-[1.02] tracking-tight sm:text-[3.8rem] lg:text-[5rem]">
             Bring us the messy part of your business. We&apos;ll tell you what to fix first.
           </h2>
           <p className="mt-8 max-w-2xl text-lg leading-relaxed text-slate-soft">

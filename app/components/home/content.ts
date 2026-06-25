@@ -145,17 +145,17 @@ export const processSteps = [
 export const founders = [
   {
     name: "Nikunj Jadawala",
-    lane: "Software and security",
-    detail: "Application development and cyber security background for building and protecting the system.",
+    lane: "Technology · AI Solutions",
+    detail: "Builds and secures the system. Application development and cyber security across multiple stacks.",
   },
   {
     name: "Jiten Patel",
-    lane: "Money and client relationships",
-    detail: "Financial audit background for scoping, ROI conversations, and operational discipline.",
+    lane: "Operations · Strategy",
+    detail: "Brings audit discipline to scoping and ROI. If a project lacks a number attached, he asks why.",
   },
   {
     name: "Shayar Patel",
-    lane: "Operations and relationships",
-    detail: "Hotel management and IT background for translating real business problems into practical systems.",
+    lane: "Growth · Client Success",
+    detail: "Former hotel operator and IT manager. Translates business pain into practical technical scope.",
   },
 ];

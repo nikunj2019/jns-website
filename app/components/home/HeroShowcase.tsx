@@ -50,7 +50,7 @@ export default function HeroShowcase() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.35 + i * 0.1, ease: [0.22, 1, 0.36, 1] }}
-          className="bg-navy px-7 py-8"
+          className="bg-white/[0.04] backdrop-blur-md border border-white/[0.08] px-7 py-8 hover:bg-white/[0.07] transition-all duration-300"
         >
           {/* Label */}
           <div className="flex items-center gap-2.5">
@@ -68,7 +68,7 @@ export default function HeroShowcase() {
           </div>
 
           {/* Big number */}
-          <p className="font-display mt-5 text-4xl leading-none tracking-tight text-ivory sm:text-5xl">
+          <p className="text-gradient font-display mt-5 text-4xl leading-none tracking-tight sm:text-5xl">
             {p.headline}
           </p>
           <p className="mt-1.5 text-sm text-slate-soft">

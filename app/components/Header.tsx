@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { AnimatePresence, motion } from "motion/react";
 import Container from "./Container";
 import Logo from "./Logo";
 import Button from "./Button";
@@ -50,8 +51,10 @@ export default function Header() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`text-sm tracking-tight transition-colors ${
-                    active ? "text-navy" : "text-slate hover:text-navy"
+                  className={`relative text-sm tracking-tight transition-colors ${
+                    active
+                      ? "text-navy after:absolute after:bottom-[-2px] after:left-0 after:right-0 after:h-px after:bg-navy"
+                      : "text-slate hover:text-navy"
                   }`}
                 >
                   {item.label}
@@ -85,34 +88,42 @@ export default function Header() {
         </div>
       </Container>
 
-      {open && (
-        <div className="md:hidden border-t border-slate-line bg-ivory">
-          <Container size="wide">
-            <nav className="flex flex-col py-6 gap-1">
-              {NAV.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  className="py-3 text-base text-navy border-b border-slate-line/60 last:border-b-0"
-                >
-                  {item.label}
-                </Link>
-              ))}
-              <div className="pt-5">
-                <Button
-                  href="/contact"
-                  size="md"
-                  className="w-full"
-                  onClick={() => setOpen(false)}
-                >
-                  Book a consult
-                </Button>
-              </div>
-            </nav>
-          </Container>
-        </div>
-      )}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            className="md:hidden border-t border-slate-line bg-ivory overflow-hidden"
+          >
+            <Container size="wide">
+              <nav className="flex flex-col py-6 gap-1">
+                {NAV.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setOpen(false)}
+                    className="py-3 text-base text-navy border-b border-slate-line/60 last:border-b-0"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+                <div className="pt-5">
+                  <Button
+                    href="/contact"
+                    size="md"
+                    className="w-full"
+                    onClick={() => setOpen(false)}
+                  >
+                    Book a consult
+                  </Button>
+                </div>
+              </nav>
+            </Container>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }
