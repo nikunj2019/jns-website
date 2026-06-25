@@ -50,6 +50,9 @@ function SurveyContent() {
         if (snap.exists()) {
           const data = snap.data();
           setInviteClientName(data.clientName || "");
+          if (Array.isArray(data.customQuestions) && data.customQuestions.length > 0) {
+            setQuestions(data.customQuestions as SurveyQuestion[]);
+          }
           setAnswers((prev) => ({
             ...prev,
             ...(data.clientName ? { contact_name: data.clientName } : {}),

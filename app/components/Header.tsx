@@ -20,6 +20,8 @@ export default function Header() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
+  if (pathname?.startsWith("/admin") || pathname?.startsWith("/survey")) return null;
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
     onScroll();
