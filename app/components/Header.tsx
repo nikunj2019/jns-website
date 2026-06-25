@@ -38,7 +38,7 @@ export default function Header() {
       }`}
     >
       <Container size="wide">
-        <div className="flex h-28 items-center justify-between">
+        <div className="flex h-16 md:h-24 items-center justify-between">
           <Logo size={94} showWordmark={false} />
 
           <nav className="hidden md:flex items-center gap-8">

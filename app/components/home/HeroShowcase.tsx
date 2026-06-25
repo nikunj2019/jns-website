@@ -43,14 +43,14 @@ const panels = [
 
 export default function HeroShowcase() {
   return (
-    <div className="grid gap-px bg-ivory/10 border border-ivory/10 sm:grid-cols-3">
+    <div className="flex overflow-x-auto snap-x snap-mandatory gap-px bg-ivory/10 border border-ivory/10 sm:grid sm:grid-cols-3 sm:overflow-x-visible">
       {panels.map((p, i) => (
         <motion.div
           key={p.eyebrow}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.35 + i * 0.1, ease: [0.22, 1, 0.36, 1] }}
-          className="bg-white/[0.04] backdrop-blur-md border border-white/[0.08] px-7 py-8 hover:bg-white/[0.07] transition-all duration-300"
+          className="bg-white/[0.04] backdrop-blur-md border border-white/[0.08] px-5 py-6 sm:px-7 sm:py-8 hover:bg-white/[0.07] transition-all duration-300 snap-center shrink-0 w-[82vw] sm:w-auto"
         >
           {/* Label */}
           <div className="flex items-center gap-2.5">

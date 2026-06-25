@@ -29,7 +29,7 @@ export default function FinalCTA() {
         />
       </div>
 
-      <Container size="wide" className="relative py-28 sm:py-36 lg:py-44">
+      <Container size="wide" className="relative py-16 sm:py-28 lg:py-44">
         <Reveal>
           <p className="brand-eyebrow text-slate-soft flex items-center gap-3">
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-ivory" aria-hidden="true" />

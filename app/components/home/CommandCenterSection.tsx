@@ -49,7 +49,7 @@ const modules = [
 
 export default function CommandCenterSection() {
   return (
-    <section id="command-center" className="bg-cream py-24 sm:py-28 lg:py-36">
+    <section id="command-center" className="bg-cream py-14 sm:py-24 lg:py-36">
       <Container size="wide">
         {/* Intro */}
         <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">

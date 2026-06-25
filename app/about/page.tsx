@@ -44,7 +44,7 @@ export default function AboutPage() {
     <>
       {/* HEADER */}
       <section className="border-b border-slate-line">
-        <Container size="wide" className="pt-20 pb-24 sm:pt-28 sm:pb-32">
+        <Container size="wide" className="pt-14 pb-16 sm:pt-24 sm:pb-28">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-end">
             <Reveal className="lg:col-span-7">
               <SectionLabel>About JNS</SectionLabel>
@@ -68,7 +68,7 @@ export default function AboutPage() {
       </section>
 
       {/* FOUNDERS */}
-      <section className="py-28 sm:py-36">
+      <section className="py-14 sm:py-24">
         <Container size="wide">
           <Reveal className="text-center mb-16">
             <SectionLabel className="tracking-[0.3em]">Three Founders. One Mission.</SectionLabel>
@@ -112,7 +112,7 @@ export default function AboutPage() {
       </section>
 
       {/* WHY JNS */}
-      <section className="bg-cream py-20 sm:py-24">
+      <section className="bg-cream py-12 sm:py-20">
         <Container size="wide">
           <Reveal className="text-center mb-14">
             <SectionLabel className="tracking-[0.3em]">Why Businesses Choose JNS</SectionLabel>
@@ -136,7 +136,7 @@ export default function AboutPage() {
 
       {/* CTA */}
       <section className="bg-navy text-ivory">
-        <Container size="wide" className="py-24 sm:py-32">
+        <Container size="wide" className="py-14 sm:py-24">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             <Reveal className="lg:col-span-8">
               <h2 className="font-display text-4xl sm:text-5xl leading-[1.05] tracking-tight">

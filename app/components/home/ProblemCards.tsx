@@ -4,7 +4,7 @@ import { problems } from "./content";
 
 export default function ProblemCards() {
   return (
-    <section className="bg-ivory py-24 sm:py-28 lg:py-32">
+    <section className="bg-ivory py-14 sm:py-24 lg:py-32">
       <Container size="wide">
         <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:gap-16">
           <Reveal>

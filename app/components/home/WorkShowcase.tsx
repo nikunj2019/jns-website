@@ -39,7 +39,7 @@ const projects = [
 
 export default function WorkShowcase() {
   return (
-    <section id="work-we-do" className="bg-ivory py-24 sm:py-28 lg:py-36">
+    <section id="work-we-do" className="bg-ivory py-14 sm:py-24 lg:py-36">
       <Container size="wide">
         <Reveal>
           <p className="text-xs uppercase tracking-[0.22em] text-slate">
@@ -58,7 +58,7 @@ export default function WorkShowcase() {
         <RevealGroup className="mt-16 grid gap-px border border-slate-line bg-slate-line lg:grid-cols-2" stagger={0.1}>
           {projects.map((project) => (
             <RevealItem key={project.industry}>
-              <article className="flex h-full flex-col bg-ivory p-8 lg:p-10">
+              <article className="flex h-full flex-col bg-ivory p-5 sm:p-8 lg:p-10">
                 <div>
                   <p className="brand-eyebrow text-slate">{project.industry}</p>
                   <p className="mt-1 text-xs text-slate/70">{project.type}</p>

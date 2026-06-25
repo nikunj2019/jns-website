@@ -47,7 +47,7 @@ const outcomes = [
 
 export default function AICalling() {
   return (
-    <section className="relative overflow-hidden bg-navy py-24 text-ivory sm:py-28 lg:py-36">
+    <section className="relative overflow-hidden bg-navy py-14 text-ivory sm:py-24 lg:py-36">
       <AuroraGlow />
       <Container size="wide" className="relative">
         {/* Heading */}

@@ -4,7 +4,7 @@ import { founders } from "./content";
 
 export default function FounderTrust() {
   return (
-    <section className="bg-ivory py-24 sm:py-28 lg:py-32">
+    <section className="bg-ivory py-14 sm:py-24 lg:py-32">
       <Container size="wide">
         <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
           <Reveal>
@@ -30,9 +30,9 @@ export default function FounderTrust() {
         >
           {founders.map((founder) => (
             <RevealItem key={founder.name}>
-              <article className="bg-ivory rounded-2xl border border-slate-line p-7 lg:p-9 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-slate/40 overflow-hidden">
+              <article className="bg-ivory rounded-2xl border border-slate-line p-5 sm:p-7 lg:p-9 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-slate/40 overflow-hidden">
                 {/* Gradient accent bar */}
-                <div className="h-0.5 -mx-7 lg:-mx-9 -mt-7 lg:-mt-9 mb-7 bg-gradient-to-r from-navy/60 via-slate-soft/30 to-transparent" />
+                <div className="h-0.5 -mx-5 sm:-mx-7 lg:-mx-9 -mt-5 sm:-mt-7 lg:-mt-9 mb-5 sm:mb-7 bg-gradient-to-r from-navy/60 via-slate-soft/30 to-transparent" />
                 <p className="font-display text-5xl text-slate">
                   {founder.name.charAt(0)}
                 </p>

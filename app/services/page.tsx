@@ -134,7 +134,7 @@ export default function ServicesPage() {
     <>
       {/* PAGE HEADER */}
       <section className="border-b border-slate-line">
-        <Container size="wide" className="pt-20 pb-20 sm:pt-28 sm:pb-28">
+        <Container size="wide" className="pt-14 pb-14 sm:pt-24 sm:pb-24">
           <Reveal>
             <SectionLabel>Services</SectionLabel>
           </Reveal>
@@ -160,7 +160,7 @@ export default function ServicesPage() {
           id={s.slug}
           className={`${idx % 2 === 1 ? "bg-cream" : ""} scroll-mt-24`}
         >
-          <Container size="wide" className="py-28 sm:py-36">
+          <Container size="wide" className="py-14 sm:py-24">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
               {/* Left: heading */}
               <Reveal direction="up" className="lg:col-span-5">
@@ -268,7 +268,7 @@ export default function ServicesPage() {
               { t: "Handoff", b: "Source code, docs, access. We stay available, never required." },
             ].map((step) => (
               <RevealItem key={step.t}>
-                <div className="bg-navy p-8 lg:p-10 h-full transition-colors hover:bg-navy-700">
+                <div className="bg-navy p-5 sm:p-8 lg:p-10 h-full transition-colors hover:bg-navy-700">
                   <h3 className="font-display text-xl leading-tight">{step.t}</h3>
                   <p className="mt-3 text-sm leading-relaxed text-slate-soft">{step.b}</p>
                 </div>

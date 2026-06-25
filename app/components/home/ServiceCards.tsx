@@ -49,7 +49,7 @@ const services = [
 
 export default function ServiceCards() {
   return (
-    <section id="services-overview" className="bg-cream py-24 sm:py-28 lg:py-36">
+    <section id="services-overview" className="bg-cream py-14 sm:py-24 lg:py-36">
       <Container size="wide">
         {/* Intro */}
         <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
@@ -82,7 +82,7 @@ export default function ServiceCards() {
               <div className="group flex h-full flex-col bg-ivory rounded-2xl overflow-hidden border border-slate-line transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_60px_-15px_rgba(30,42,58,0.15)] hover:border-slate/50">
                 {/* Gradient accent bar */}
                 <div className="h-0.5 bg-gradient-to-r from-navy/60 via-slate-soft/30 to-transparent" />
-                <div className="flex flex-col flex-1 p-8 lg:p-10">
+                <div className="flex flex-col flex-1 p-5 sm:p-8 lg:p-10">
                   {/* Number + title */}
                   <div>
                     <p className="font-display text-5xl tabular-nums text-slate-line transition-colors duration-300">

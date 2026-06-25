@@ -36,15 +36,15 @@ export default function TrustMetrics() {
   return (
     <section className="relative overflow-hidden bg-navy text-ivory">
       <AuroraGlow />
-      <Container size="wide" className="relative py-24 sm:py-28 lg:py-32">
+      <Container size="wide" className="relative py-14 sm:py-24 lg:py-32">
         <RevealGroup
-          className="grid grid-cols-2 gap-8 lg:grid-cols-4 lg:gap-12"
+          className="grid grid-cols-2 gap-4 sm:gap-8 lg:grid-cols-4 lg:gap-12"
           stagger={0.1}
         >
           {metrics.map((m) => (
             <RevealItem key={m.label}>
-              <div className="bg-white/[0.04] backdrop-blur-sm border border-ivory/[0.08] rounded-2xl p-8 lg:p-10 flex flex-col h-full">
-                <p className="text-gradient font-display text-5xl sm:text-6xl tracking-tight leading-none">
+              <div className="bg-white/[0.04] backdrop-blur-sm border border-ivory/[0.08] rounded-2xl p-5 sm:p-8 lg:p-10 flex flex-col h-full">
+                <p className="text-gradient font-display text-4xl sm:text-6xl tracking-tight leading-none">
                   <CountUp end={m.value} suffix={m.suffix} duration={1.6} />
                 </p>
                 <p className="mt-5 text-base font-medium text-ivory leading-snug">

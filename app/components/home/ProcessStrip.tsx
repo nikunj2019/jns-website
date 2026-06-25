@@ -8,7 +8,7 @@ import { processSteps } from "./content";
 
 export default function ProcessStrip() {
   return (
-    <section id="process" className="bg-cream py-24 sm:py-28 lg:py-32">
+    <section id="process" className="bg-cream py-14 sm:py-24 lg:py-32">
       <Container size="wide">
         <div className="grid gap-10 lg:grid-cols-[0.78fr_1.22fr] lg:gap-16">
           <Reveal>
@@ -60,7 +60,7 @@ export default function ProcessStrip() {
           <RevealGroup className="grid gap-4 md:grid-cols-4" stagger={0.08}>
             {processSteps.map((step, i) => (
               <RevealItem key={step.title}>
-                <article className="bg-cream rounded-xl p-7 border border-slate-line/50 h-full">
+                <article className="bg-cream rounded-xl p-5 sm:p-7 border border-slate-line/50 h-full">
                   <span className="md:hidden font-display text-3xl text-slate-line">
                     {String(i + 1).padStart(2, "0")}
                   </span>
