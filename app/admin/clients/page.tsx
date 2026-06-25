@@ -17,6 +17,7 @@ import {
 import { auth, db } from "../../lib/firebase";
 import { AdminNav } from "../AdminNav";
 import { DEFAULT_QUESTIONS, STEP_LABELS, type SurveyQuestion, type QuestionType } from "../../lib/survey-questions";
+import { generateQuestionsWithAI, AI_AVAILABLE } from "../../lib/generate-questions";
 
 interface Invite {
   id: string;
@@ -160,6 +161,96 @@ function QuestionEditor({
   );
 }
 
+function AIGeneratorPanel({ onApply }: { onApply: (qs: SurveyQuestion[], mode: "replace" | "append") => void }) {
+  const [prompt, setPrompt] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [preview, setPreview] = useState<SurveyQuestion[] | null>(null);
+  const [error, setError] = useState("");
+
+  async function handleGenerate() {
+    if (!prompt.trim()) return;
+    setGenerating(true);
+    setError("");
+    setPreview(null);
+    try {
+      const qs = await generateQuestionsWithAI(prompt);
+      setPreview(qs);
+    } catch (err) {
+      setError((err as Error).message || "Generation failed");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  if (!AI_AVAILABLE) {
+    return (
+      <div className="text-xs text-slate bg-cream rounded-lg p-3 border border-slate-line">
+        Add <code className="font-mono bg-white px-1 rounded">NEXT_PUBLIC_ANTHROPIC_API_KEY</code> to GitHub secrets to enable AI generation.
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-navy/5 border border-navy/10 rounded-lg p-3 space-y-3">
+      <p className="text-xs font-medium text-navy uppercase tracking-wide flex items-center gap-1.5">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1L7.5 4.5H11L8.25 6.75L9.25 10.5L6 8.25L2.75 10.5L3.75 6.75L1 4.5H4.5L6 1Z" fill="currentColor" /></svg>
+        Generate with AI
+      </p>
+      <textarea
+        rows={2}
+        value={prompt}
+        onChange={(e) => { setPrompt(e.target.value); setPreview(null); }}
+        placeholder="Describe what you want, e.g. 'Beauty salon owner, focus on missed calls, booking pain points, and interest in AI receptionist'"
+        className="w-full border border-slate-line bg-white px-3 py-2 text-sm text-navy placeholder-slate/60 focus:border-navy focus:outline-none transition-colors resize-none"
+      />
+      {error && <p className="text-xs text-red-600">{error}</p>}
+
+      {!preview ? (
+        <button
+          onClick={handleGenerate}
+          disabled={generating || !prompt.trim()}
+          className="inline-flex items-center gap-2 bg-navy text-ivory text-xs px-4 py-2 rounded-full hover:opacity-90 transition-opacity disabled:opacity-50"
+        >
+          {generating ? (
+            <><span className="w-3 h-3 border border-ivory/50 border-t-ivory rounded-full animate-spin" />Generating…</>
+          ) : "Generate Questions"}
+        </button>
+      ) : (
+        <div className="space-y-2">
+          <p className="text-xs text-slate">{preview.length} questions generated — preview:</p>
+          <ul className="text-xs text-navy/80 space-y-0.5 max-h-28 overflow-y-auto bg-white border border-slate-line rounded p-2">
+            {preview.map((q, i) => (
+              <li key={i} className="truncate">
+                <span className="text-slate mr-1">Step {q.step}·</span>{q.label}
+              </li>
+            ))}
+          </ul>
+          <div className="flex gap-2">
+            <button
+              onClick={() => { onApply(preview, "replace"); setPreview(null); setPrompt(""); }}
+              className="bg-navy text-ivory text-xs px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity"
+            >
+              Replace all
+            </button>
+            <button
+              onClick={() => { onApply(preview, "append"); setPreview(null); setPrompt(""); }}
+              className="border border-navy text-navy text-xs px-3 py-1.5 rounded-full hover:bg-navy/5 transition-colors"
+            >
+              Add to existing
+            </button>
+            <button
+              onClick={() => { setPreview(null); }}
+              className="text-xs text-slate hover:text-navy transition-colors"
+            >
+              Discard
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function CustomSurveyEditor({
   inviteId,
   initialQuestions,
@@ -221,6 +312,12 @@ function CustomSurveyEditor({
     save(DEFAULT_QUESTIONS);
   }
 
+  function handleAI(generated: SurveyQuestion[], mode: "replace" | "append") {
+    const next = mode === "replace" ? generated : [...questions, ...generated];
+    setQuestions(next);
+    save(next);
+  }
+
   return (
     <div className="mt-4 border border-slate-line rounded-xl bg-ivory p-4">
       <div className="flex items-center justify-between mb-4">
@@ -235,6 +332,9 @@ function CustomSurveyEditor({
         </div>
       </div>
 
+      <AIGeneratorPanel onApply={handleAI} />
+
+      <div className="mt-4">
       {STEP_LABELS.map((stepLabel, i) => {
         const stepNum = i + 1;
         const stepQs = questions.filter((q) => q.step === stepNum);
@@ -274,6 +374,7 @@ function CustomSurveyEditor({
           </div>
         );
       })}
+      </div>
     </div>
   );
 }

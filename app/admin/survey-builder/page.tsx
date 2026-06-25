@@ -7,6 +7,7 @@ import { getDoc, setDoc, doc } from "firebase/firestore";
 import { auth, db } from "../../lib/firebase";
 import { DEFAULT_QUESTIONS, STEP_LABELS, type SurveyQuestion, type QuestionType } from "../../lib/survey-questions";
 import { AdminNav } from "../AdminNav";
+import { generateQuestionsWithAI, AI_AVAILABLE } from "../../lib/generate-questions";
 
 const QUESTION_TYPES: QuestionType[] = ["text", "email", "tel", "radio", "checkbox", "textarea", "select"];
 
@@ -211,6 +212,35 @@ export default function SurveyBuilderPage() {
     await saveToFirestore(DEFAULT_QUESTIONS);
   }
 
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiPreview, setAiPreview] = useState<SurveyQuestion[] | null>(null);
+  const [aiError, setAiError] = useState("");
+
+  async function handleAiGenerate() {
+    if (!aiPrompt.trim()) return;
+    setAiGenerating(true);
+    setAiError("");
+    setAiPreview(null);
+    try {
+      const qs = await generateQuestionsWithAI(aiPrompt);
+      setAiPreview(qs);
+    } catch (err) {
+      setAiError((err as Error).message || "Generation failed");
+    } finally {
+      setAiGenerating(false);
+    }
+  }
+
+  function applyAi(mode: "replace" | "append") {
+    if (!aiPreview) return;
+    const next = mode === "replace" ? aiPreview : [...questions, ...aiPreview];
+    setQuestions(next);
+    saveToFirestore(next);
+    setAiPreview(null);
+    setAiPrompt("");
+  }
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-ivory flex items-center justify-center">
@@ -245,6 +275,61 @@ export default function SurveyBuilderPage() {
               Reset to defaults
             </button>
           </div>
+        </div>
+
+        {/* AI Generator */}
+        <div className="mb-10 bg-navy/5 border border-navy/10 rounded-xl p-5 space-y-3">
+          <p className="text-sm font-medium text-navy flex items-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 12 12" fill="none"><path d="M6 1L7.5 4.5H11L8.25 6.75L9.25 10.5L6 8.25L2.75 10.5L3.75 6.75L1 4.5H4.5L6 1Z" fill="currentColor" /></svg>
+            Generate questions with AI
+          </p>
+          {AI_AVAILABLE ? (
+            <>
+              <textarea
+                rows={2}
+                value={aiPrompt}
+                onChange={(e) => { setAiPrompt(e.target.value); setAiPreview(null); }}
+                placeholder="Describe what you want, e.g. 'Questions for a pet grooming salon, focused on booking, pricing concerns, and interest in online scheduling'"
+                className="w-full border border-slate-line bg-white px-4 py-3 text-sm text-navy placeholder-slate/60 focus:border-navy focus:outline-none transition-colors resize-none"
+              />
+              {aiError && <p className="text-xs text-red-600">{aiError}</p>}
+              {!aiPreview ? (
+                <button
+                  onClick={handleAiGenerate}
+                  disabled={aiGenerating || !aiPrompt.trim()}
+                  className="inline-flex items-center gap-2 bg-navy text-ivory text-sm px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  {aiGenerating ? (
+                    <><span className="w-3.5 h-3.5 border border-ivory/50 border-t-ivory rounded-full animate-spin" />Generating…</>
+                  ) : "Generate Questions"}
+                </button>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-sm text-slate">{aiPreview.length} questions generated:</p>
+                  <ul className="text-sm text-navy/80 space-y-1 max-h-36 overflow-y-auto bg-white border border-slate-line rounded-lg px-3 py-2">
+                    {aiPreview.map((q, i) => (
+                      <li key={i} className="truncate">
+                        <span className="text-slate text-xs mr-1">Step {q.step}·</span>{q.label}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="flex gap-3">
+                    <button onClick={() => applyAi("replace")} className="bg-navy text-ivory text-sm px-4 py-2 rounded-full hover:opacity-90 transition-opacity">
+                      Replace all
+                    </button>
+                    <button onClick={() => applyAi("append")} className="border border-navy text-navy text-sm px-4 py-2 rounded-full hover:bg-navy/5 transition-colors">
+                      Add to existing
+                    </button>
+                    <button onClick={() => setAiPreview(null)} className="text-sm text-slate hover:text-navy transition-colors">Discard</button>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-slate">
+              Add <code className="font-mono bg-white px-1 rounded border border-slate-line">NEXT_PUBLIC_ANTHROPIC_API_KEY</code> to GitHub secrets, then redeploy to enable AI question generation.
+            </p>
+          )}
         </div>
 
         {STEP_LABELS.map((stepLabel, i) => {
