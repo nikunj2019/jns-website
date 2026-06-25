@@ -24,8 +24,18 @@ export default function AdminLoginPage() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       router.push("/admin/results");
-    } catch {
-      setError("Invalid email or password.");
+    } catch (err) {
+      const code = (err as { code?: string }).code ?? "";
+      if (code === "auth/invalid-api-key" || code === "auth/app-not-authorized") {
+        setError("Firebase not configured. Check GitHub secrets and redeploy.");
+      } else if (code === "auth/operation-not-allowed") {
+        setError("Email/Password sign-in is not enabled in Firebase Console.");
+      } else if (code === "auth/user-not-found" || code === "auth/wrong-password" || code === "auth/invalid-credential") {
+        setError("Incorrect email or password.");
+      } else {
+        setError(code || "Sign-in failed. Check console for details.");
+        console.error("Admin login error:", err);
+      }
     } finally {
       setLoading(false);
     }

@@ -2,40 +2,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import Image from "next/image";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
 import { getDoc, setDoc, doc } from "firebase/firestore";
 import { auth, db } from "../../lib/firebase";
 import { DEFAULT_QUESTIONS, STEP_LABELS, type SurveyQuestion, type QuestionType } from "../../lib/survey-questions";
+import { AdminNav } from "../AdminNav";
 
 const QUESTION_TYPES: QuestionType[] = ["text", "email", "tel", "radio", "checkbox", "textarea", "select"];
-
-function AdminNav() {
-  const router = useRouter();
-  return (
-    <nav className="sticky top-0 z-40 border-b border-slate-line bg-ivory/90 backdrop-blur-sm">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-3">
-            <span className="relative inline-block" style={{ width: 32, height: 32 }}>
-              <Image src="/jns-logo.png" alt="" fill sizes="32px" className="scale-[1.45] object-contain" />
-            </span>
-            <span className="font-display text-lg text-navy">JNS Admin</span>
-          </Link>
-          <Link href="/admin/results" className="text-sm text-slate hover:text-navy transition-colors">Results</Link>
-          <Link href="/admin/survey-builder" className="text-sm font-medium text-navy transition-colors">Survey Builder</Link>
-        </div>
-        <button
-          onClick={() => signOut(auth).then(() => router.push("/admin"))}
-          className="text-sm text-slate hover:text-navy transition-colors"
-        >
-          Sign out
-        </button>
-      </div>
-    </nav>
-  );
-}
 
 const INPUT_CLASS =
   "w-full border border-slate-line bg-ivory px-3 py-2 text-sm text-navy placeholder-slate/60 focus:border-navy focus:outline-none transition-colors";
