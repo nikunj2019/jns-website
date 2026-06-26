@@ -24,7 +24,7 @@ export async function generateQuestionsWithAI(prompt: string): Promise<SurveyQue
   if (!apiKey) throw new Error("NEXT_PUBLIC_GEMINI_API_KEY is not set");
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
