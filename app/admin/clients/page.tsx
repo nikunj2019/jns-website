@@ -404,6 +404,8 @@ export default function ClientsPage() {
   const [siteUrl, setSiteUrl] = useState("");
   const [pageError, setPageError] = useState("");
   const [createError, setCreateError] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const [loadingEditorId, setLoadingEditorId] = useState<string | null>(null);
 
   useEffect(() => {
     setSiteUrl(window.location.origin);
@@ -423,6 +425,7 @@ export default function ClientsPage() {
 
   const loadInvites = useCallback(async () => {
     setDataLoading(true);
+    setLoadError("");
     try {
       const q = query(collection(getDb(), "survey-invites"), orderBy("createdAt", "desc"));
       const snap = await getDocs(q);
@@ -436,6 +439,8 @@ export default function ClientsPage() {
             .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
         );
       } catch (err) {
+        const msg = (err as { code?: string; message?: string }).code ?? (err as Error).message ?? "Failed to load clients";
+        setLoadError(msg);
         console.error("Failed to load invites:", err);
       }
     } finally {
@@ -493,22 +498,25 @@ export default function ClientsPage() {
       return;
     }
     setPageError("");
-    if (!customQuestionsCache[invite.id]) {
-      try {
-        const snap = await getDoc(doc(getDb(), "survey-invites", invite.id));
-        const data = snap.data();
-        const qs =
-          Array.isArray(data?.customQuestions) && data.customQuestions.length > 0
-            ? (data.customQuestions as SurveyQuestion[])
-            : DEFAULT_QUESTIONS;
-        setCustomQuestionsCache((prev) => ({ ...prev, [invite.id]: qs }));
-      } catch (err) {
-        const msg = (err as { code?: string; message?: string }).code ?? (err as Error).message ?? "Failed to load questions";
-        setPageError(msg);
-        setCustomQuestionsCache((prev) => ({ ...prev, [invite.id]: DEFAULT_QUESTIONS }));
-      }
-    }
+    // Open editor immediately so the user sees a response
     setEditingQuestionsId(invite.id);
+    if (customQuestionsCache[invite.id]) return; // already cached
+    setLoadingEditorId(invite.id);
+    try {
+      const snap = await getDoc(doc(getDb(), "survey-invites", invite.id));
+      const data = snap.data();
+      const qs =
+        Array.isArray(data?.customQuestions) && data.customQuestions.length > 0
+          ? (data.customQuestions as SurveyQuestion[])
+          : DEFAULT_QUESTIONS;
+      setCustomQuestionsCache((prev) => ({ ...prev, [invite.id]: qs }));
+    } catch (err) {
+      const msg = (err as { code?: string; message?: string }).code ?? (err as Error).message ?? "Failed to load questions";
+      setPageError(msg);
+      setCustomQuestionsCache((prev) => ({ ...prev, [invite.id]: DEFAULT_QUESTIONS }));
+    } finally {
+      setLoadingEditorId(null);
+    }
   }
 
   function copyLink(id: string) {
@@ -645,6 +653,14 @@ export default function ClientsPage() {
           </form>
         )}
 
+        {loadError && (
+          <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3 flex items-start gap-2">
+            <span className="shrink-0 font-bold">!</span>
+            <span>Could not load clients: {loadError}</span>
+            <button onClick={() => { setLoadError(""); loadInvites(); }} className="ml-auto text-red-500 hover:text-red-700 underline text-xs">Retry</button>
+          </div>
+        )}
+
         {pageError && (
           <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3 flex items-start gap-2">
             <span className="shrink-0 font-bold">!</span>
@@ -700,13 +716,18 @@ export default function ClientsPage() {
                   <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
                     <button
                       onClick={() => openSurveyEditor(invite)}
-                      className={`text-sm px-4 py-2 rounded-full font-medium transition-colors ${
+                      disabled={loadingEditorId === invite.id}
+                      className={`text-sm px-4 py-2 rounded-full font-medium transition-colors disabled:opacity-60 ${
                         editingQuestionsId === invite.id
                           ? "bg-navy text-ivory"
                           : "bg-navy/10 text-navy hover:bg-navy hover:text-ivory"
                       }`}
                     >
-                      {editingQuestionsId === invite.id ? "▲ Close Survey Editor" : "✎ Edit Survey"}
+                      {loadingEditorId === invite.id
+                        ? "Loading…"
+                        : editingQuestionsId === invite.id
+                        ? "▲ Close Survey Editor"
+                        : "✎ Edit Survey"}
                     </button>
                     <button
                       onClick={() => copyLink(invite.id)}
@@ -742,13 +763,19 @@ export default function ClientsPage() {
                 ) : null}
 
                 {/* Inline survey editor */}
-                {editingQuestionsId === invite.id && customQuestionsCache[invite.id] && (
+                {editingQuestionsId === invite.id && (
                   <div className="border-t border-navy/20">
-                    <CustomSurveyEditor
-                      inviteId={invite.id}
-                      initialQuestions={customQuestionsCache[invite.id]}
-                      onClose={() => setEditingQuestionsId(null)}
-                    />
+                    {loadingEditorId === invite.id ? (
+                      <div className="flex justify-center py-8">
+                        <div className="w-5 h-5 border-2 border-navy border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    ) : customQuestionsCache[invite.id] ? (
+                      <CustomSurveyEditor
+                        inviteId={invite.id}
+                        initialQuestions={customQuestionsCache[invite.id]!}
+                        onClose={() => setEditingQuestionsId(null)}
+                      />
+                    ) : null}
                   </div>
                 )}
               </div>
