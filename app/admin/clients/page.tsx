@@ -12,8 +12,9 @@ import {
 } from "../../lib/firestoreRest";
 import { AdminNav } from "../AdminNav";
 import {
-  DEFAULT_QUESTIONS,
-  STEP_LABELS,
+  DEFAULT_SECTIONS,
+  sectionsFromDoc,
+  type SurveySection,
   type SurveyQuestion,
   type QuestionType,
 } from "../../lib/survey-questions";
@@ -29,7 +30,7 @@ interface Invite {
   createdAt: string;
   status: "pending" | "completed";
   submissionId?: string | null;
-  customQuestions?: SurveyQuestion[];
+  customSections?: SurveySection[];
   _saving?: boolean;
 }
 
@@ -47,28 +48,6 @@ const QUESTION_TYPES: QuestionType[] = [
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function QuestionRow({
-  q, onEdit, onDelete,
-}: {
-  q: SurveyQuestion; onEdit: () => void; onDelete: () => void;
-}) {
-  return (
-    <div className="flex items-start justify-between border border-slate-line bg-white px-3 py-2.5 rounded-lg">
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-navy font-medium truncate">{q.label}</p>
-        <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-xs bg-cream text-slate px-1.5 py-0.5 rounded-full">{q.type}</span>
-          {q.required && <span className="text-xs text-slate">required</span>}
-        </div>
-      </div>
-      <div className="flex items-center gap-2 ml-2 shrink-0">
-        <button onClick={onEdit} className="text-xs text-slate hover:text-navy transition-colors">Edit</button>
-        <button onClick={onDelete} className="text-xs text-slate hover:text-red-600 transition-colors">✕</button>
-      </div>
-    </div>
-  );
-}
-
 function QuestionEditor({
   question, onSave, onCancel,
 }: {
@@ -76,228 +55,188 @@ function QuestionEditor({
 }) {
   const [draft, setDraft] = useState<SurveyQuestion>({ ...question });
   const needsOptions = ["radio", "checkbox", "select"].includes(draft.type);
-
   return (
     <div className="bg-cream rounded-lg p-3 space-y-3 text-sm border border-slate-line">
       <div>
-        <label className="block text-xs font-medium text-slate mb-1 uppercase tracking-wide">Label</label>
-        <input
-          value={draft.label}
-          onChange={(e) => setDraft((d) => ({ ...d, label: e.target.value }))}
-          className={SMALL_INPUT}
-          placeholder="Question label"
-        />
+        <label className="block text-xs font-medium text-slate mb-1 uppercase tracking-wide">Question</label>
+        <input value={draft.label} onChange={(e) => setDraft((d) => ({ ...d, label: e.target.value }))} className={SMALL_INPUT} placeholder="Question text" />
       </div>
       <div className="grid grid-cols-2 gap-2">
         <div>
           <label className="block text-xs font-medium text-slate mb-1 uppercase tracking-wide">Type</label>
-          <select
-            value={draft.type}
-            onChange={(e) => setDraft((d) => ({ ...d, type: e.target.value as QuestionType }))}
-            className={SMALL_INPUT}
-          >
+          <select value={draft.type} onChange={(e) => setDraft((d) => ({ ...d, type: e.target.value as QuestionType }))} className={SMALL_INPUT}>
             {QUESTION_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
         </div>
-        <div>
-          <label className="block text-xs font-medium text-slate mb-1 uppercase tracking-wide">Step</label>
-          <select
-            value={draft.step}
-            onChange={(e) => setDraft((d) => ({ ...d, step: Number(e.target.value) }))}
-            className={SMALL_INPUT}
-          >
-            {STEP_LABELS.map((label, i) => (
-              <option key={i + 1} value={i + 1}>{i + 1} — {label}</option>
-            ))}
-          </select>
+        <div className="flex items-end pb-0.5">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={draft.required} onChange={(e) => setDraft((d) => ({ ...d, required: e.target.checked }))} className="w-4 h-4 border border-slate-line" />
+            <span className="text-xs text-navy">Required</span>
+          </label>
         </div>
       </div>
       {needsOptions && (
         <div>
-          <label className="block text-xs font-medium text-slate mb-1 uppercase tracking-wide">
-            Options (comma-separated)
-          </label>
-          <textarea
-            rows={2}
-            value={(draft.options ?? []).join(", ")}
-            onChange={(e) =>
-              setDraft((d) => ({
-                ...d,
-                options: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
-              }))
-            }
-            className={`${SMALL_INPUT} resize-y`}
-            placeholder="Option A, Option B"
-          />
+          <label className="block text-xs font-medium text-slate mb-1 uppercase tracking-wide">Options (comma-separated)</label>
+          <textarea rows={2} value={(draft.options ?? []).join(", ")} onChange={(e) => setDraft((d) => ({ ...d, options: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) }))} className={`${SMALL_INPUT} resize-y`} placeholder="Option A, Option B" />
         </div>
       )}
       {["text", "email", "tel", "textarea"].includes(draft.type) && (
         <div>
           <label className="block text-xs font-medium text-slate mb-1 uppercase tracking-wide">Placeholder</label>
-          <input
-            value={draft.placeholder ?? ""}
-            onChange={(e) => setDraft((d) => ({ ...d, placeholder: e.target.value }))}
-            className={SMALL_INPUT}
-            placeholder="Placeholder text"
-          />
+          <input value={draft.placeholder ?? ""} onChange={(e) => setDraft((d) => ({ ...d, placeholder: e.target.value }))} className={SMALL_INPUT} placeholder="Placeholder text" />
         </div>
       )}
-      <label className="flex items-center gap-2 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={draft.required}
-          onChange={(e) => setDraft((d) => ({ ...d, required: e.target.checked }))}
-          className="w-4 h-4 border border-slate-line"
-        />
-        <span className="text-xs text-navy">Required</span>
-      </label>
       <div className="flex gap-2 pt-1">
-        <button
-          onClick={() => onSave(draft)}
-          className="bg-navy text-ivory text-xs px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity"
-        >
-          Save
-        </button>
-        <button onClick={onCancel} className="text-xs text-slate hover:text-navy transition-colors">
-          Cancel
+        <button onClick={() => onSave(draft)} className="bg-navy text-ivory text-xs px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity">Save</button>
+        <button onClick={onCancel} className="text-xs text-slate hover:text-navy transition-colors">Cancel</button>
+      </div>
+    </div>
+  );
+}
+
+function SectionBlock({
+  section, onUpdate, onDelete, canDelete,
+}: {
+  section: SurveySection; onUpdate: (s: SurveySection) => void; onDelete: () => void; canDelete: boolean;
+}) {
+  const [editingLabel, setEditingLabel] = useState(false);
+  const [labelDraft, setLabelDraft] = useState(section.label);
+  const [editingQId, setEditingQId] = useState<string | null>(null);
+
+  function saveLabel() {
+    const t = labelDraft.trim();
+    if (t) onUpdate({ ...section, label: t });
+    setEditingLabel(false);
+  }
+  function addQuestion() {
+    const q: SurveyQuestion = { id: `q_${Date.now()}`, label: "New question", type: "text", required: false };
+    onUpdate({ ...section, questions: [...section.questions, q] });
+    setEditingQId(q.id);
+  }
+  function updateQ(updated: SurveyQuestion) {
+    onUpdate({ ...section, questions: section.questions.map((q) => (q.id === updated.id ? updated : q)) });
+    setEditingQId(null);
+  }
+  function deleteQ(id: string) {
+    onUpdate({ ...section, questions: section.questions.filter((q) => q.id !== id) });
+  }
+
+  return (
+    <div className="mb-4 border border-slate-line rounded-xl overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-2.5 bg-cream border-b border-slate-line gap-2">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <span className="w-5 h-5 rounded-full bg-navy text-ivory text-xs flex items-center justify-center font-medium shrink-0">§</span>
+          {editingLabel ? (
+            <input autoFocus value={labelDraft} onChange={(e) => setLabelDraft(e.target.value)}
+              onBlur={saveLabel} onKeyDown={(e) => { if (e.key === "Enter") saveLabel(); if (e.key === "Escape") setEditingLabel(false); }}
+              className="flex-1 text-sm font-medium text-navy bg-white border border-navy px-2 py-0.5 rounded focus:outline-none" />
+          ) : (
+            <button onClick={() => { setLabelDraft(section.label); setEditingLabel(true); }}
+              className="text-sm font-medium text-navy hover:text-navy/70 transition-colors text-left truncate" title="Click to rename">
+              {section.label} <span className="text-xs text-slate font-normal">✏️</span>
+            </button>
+          )}
+        </div>
+        {canDelete && (
+          <button onClick={() => { if (confirm(`Delete "${section.label}"?`)) onDelete(); }}
+            className="shrink-0 text-xs text-slate hover:text-red-600 transition-colors">Delete</button>
+        )}
+      </div>
+      <div className="p-3 space-y-2">
+        {section.questions.length === 0 && <p className="text-xs text-slate/50 text-center py-2">No questions yet.</p>}
+        {section.questions.map((q) => (
+          <div key={q.id}>
+            {editingQId === q.id ? (
+              <QuestionEditor question={q} onSave={updateQ} onCancel={() => setEditingQId(null)} />
+            ) : (
+              <div className="flex items-start justify-between border border-slate-line bg-white px-3 py-2.5 rounded-lg">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-navy font-medium truncate">{q.label}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-xs bg-cream text-slate px-1.5 py-0.5 rounded-full">{q.type}</span>
+                    {q.required && <span className="text-xs text-slate">required</span>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 ml-2 shrink-0">
+                  <button onClick={() => setEditingQId(q.id)} className="text-xs text-slate hover:text-navy transition-colors">Edit</button>
+                  <button onClick={() => deleteQ(q.id)} className="text-xs text-slate hover:text-red-600 transition-colors">✕</button>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+        <button onClick={addQuestion} className="w-full border border-dashed border-slate-line text-slate hover:border-navy hover:text-navy text-xs py-2 rounded-lg transition-colors">
+          + Add Question
         </button>
       </div>
     </div>
   );
 }
 
-function AIGeneratorPanel({ onApply }: { onApply: (qs: SurveyQuestion[], mode: "replace" | "append") => void }) {
-  const [prompt, setPrompt] = useState("");
-  const [generating, setGenerating] = useState(false);
-  const [preview, setPreview] = useState<SurveyQuestion[] | null>(null);
-  const [error, setError] = useState("");
-
-  async function handleGenerate() {
-    if (!prompt.trim()) return;
-    setGenerating(true); setError(""); setPreview(null);
-    try {
-      const qs = await generateQuestionsWithAI(prompt);
-      setPreview(qs);
-    } catch (err) {
-      setError((err as Error).message || "Generation failed");
-    } finally {
-      setGenerating(false);
-    }
-  }
-
-  if (!AI_AVAILABLE) return (
-    <div className="text-xs text-slate bg-cream rounded-lg p-3 border border-slate-line">
-      Add <code className="font-mono bg-white px-1 rounded">NEXT_PUBLIC_GEMINI_API_KEY</code> to
-      GitHub secrets to enable AI generation.
-    </div>
-  );
-
-  return (
-    <div className="bg-navy/5 border border-navy/10 rounded-lg p-3 space-y-3">
-      <p className="text-xs font-medium text-navy uppercase tracking-wide flex items-center gap-1.5">
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <path d="M6 1L7.5 4.5H11L8.25 6.75L9.25 10.5L6 8.25L2.75 10.5L3.75 6.75L1 4.5H4.5L6 1Z" fill="currentColor" />
-        </svg>
-        Generate with AI
-      </p>
-      <textarea
-        rows={2}
-        value={prompt}
-        onChange={(e) => { setPrompt(e.target.value); setPreview(null); }}
-        placeholder="Describe what you want, e.g. 'Beauty salon, focus on missed calls and booking'"
-        className="w-full border border-slate-line bg-white px-3 py-2 text-sm text-navy placeholder-slate/60 focus:border-navy focus:outline-none transition-colors resize-none"
-      />
-      {error && <p className="text-xs text-red-600">{error}</p>}
-      {!preview ? (
-        <button
-          onClick={handleGenerate}
-          disabled={generating || !prompt.trim()}
-          className="inline-flex items-center gap-2 bg-navy text-ivory text-xs px-4 py-2 rounded-full hover:opacity-90 disabled:opacity-50 transition-opacity"
-        >
-          {generating ? (
-            <><span className="w-3 h-3 border border-ivory/50 border-t-ivory rounded-full animate-spin" />Generating…</>
-          ) : "Generate Questions"}
-        </button>
-      ) : (
-        <div className="space-y-2">
-          <p className="text-xs text-slate">{preview.length} questions generated:</p>
-          <ul className="text-xs text-navy/80 space-y-0.5 max-h-28 overflow-y-auto bg-white border border-slate-line rounded p-2">
-            {preview.map((q, i) => (
-              <li key={i} className="truncate">
-                <span className="text-slate mr-1">Step {q.step}·</span>{q.label}
-              </li>
-            ))}
-          </ul>
-          <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={() => { onApply(preview, "replace"); setPreview(null); setPrompt(""); }}
-              className="bg-navy text-ivory text-xs px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity"
-            >Replace all</button>
-            <button
-              onClick={() => { onApply(preview, "append"); setPreview(null); setPrompt(""); }}
-              className="border border-navy text-navy text-xs px-3 py-1.5 rounded-full hover:bg-navy/5 transition-colors"
-            >Add to existing</button>
-            <button onClick={() => setPreview(null)} className="text-xs text-slate hover:text-navy transition-colors">Discard</button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 function CustomSurveyEditor({
-  inviteId, initialQuestions, token, onSaved, onClose,
+  inviteId, initialSections, token, onSaved, onClose,
 }: {
   inviteId: string;
-  initialQuestions: SurveyQuestion[];
+  initialSections: SurveySection[];
   token: string;
-  onSaved: (qs: SurveyQuestion[]) => void;
+  onSaved: (sections: SurveySection[]) => void;
   onClose: () => void;
 }) {
-  const [questions, setQuestions] = useState<SurveyQuestion[]>(initialQuestions);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [sections, setSections] = useState<SurveySection[]>(initialSections);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiPreview, setAiPreview] = useState<SurveySection[] | null>(null);
+  const [aiError, setAiError] = useState("");
 
-  async function save(qs: SurveyQuestion[]) {
+  async function save(next: SurveySection[]) {
     setSaving(true); setSaved(false); setSaveError("");
     try {
-      await fsPatchDoc("survey-invites", inviteId, { customQuestions: qs }, token);
-      onSaved(qs);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-    } catch (err) {
-      setSaveError((err as Error).message ?? "Save failed");
-    } finally {
-      setSaving(false);
-    }
+      await fsPatchDoc("survey-invites", inviteId, { customSections: next }, token);
+      onSaved(next); setSaved(true); setTimeout(() => setSaved(false), 2500);
+    } catch (err) { setSaveError((err as Error).message ?? "Save failed"); }
+    finally { setSaving(false); }
   }
 
-  function handleSaveQuestion(updated: SurveyQuestion) {
-    const next = questions.map((q) => (q.id === updated.id ? updated : q));
-    setQuestions(next); setEditingId(null); save(next);
+  function updateSection(updated: SurveySection) {
+    const next = sections.map((s) => (s.id === updated.id ? updated : s));
+    setSections(next); save(next);
   }
-
-  function handleDeleteQuestion(id: string) {
-    const next = questions.filter((q) => q.id !== id);
-    setQuestions(next); save(next);
+  function deleteSection(id: string) {
+    const next = sections.filter((s) => s.id !== id);
+    setSections(next); save(next);
   }
-
-  function handleAdd(step: number) {
-    const newQ: SurveyQuestion = { id: `q_${Date.now()}`, step, label: "New question", type: "text", required: false };
-    const next = [...questions, newQ];
-    setQuestions(next); setEditingId(newQ.id);
+  function addSection() {
+    const s: SurveySection = { id: `sec_${Date.now()}`, label: "New Section", questions: [] };
+    const next = [...sections, s];
+    setSections(next); save(next);
   }
-
   function handleReset() {
-    if (!confirm("Reset to global default questions?")) return;
-    setQuestions(DEFAULT_QUESTIONS); setEditingId(null); save(DEFAULT_QUESTIONS);
+    if (!confirm("Reset to global default sections?")) return;
+    setSections(DEFAULT_SECTIONS); save(DEFAULT_SECTIONS);
   }
 
-  function handleAI(generated: SurveyQuestion[], mode: "replace" | "append") {
-    const next = mode === "replace" ? generated : [...questions, ...generated];
-    setQuestions(next); save(next);
+  async function handleAiGenerate() {
+    if (!aiPrompt.trim()) return;
+    setAiGenerating(true); setAiError(""); setAiPreview(null);
+    try {
+      const qs = await generateQuestionsWithAI(aiPrompt);
+      const steps = Array.from(new Set(qs.map((q) => q.step ?? 1))).sort((a, b) => a - b);
+      setAiPreview(steps.map((step, i) => ({
+        id: `sec_ai_${i}_${Date.now()}`, label: `Section ${i + 1}`,
+        questions: qs.filter((q) => (q.step ?? 1) === step),
+      })));
+    } catch (err) { setAiError((err as Error).message || "Generation failed"); }
+    finally { setAiGenerating(false); }
+  }
+
+  function applyAi(mode: "replace" | "append") {
+    if (!aiPreview) return;
+    const next = mode === "replace" ? aiPreview : [...sections, ...aiPreview];
+    setSections(next); save(next); setAiPreview(null); setAiPrompt("");
   }
 
   return (
@@ -305,58 +244,58 @@ function CustomSurveyEditor({
       <div className="flex items-center justify-between px-4 py-3 bg-navy/5 border-b border-navy/10 flex-wrap gap-2">
         <div>
           <p className="text-sm font-medium text-navy">Survey Builder</p>
-          <p className="text-xs text-slate">Questions for this client only</p>
+          <p className="text-xs text-slate">Sections and questions for this client only</p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           {saved && <span className="text-xs text-green-700 font-medium">Saved!</span>}
           {saving && <span className="text-xs text-slate">Saving…</span>}
-          {saveError && (
-            <span className="text-xs text-red-600 max-w-[180px] truncate" title={saveError}>
-              Error: {saveError}
-            </span>
-          )}
-          <button
-            onClick={handleReset}
-            className="text-xs text-slate hover:text-navy transition-colors underline underline-offset-2"
-          >Reset to defaults</button>
-          <button onClick={onClose} className="text-xs font-medium text-slate hover:text-navy transition-colors">
-            ✕ Close
-          </button>
+          {saveError && <span className="text-xs text-red-600 max-w-[180px] truncate" title={saveError}>Error: {saveError}</span>}
+          <button onClick={handleReset} className="text-xs text-slate hover:text-navy transition-colors underline underline-offset-2">Reset</button>
+          <button onClick={onClose} className="text-xs font-medium text-slate hover:text-navy transition-colors">✕ Close</button>
         </div>
       </div>
 
-      <div className="p-4 space-y-4">
-        <AIGeneratorPanel onApply={handleAI} />
-
-        {STEP_LABELS.map((stepLabel, i) => {
-          const stepNum = i + 1;
-          const stepQs = questions.filter((q) => q.step === stepNum);
-          return (
-            <div key={stepNum}>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="w-5 h-5 rounded-full bg-navy text-ivory text-xs flex items-center justify-center font-medium shrink-0">
-                  {stepNum}
-                </span>
-                <p className="text-xs font-medium text-navy uppercase tracking-wide">{stepLabel}</p>
-              </div>
-              <div className="space-y-2">
-                {stepQs.map((q) =>
-                  editingId === q.id ? (
-                    <QuestionEditor key={q.id} question={q} onSave={handleSaveQuestion} onCancel={() => setEditingId(null)} />
-                  ) : (
-                    <QuestionRow key={q.id} q={q} onEdit={() => setEditingId(q.id)} onDelete={() => handleDeleteQuestion(q.id)} />
-                  )
-                )}
-              </div>
-              <button
-                onClick={() => handleAdd(stepNum)}
-                className="mt-2 w-full border border-dashed border-slate-line text-slate hover:border-navy hover:text-navy text-xs py-2 rounded-lg transition-colors"
-              >
-                + Add question to Step {stepNum}
+      <div className="p-4 space-y-3">
+        {/* AI panel */}
+        {AI_AVAILABLE ? (
+          <div className="bg-navy/5 border border-navy/10 rounded-lg p-3 space-y-2">
+            <p className="text-xs font-medium text-navy flex items-center gap-1.5">
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 1L7.5 4.5H11L8.25 6.75L9.25 10.5L6 8.25L2.75 10.5L3.75 6.75L1 4.5H4.5L6 1Z" fill="currentColor" /></svg>
+              Generate with AI
+            </p>
+            <textarea rows={2} value={aiPrompt} onChange={(e) => { setAiPrompt(e.target.value); setAiPreview(null); }}
+              placeholder="Describe the client's business and focus areas"
+              className="w-full border border-slate-line bg-white px-3 py-2 text-xs text-navy placeholder-slate/60 focus:border-navy focus:outline-none transition-colors resize-none" />
+            {aiError && <p className="text-xs text-red-600">{aiError}</p>}
+            {!aiPreview ? (
+              <button onClick={handleAiGenerate} disabled={aiGenerating || !aiPrompt.trim()}
+                className="inline-flex items-center gap-1.5 bg-navy text-ivory text-xs px-3 py-1.5 rounded-full hover:opacity-90 disabled:opacity-50 transition-opacity">
+                {aiGenerating ? <><span className="w-2.5 h-2.5 border border-ivory/50 border-t-ivory rounded-full animate-spin" />Generating…</> : "Generate"}
               </button>
-            </div>
-          );
-        })}
+            ) : (
+              <div className="space-y-2">
+                <p className="text-xs text-slate">{aiPreview.reduce((n, s) => n + s.questions.length, 0)} questions in {aiPreview.length} sections</p>
+                <div className="flex gap-2">
+                  <button onClick={() => applyAi("replace")} className="bg-navy text-ivory text-xs px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity">Replace all</button>
+                  <button onClick={() => applyAi("append")} className="border border-navy text-navy text-xs px-3 py-1.5 rounded-full hover:bg-navy/5 transition-colors">Append</button>
+                  <button onClick={() => setAiPreview(null)} className="text-xs text-slate hover:text-navy transition-colors">Discard</button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-xs text-slate bg-cream rounded-lg p-3 border border-slate-line">
+            Add <code className="font-mono bg-white px-1 rounded">NEXT_PUBLIC_GEMINI_API_KEY</code> to enable AI.
+          </div>
+        )}
+
+        {sections.map((sec) => (
+          <SectionBlock key={sec.id} section={sec} onUpdate={updateSection} onDelete={() => deleteSection(sec.id)} canDelete={sections.length > 1} />
+        ))}
+
+        <button onClick={addSection} className="w-full border-2 border-dashed border-navy/20 text-navy/50 hover:border-navy hover:text-navy text-xs py-2.5 rounded-xl transition-colors">
+          + Add Section
+        </button>
       </div>
     </div>
   );
@@ -490,9 +429,9 @@ export default function ClientsPage() {
     setEditingQuestionsId((prev) => (prev === id ? null : id));
   }
 
-  function handleQuestionsUpdated(inviteId: string, qs: SurveyQuestion[]) {
+  function handleSectionsUpdated(inviteId: string, sections: SurveySection[]) {
     setInvites((prev) =>
-      prev.map((inv) => (inv.id === inviteId ? { ...inv, customQuestions: qs } : inv))
+      prev.map((inv) => (inv.id === inviteId ? { ...inv, customSections: sections } : inv))
     );
   }
 
@@ -669,9 +608,9 @@ export default function ClientsPage() {
                           }`}>
                             {isTemp ? "saving…" : invite.status}
                           </span>
-                          {!isTemp && invite.customQuestions && invite.customQuestions.length > 0 && (
+                          {!isTemp && invite.customSections && invite.customSections.length > 0 && (
                             <span className="text-xs px-2 py-0.5 rounded-full bg-navy/10 text-navy font-medium">
-                              {invite.customQuestions.length} custom questions
+                              {invite.customSections.reduce((n, s) => n + s.questions.length, 0)} custom questions
                             </span>
                           )}
                         </div>
@@ -737,13 +676,13 @@ export default function ClientsPage() {
                       <CustomSurveyEditor
                         key={invite.id}
                         inviteId={invite.id}
-                        initialQuestions={
-                          invite.customQuestions && invite.customQuestions.length > 0
-                            ? invite.customQuestions
-                            : DEFAULT_QUESTIONS
+                        initialSections={
+                          invite.customSections && invite.customSections.length > 0
+                            ? invite.customSections
+                            : DEFAULT_SECTIONS
                         }
                         token={token}
-                        onSaved={(qs) => handleQuestionsUpdated(invite.id, qs)}
+                        onSaved={(sections) => handleSectionsUpdated(invite.id, sections)}
                         onClose={() => setEditingQuestionsId(null)}
                       />
                     </div>

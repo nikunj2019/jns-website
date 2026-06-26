@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { fsGetDoc, fsAddDoc, fsPatchDoc } from "../lib/firestoreRest";
-import { DEFAULT_QUESTIONS, STEP_LABELS, type SurveyQuestion } from "../lib/survey-questions";
+import { DEFAULT_SECTIONS, sectionsFromDoc, type SurveyQuestion, type SurveySection } from "../lib/survey-questions";
 import Button from "../components/Button";
 
 const INPUT_CLASS =
@@ -18,7 +18,7 @@ function SurveyContent() {
 
   const [step, setStep] = useState(1);
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
-  const [questions, setQuestions] = useState<SurveyQuestion[]>(DEFAULT_QUESTIONS);
+  const [sections, setSections] = useState<SurveySection[]>(DEFAULT_SECTIONS);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -29,9 +29,7 @@ function SurveyContent() {
     async function loadQuestions() {
       try {
         const data = await fsGetDoc("survey-config", "questions");
-        if (data && Array.isArray(data.questions) && (data.questions as SurveyQuestion[]).length > 0) {
-          setQuestions(data.questions as SurveyQuestion[]);
-        }
+        if (data) setSections(sectionsFromDoc(data));
       } catch {
         // fall back to defaults on error
       }
@@ -46,15 +44,13 @@ function SurveyContent() {
         const data = await fsGetDoc("survey-invites", inviteId!);
         if (data) {
           setInviteClientName((data.clientName as string) || "");
-          if (Array.isArray(data.customQuestions) && (data.customQuestions as SurveyQuestion[]).length > 0) {
-            setQuestions(data.customQuestions as SurveyQuestion[]);
+          if (Array.isArray(data.customSections) && (data.customSections as SurveySection[]).length > 0) {
+            setSections(data.customSections as SurveySection[]);
           } else {
-            // No custom questions on invite — load global config
+            // No custom sections on invite — load global config
             try {
               const globalData = await fsGetDoc("survey-config", "questions");
-              if (globalData && Array.isArray(globalData.questions) && (globalData.questions as SurveyQuestion[]).length > 0) {
-                setQuestions(globalData.questions as SurveyQuestion[]);
-              }
+              if (globalData) setSections(sectionsFromDoc(globalData));
             } catch {
               // stay on defaults
             }
@@ -72,8 +68,9 @@ function SurveyContent() {
     loadInvite();
   }, [inviteId]);
 
-  const stepQuestions = questions.filter((q) => q.step === step);
-  const totalSteps = STEP_LABELS.length;
+  const currentSection = sections[step - 1];
+  const stepQuestions = currentSection?.questions ?? [];
+  const totalSteps = sections.length;
 
   function getAnswer(id: string): string | string[] {
     return answers[id] ?? "";
@@ -184,12 +181,12 @@ function SurveyContent() {
               {/* Progress indicator */}
               <div className="mb-10">
                 <div className="flex items-center gap-0">
-                  {STEP_LABELS.map((label, i) => {
+                  {sections.map((section, i) => {
                     const n = i + 1;
                     const isActive = n === step;
                     const isComplete = n < step;
                     return (
-                      <div key={n} className="flex items-center flex-1 last:flex-none">
+                      <div key={section.id} className="flex items-center flex-1 last:flex-none">
                         <div className="flex flex-col items-center">
                           <div
                             className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
@@ -219,10 +216,10 @@ function SurveyContent() {
                               isActive ? "text-navy font-medium" : "text-slate"
                             }`}
                           >
-                            {label}
+                            {section.label}
                           </span>
                         </div>
-                        {i < STEP_LABELS.length - 1 && (
+                        {i < sections.length - 1 && (
                           <div
                             className={`h-px flex-1 mx-2 mb-5 transition-colors ${
                               isComplete ? "bg-navy" : "bg-slate-line"
@@ -245,7 +242,7 @@ function SurveyContent() {
                   transition={{ duration: 0.22, ease: "easeInOut" }}
                 >
                   <h2 className="font-display text-2xl text-navy mb-8">
-                    {STEP_LABELS[step - 1]}
+                    {currentSection?.label ?? ""}
                   </h2>
 
                   <div className="space-y-8">
