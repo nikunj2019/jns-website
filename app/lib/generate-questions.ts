@@ -37,8 +37,11 @@ export async function generateQuestionsWithAI(prompt: string): Promise<SurveyQue
   );
 
   if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Gemini API ${res.status}: ${body.slice(0, 120)}`);
+    if (res.status === 429) {
+      throw new Error("Gemini free quota exceeded. Wait a minute and try again, or get a new key at aistudio.google.com.");
+    }
+    const body = await res.json().catch(() => ({})) as { error?: { message?: string } };
+    throw new Error(body?.error?.message ?? `Gemini API error ${res.status}`);
   }
 
   const data = await res.json();
