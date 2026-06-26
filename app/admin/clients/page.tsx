@@ -3,6 +3,16 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  type DragStartEvent,
+  type DragEndEvent,
+} from "@dnd-kit/core";
 import { getAuthInstance } from "../../lib/firebase";
 import {
   fsListDocs,
@@ -16,9 +26,9 @@ import {
   sectionsFromDoc,
   type SurveySection,
   type SurveyQuestion,
-  type QuestionType,
 } from "../../lib/survey-questions";
 import { generateQuestionsWithAI, AI_AVAILABLE } from "../../lib/generate-questions";
+import { SectionBlock, QuestionDragOverlay, applyDragEnd } from "../survey-shared";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -39,141 +49,6 @@ interface Invite {
 const INPUT =
   "w-full border border-slate-line bg-ivory px-4 py-3 text-sm text-navy placeholder-slate/60 focus:border-navy focus:outline-none transition-colors";
 
-const SMALL_INPUT =
-  "w-full border border-slate-line bg-white px-3 py-2 text-sm text-navy placeholder-slate/60 focus:border-navy focus:outline-none transition-colors";
-
-const QUESTION_TYPES: QuestionType[] = [
-  "text", "email", "tel", "radio", "checkbox", "textarea", "select",
-];
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function QuestionEditor({
-  question, onSave, onCancel,
-}: {
-  question: SurveyQuestion; onSave: (q: SurveyQuestion) => void; onCancel: () => void;
-}) {
-  const [draft, setDraft] = useState<SurveyQuestion>({ ...question });
-  const needsOptions = ["radio", "checkbox", "select"].includes(draft.type);
-  return (
-    <div className="bg-cream rounded-lg p-3 space-y-3 text-sm border border-slate-line">
-      <div>
-        <label className="block text-xs font-medium text-slate mb-1 uppercase tracking-wide">Question</label>
-        <input value={draft.label} onChange={(e) => setDraft((d) => ({ ...d, label: e.target.value }))} className={SMALL_INPUT} placeholder="Question text" />
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <label className="block text-xs font-medium text-slate mb-1 uppercase tracking-wide">Type</label>
-          <select value={draft.type} onChange={(e) => setDraft((d) => ({ ...d, type: e.target.value as QuestionType }))} className={SMALL_INPUT}>
-            {QUESTION_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-          </select>
-        </div>
-        <div className="flex items-end pb-0.5">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={draft.required} onChange={(e) => setDraft((d) => ({ ...d, required: e.target.checked }))} className="w-4 h-4 border border-slate-line" />
-            <span className="text-xs text-navy">Required</span>
-          </label>
-        </div>
-      </div>
-      {needsOptions && (
-        <div>
-          <label className="block text-xs font-medium text-slate mb-1 uppercase tracking-wide">Options (comma-separated)</label>
-          <textarea rows={2} value={(draft.options ?? []).join(", ")} onChange={(e) => setDraft((d) => ({ ...d, options: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) }))} className={`${SMALL_INPUT} resize-y`} placeholder="Option A, Option B" />
-        </div>
-      )}
-      {["text", "email", "tel", "textarea"].includes(draft.type) && (
-        <div>
-          <label className="block text-xs font-medium text-slate mb-1 uppercase tracking-wide">Placeholder</label>
-          <input value={draft.placeholder ?? ""} onChange={(e) => setDraft((d) => ({ ...d, placeholder: e.target.value }))} className={SMALL_INPUT} placeholder="Placeholder text" />
-        </div>
-      )}
-      <div className="flex gap-2 pt-1">
-        <button onClick={() => onSave(draft)} className="bg-navy text-ivory text-xs px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity">Save</button>
-        <button onClick={onCancel} className="text-xs text-slate hover:text-navy transition-colors">Cancel</button>
-      </div>
-    </div>
-  );
-}
-
-function SectionBlock({
-  section, onUpdate, onDelete, canDelete,
-}: {
-  section: SurveySection; onUpdate: (s: SurveySection) => void; onDelete: () => void; canDelete: boolean;
-}) {
-  const [editingLabel, setEditingLabel] = useState(false);
-  const [labelDraft, setLabelDraft] = useState(section.label);
-  const [editingQId, setEditingQId] = useState<string | null>(null);
-
-  function saveLabel() {
-    const t = labelDraft.trim();
-    if (t) onUpdate({ ...section, label: t });
-    setEditingLabel(false);
-  }
-  function addQuestion() {
-    const q: SurveyQuestion = { id: `q_${Date.now()}`, label: "New question", type: "text", required: false };
-    onUpdate({ ...section, questions: [...section.questions, q] });
-    setEditingQId(q.id);
-  }
-  function updateQ(updated: SurveyQuestion) {
-    onUpdate({ ...section, questions: section.questions.map((q) => (q.id === updated.id ? updated : q)) });
-    setEditingQId(null);
-  }
-  function deleteQ(id: string) {
-    onUpdate({ ...section, questions: section.questions.filter((q) => q.id !== id) });
-  }
-
-  return (
-    <div className="mb-4 border border-slate-line rounded-xl overflow-hidden">
-      <div className="flex items-center justify-between px-3 py-2.5 bg-cream border-b border-slate-line gap-2">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <span className="w-5 h-5 rounded-full bg-navy text-ivory text-xs flex items-center justify-center font-medium shrink-0">§</span>
-          {editingLabel ? (
-            <input autoFocus value={labelDraft} onChange={(e) => setLabelDraft(e.target.value)}
-              onBlur={saveLabel} onKeyDown={(e) => { if (e.key === "Enter") saveLabel(); if (e.key === "Escape") setEditingLabel(false); }}
-              className="flex-1 text-sm font-medium text-navy bg-white border border-navy px-2 py-0.5 rounded focus:outline-none" />
-          ) : (
-            <button onClick={() => { setLabelDraft(section.label); setEditingLabel(true); }}
-              className="text-sm font-medium text-navy hover:text-navy/70 transition-colors text-left truncate" title="Click to rename">
-              {section.label} <span className="text-xs text-slate font-normal">✏️</span>
-            </button>
-          )}
-        </div>
-        {canDelete && (
-          <button onClick={() => { if (confirm(`Delete "${section.label}"?`)) onDelete(); }}
-            className="shrink-0 text-xs text-slate hover:text-red-600 transition-colors">Delete</button>
-        )}
-      </div>
-      <div className="p-3 space-y-2">
-        {section.questions.length === 0 && <p className="text-xs text-slate/50 text-center py-2">No questions yet.</p>}
-        {section.questions.map((q) => (
-          <div key={q.id}>
-            {editingQId === q.id ? (
-              <QuestionEditor question={q} onSave={updateQ} onCancel={() => setEditingQId(null)} />
-            ) : (
-              <div className="flex items-start justify-between border border-slate-line bg-white px-3 py-2.5 rounded-lg">
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-navy font-medium truncate">{q.label}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs bg-cream text-slate px-1.5 py-0.5 rounded-full">{q.type}</span>
-                    {q.required && <span className="text-xs text-slate">required</span>}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 ml-2 shrink-0">
-                  <button onClick={() => setEditingQId(q.id)} className="text-xs text-slate hover:text-navy transition-colors">Edit</button>
-                  <button onClick={() => deleteQ(q.id)} className="text-xs text-slate hover:text-red-600 transition-colors">✕</button>
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-        <button onClick={addQuestion} className="w-full border border-dashed border-slate-line text-slate hover:border-navy hover:text-navy text-xs py-2 rounded-lg transition-colors">
-          + Add Question
-        </button>
-      </div>
-    </div>
-  );
-}
-
 function CustomSurveyEditor({
   inviteId, initialSections, token, onSaved, onClose,
 }: {
@@ -191,6 +66,10 @@ function CustomSurveyEditor({
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiPreview, setAiPreview] = useState<SurveySection[] | null>(null);
   const [aiError, setAiError] = useState("");
+
+  // DnD
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const [activeQuestion, setActiveQuestion] = useState<SurveyQuestion | null>(null);
 
   async function save(next: SurveySection[]) {
     setSaving(true); setSaved(false); setSaveError("");
@@ -237,6 +116,24 @@ function CustomSurveyEditor({
     if (!aiPreview) return;
     const next = mode === "replace" ? aiPreview : [...sections, ...aiPreview];
     setSections(next); save(next); setAiPreview(null); setAiPrompt("");
+  }
+
+  function findQuestion(id: string): SurveyQuestion | null {
+    for (const sec of sections) {
+      const q = sec.questions.find((q) => q.id === id);
+      if (q) return q;
+    }
+    return null;
+  }
+
+  function handleDragStart(e: DragStartEvent) {
+    setActiveQuestion(findQuestion(String(e.active.id)));
+  }
+
+  function handleDragEnd(e: DragEndEvent) {
+    setActiveQuestion(null);
+    const next = applyDragEnd(e, sections);
+    if (next) { setSections(next); save(next); }
   }
 
   return (
@@ -289,9 +186,19 @@ function CustomSurveyEditor({
           </div>
         )}
 
-        {sections.map((sec) => (
-          <SectionBlock key={sec.id} section={sec} onUpdate={updateSection} onDelete={() => deleteSection(sec.id)} canDelete={sections.length > 1} />
-        ))}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          {sections.map((sec) => (
+            <SectionBlock key={sec.id} section={sec} onUpdate={updateSection} onDelete={() => deleteSection(sec.id)} canDelete={sections.length > 1} />
+          ))}
+          <DragOverlay>
+            {activeQuestion && <QuestionDragOverlay question={activeQuestion} />}
+          </DragOverlay>
+        </DndContext>
 
         <button onClick={addSection} className="w-full border-2 border-dashed border-navy/20 text-navy/50 hover:border-navy hover:text-navy text-xs py-2.5 rounded-xl transition-colors">
           + Add Section
