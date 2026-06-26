@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
-import { getDoc, setDoc, doc, getDocFromServer } from "firebase/firestore";
-import { getAuthInstance, getDb } from "../../lib/firebase";
+import { getAuthInstance } from "../../lib/firebase";
+import { fsGetDoc, fsSetDoc } from "../../lib/firestoreRest";
 import { DEFAULT_QUESTIONS, STEP_LABELS, type SurveyQuestion, type QuestionType } from "../../lib/survey-questions";
 import { AdminNav } from "../AdminNav";
 import { generateQuestionsWithAI, AI_AVAILABLE } from "../../lib/generate-questions";
@@ -15,13 +15,9 @@ const INPUT_CLASS =
   "w-full border border-slate-line bg-ivory px-3 py-2 text-sm text-navy placeholder-slate/60 focus:border-navy focus:outline-none transition-colors";
 
 function QuestionEditor({
-  question,
-  onSave,
-  onCancel,
+  question, onSave, onCancel,
 }: {
-  question: SurveyQuestion;
-  onSave: (q: SurveyQuestion) => void;
-  onCancel: () => void;
+  question: SurveyQuestion; onSave: (q: SurveyQuestion) => void; onCancel: () => void;
 }) {
   const [draft, setDraft] = useState<SurveyQuestion>({ ...question });
   const needsOptions = ["radio", "checkbox", "select"].includes(draft.type);
@@ -46,12 +42,9 @@ function QuestionEditor({
             onChange={(e) => setDraft((d) => ({ ...d, type: e.target.value as QuestionType }))}
             className={INPUT_CLASS}
           >
-            {QUESTION_TYPES.map((t) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
+            {QUESTION_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
         </div>
-
         <div>
           <label className="block text-xs font-medium text-slate mb-1 uppercase tracking-wide">Step</label>
           <select
@@ -115,10 +108,7 @@ function QuestionEditor({
         >
           Save
         </button>
-        <button
-          onClick={onCancel}
-          className="text-sm text-slate hover:text-navy transition-colors"
-        >
+        <button onClick={onCancel} className="text-sm text-slate hover:text-navy transition-colors">
           Cancel
         </button>
       </div>
@@ -129,38 +119,31 @@ function QuestionEditor({
 export default function SurveyBuilderPage() {
   const router = useRouter();
   const [authLoading, setAuthLoading] = useState(true);
-  const [authed, setAuthed] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
   const [questions, setQuestions] = useState<SurveyQuestion[]>(DEFAULT_QUESTIONS);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(getAuthInstance(), (user) => {
+    const unsub = onAuthStateChanged(getAuthInstance(), async (user) => {
       if (!user) {
         router.replace("/admin");
       } else {
-        setAuthed(true);
+        const t = await user.getIdToken();
+        setToken(t);
       }
       setAuthLoading(false);
     });
     return () => unsub();
   }, [router]);
 
-  const loadQuestions = useCallback(async () => {
+  const loadQuestions = useCallback(async (t: string) => {
     try {
-      const timeout = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Timed out")), 12_000)
-      );
-      const snap = await Promise.race([
-        getDocFromServer(doc(getDb(), "survey-config", "questions")),
-        timeout,
-      ]);
-      if (snap.exists()) {
-        const data = snap.data();
-        if (Array.isArray(data.questions) && data.questions.length > 0) {
-          setQuestions(data.questions as SurveyQuestion[]);
-        }
+      const doc = await fsGetDoc("survey-config", "questions", t);
+      if (doc && Array.isArray(doc.questions) && (doc.questions as SurveyQuestion[]).length > 0) {
+        setQuestions(doc.questions as SurveyQuestion[]);
       }
     } catch (err) {
       console.error("Failed to load questions:", err);
@@ -168,23 +151,18 @@ export default function SurveyBuilderPage() {
   }, []);
 
   useEffect(() => {
-    if (authed) loadQuestions();
-  }, [authed, loadQuestions]);
-
-  const [saveError, setSaveError] = useState("");
+    if (token) loadQuestions(token);
+  }, [token, loadQuestions]);
 
   async function saveToFirestore(qs: SurveyQuestion[]) {
-    setSaving(true);
-    setSaved(false);
-    setSaveError("");
+    setSaving(true); setSaved(false); setSaveError("");
     try {
-      await setDoc(doc(getDb(), "survey-config", "questions"), { questions: qs });
+      const t = await getAuthInstance().currentUser!.getIdToken();
+      await fsSetDoc("survey-config", "questions", { questions: qs }, t);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
-      const msg = (err as { code?: string; message?: string }).code ?? (err as Error).message ?? "Save failed";
-      setSaveError(msg);
-      console.error("Failed to save:", err);
+      setSaveError((err as Error).message ?? "Save failed");
     } finally {
       setSaving(false);
     }
@@ -192,34 +170,25 @@ export default function SurveyBuilderPage() {
 
   function handleSaveQuestion(updated: SurveyQuestion) {
     const next = questions.map((q) => (q.id === updated.id ? updated : q));
-    setQuestions(next);
-    setEditingId(null);
-    saveToFirestore(next);
+    setQuestions(next); setEditingId(null); saveToFirestore(next);
   }
 
   function handleDelete(id: string) {
     const next = questions.filter((q) => q.id !== id);
-    setQuestions(next);
-    saveToFirestore(next);
+    setQuestions(next); saveToFirestore(next);
   }
 
   function handleAddQuestion(step: number) {
     const newQ: SurveyQuestion = {
-      id: `q_${Date.now()}`,
-      step,
-      label: "New question",
-      type: "text",
-      required: false,
+      id: `q_${Date.now()}`, step, label: "New question", type: "text", required: false,
     };
     const next = [...questions, newQ];
-    setQuestions(next);
-    setEditingId(newQ.id);
+    setQuestions(next); setEditingId(newQ.id);
   }
 
   async function handleReset() {
     if (!confirm("Reset to default questions? This will overwrite your current questions.")) return;
-    setQuestions(DEFAULT_QUESTIONS);
-    setEditingId(null);
+    setQuestions(DEFAULT_QUESTIONS); setEditingId(null);
     await saveToFirestore(DEFAULT_QUESTIONS);
   }
 
@@ -230,9 +199,7 @@ export default function SurveyBuilderPage() {
 
   async function handleAiGenerate() {
     if (!aiPrompt.trim()) return;
-    setAiGenerating(true);
-    setAiError("");
-    setAiPreview(null);
+    setAiGenerating(true); setAiError(""); setAiPreview(null);
     try {
       const qs = await generateQuestionsWithAI(aiPrompt);
       setAiPreview(qs);
@@ -246,10 +213,7 @@ export default function SurveyBuilderPage() {
   function applyAi(mode: "replace" | "append") {
     if (!aiPreview) return;
     const next = mode === "replace" ? aiPreview : [...questions, ...aiPreview];
-    setQuestions(next);
-    saveToFirestore(next);
-    setAiPreview(null);
-    setAiPrompt("");
+    setQuestions(next); saveToFirestore(next); setAiPreview(null); setAiPrompt("");
   }
 
   if (authLoading) {
@@ -260,7 +224,7 @@ export default function SurveyBuilderPage() {
     );
   }
 
-  if (!authed) return null;
+  if (!token) return null;
 
   return (
     <div className="min-h-screen bg-ivory">
@@ -276,14 +240,12 @@ export default function SurveyBuilderPage() {
             </p>
           </div>
           <div className="flex items-center gap-4">
-            {saved && (
-              <span className="text-sm text-green-700 font-medium">Saved!</span>
-            )}
-            {saving && (
-              <span className="text-sm text-slate">Saving…</span>
-            )}
+            {saved && <span className="text-sm text-green-700 font-medium">Saved!</span>}
+            {saving && <span className="text-sm text-slate">Saving…</span>}
             {saveError && (
-              <span className="text-sm text-red-600 max-w-xs truncate" title={saveError}>Error: {saveError}</span>
+              <span className="text-sm text-red-600 max-w-xs truncate" title={saveError}>
+                Error: {saveError}
+              </span>
             )}
             <button
               onClick={handleReset}
@@ -297,7 +259,9 @@ export default function SurveyBuilderPage() {
         {/* AI Generator */}
         <div className="mb-10 bg-navy/5 border border-navy/10 rounded-xl p-5 space-y-3">
           <p className="text-sm font-medium text-navy flex items-center gap-2">
-            <svg width="14" height="14" viewBox="0 0 12 12" fill="none"><path d="M6 1L7.5 4.5H11L8.25 6.75L9.25 10.5L6 8.25L2.75 10.5L3.75 6.75L1 4.5H4.5L6 1Z" fill="currentColor" /></svg>
+            <svg width="14" height="14" viewBox="0 0 12 12" fill="none">
+              <path d="M6 1L7.5 4.5H11L8.25 6.75L9.25 10.5L6 8.25L2.75 10.5L3.75 6.75L1 4.5H4.5L6 1Z" fill="currentColor" />
+            </svg>
             Generate questions with AI
           </p>
           {AI_AVAILABLE ? (
@@ -365,35 +329,19 @@ export default function SurveyBuilderPage() {
                 {stepQs.map((q) => (
                   <div key={q.id}>
                     {editingId === q.id ? (
-                      <QuestionEditor
-                        question={q}
-                        onSave={handleSaveQuestion}
-                        onCancel={() => setEditingId(null)}
-                      />
+                      <QuestionEditor question={q} onSave={handleSaveQuestion} onCancel={() => setEditingId(null)} />
                     ) : (
                       <div className="flex items-start justify-between border border-slate-line bg-white px-4 py-3 rounded-lg">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-navy font-medium truncate">{q.label}</p>
                           <div className="flex items-center gap-2 mt-1">
                             <span className="text-xs bg-cream text-slate px-2 py-0.5 rounded-full">{q.type}</span>
-                            {q.required && (
-                              <span className="text-xs text-slate">required</span>
-                            )}
+                            {q.required && <span className="text-xs text-slate">required</span>}
                           </div>
                         </div>
                         <div className="flex items-center gap-2 ml-4 flex-shrink-0">
-                          <button
-                            onClick={() => setEditingId(q.id)}
-                            className="text-sm text-slate hover:text-navy transition-colors"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDelete(q.id)}
-                            className="text-sm text-slate hover:text-red-600 transition-colors"
-                          >
-                            Delete
-                          </button>
+                          <button onClick={() => setEditingId(q.id)} className="text-sm text-slate hover:text-navy transition-colors">Edit</button>
+                          <button onClick={() => handleDelete(q.id)} className="text-sm text-slate hover:text-red-600 transition-colors">Delete</button>
                         </div>
                       </div>
                     )}

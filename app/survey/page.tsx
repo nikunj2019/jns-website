@@ -5,8 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
-import { collection, addDoc, getDoc, doc, updateDoc } from "firebase/firestore";
-import { getDb } from "../lib/firebase";
+import { fsGetDoc, fsAddDoc, fsPatchDoc } from "../lib/firestoreRest";
 import { DEFAULT_QUESTIONS, STEP_LABELS, type SurveyQuestion } from "../lib/survey-questions";
 import Button from "../components/Button";
 
@@ -26,15 +25,12 @@ function SurveyContent() {
   const [inviteClientName, setInviteClientName] = useState("");
 
   useEffect(() => {
-    if (inviteId) return; // invite-specific questions take priority; skip global load
+    if (inviteId) return;
     async function loadQuestions() {
       try {
-        const snap = await getDoc(doc(getDb(), "survey-config", "questions"));
-        if (snap.exists()) {
-          const data = snap.data();
-          if (Array.isArray(data.questions) && data.questions.length > 0) {
-            setQuestions(data.questions as SurveyQuestion[]);
-          }
+        const data = await fsGetDoc("survey-config", "questions");
+        if (data && Array.isArray(data.questions) && (data.questions as SurveyQuestion[]).length > 0) {
+          setQuestions(data.questions as SurveyQuestion[]);
         }
       } catch {
         // fall back to defaults on error
@@ -47,21 +43,17 @@ function SurveyContent() {
     if (!inviteId) return;
     async function loadInvite() {
       try {
-        const snap = await getDoc(doc(getDb(), "survey-invites", inviteId!));
-        if (snap.exists()) {
-          const data = snap.data();
-          setInviteClientName(data.clientName || "");
-          if (Array.isArray(data.customQuestions) && data.customQuestions.length > 0) {
+        const data = await fsGetDoc("survey-invites", inviteId!);
+        if (data) {
+          setInviteClientName((data.clientName as string) || "");
+          if (Array.isArray(data.customQuestions) && (data.customQuestions as SurveyQuestion[]).length > 0) {
             setQuestions(data.customQuestions as SurveyQuestion[]);
           } else {
             // No custom questions on invite — load global config
             try {
-              const globalSnap = await getDoc(doc(getDb(), "survey-config", "questions"));
-              if (globalSnap.exists()) {
-                const gd = globalSnap.data();
-                if (Array.isArray(gd.questions) && gd.questions.length > 0) {
-                  setQuestions(gd.questions as SurveyQuestion[]);
-                }
+              const globalData = await fsGetDoc("survey-config", "questions");
+              if (globalData && Array.isArray(globalData.questions) && (globalData.questions as SurveyQuestion[]).length > 0) {
+                setQuestions(globalData.questions as SurveyQuestion[]);
               }
             } catch {
               // stay on defaults
@@ -69,8 +61,8 @@ function SurveyContent() {
           }
           setAnswers((prev) => ({
             ...prev,
-            ...(data.clientName ? { contact_name: data.clientName } : {}),
-            ...(data.clientEmail ? { email: data.clientEmail } : {}),
+            ...(data.clientName ? { contact_name: data.clientName as string } : {}),
+            ...(data.clientEmail ? { email: data.clientEmail as string } : {}),
           }));
         }
       } catch {
@@ -139,14 +131,11 @@ function SurveyContent() {
       };
       if (inviteId) payload.inviteId = inviteId;
 
-      const docRef = await addDoc(collection(getDb(), "survey-submissions"), payload);
+      const newId = await fsAddDoc("survey-submissions", payload);
 
       if (inviteId) {
         try {
-          await updateDoc(doc(getDb(), "survey-invites", inviteId), {
-            status: "completed",
-            submissionId: docRef.id,
-          });
+          await fsPatchDoc("survey-invites", inviteId, { status: "completed", submissionId: newId });
         } catch {
           // non-critical — submission is already saved
         }

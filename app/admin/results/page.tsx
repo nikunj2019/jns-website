@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
-import { collection, getDocsFromServer, orderBy, query } from "firebase/firestore";
-import { getAuthInstance, getDb } from "../../lib/firebase";
+import { getAuthInstance } from "../../lib/firebase";
+import { fsListDocs } from "../../lib/firestoreRest";
 import { AdminNav } from "../AdminNav";
 
 interface Submission {
@@ -22,54 +22,44 @@ interface Submission {
 export default function ResultsPage() {
   const router = useRouter();
   const [authLoading, setAuthLoading] = useState(true);
-  const [authed, setAuthed] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
+  const [dataError, setDataError] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(getAuthInstance(), (user) => {
+    const unsub = onAuthStateChanged(getAuthInstance(), async (user) => {
       if (!user) {
         router.replace("/admin");
       } else {
-        setAuthed(true);
+        const t = await user.getIdToken();
+        setToken(t);
       }
       setAuthLoading(false);
     });
     return () => unsub();
   }, [router]);
 
-  const loadSubmissions = useCallback(async () => {
+  const loadSubmissions = useCallback(async (t: string) => {
     setDataLoading(true);
+    setDataError("");
     try {
-      const timeout = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Timed out")), 12_000)
+      const docs = await fsListDocs("survey-submissions", t);
+      const sorted = (docs as unknown as Submission[]).sort(
+        (a, b) => (b.submittedAt ?? "").localeCompare(a.submittedAt ?? "")
       );
-      let snap;
-      try {
-        const q = query(collection(getDb(), "survey-submissions"), orderBy("submittedAt", "desc"));
-        snap = await Promise.race([getDocsFromServer(q), timeout]);
-      } catch {
-        // orderBy might fail without index — retry without ordering
-        snap = await Promise.race([
-          getDocsFromServer(collection(getDb(), "survey-submissions")),
-          new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Timed out")), 12_000)),
-        ]);
-      }
-      const docs = snap.docs
-        .map((d) => ({ id: d.id, ...d.data() } as Submission))
-        .sort((a, b) => (b.submittedAt ?? "").localeCompare(a.submittedAt ?? ""));
-      setSubmissions(docs);
+      setSubmissions(sorted);
     } catch (err) {
-      console.error("Failed to load submissions:", err);
+      setDataError((err as Error).message ?? "Failed to load submissions");
     } finally {
       setDataLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    if (authed) loadSubmissions();
-  }, [authed, loadSubmissions]);
+    if (token) loadSubmissions(token);
+  }, [token, loadSubmissions]);
 
   function exportCsv() {
     if (submissions.length === 0) return;
@@ -77,15 +67,15 @@ export default function ResultsPage() {
       new Set(submissions.flatMap((s) => Object.keys(s).filter((k) => k !== "id")))
     );
     const header = ["id", ...allKeys].join(",");
-    const rows = submissions.map((s) => {
-      return ["id", ...allKeys]
+    const rows = submissions.map((s) =>
+      ["id", ...allKeys]
         .map((k) => {
           const val = k === "id" ? s.id : s[k];
           const str = Array.isArray(val) ? val.join("; ") : String(val ?? "");
           return `"${str.replace(/"/g, '""')}"`;
         })
-        .join(",");
-    });
+        .join(",")
+    );
     const csv = [header, ...rows].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -100,9 +90,7 @@ export default function ResultsPage() {
     if (!iso) return "—";
     try {
       return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-    } catch {
-      return iso;
-    }
+    } catch { return iso; }
   }
 
   function truncate(val: string | string[] | undefined, max = 40) {
@@ -119,7 +107,7 @@ export default function ResultsPage() {
     );
   }
 
-  if (!authed) return null;
+  if (!token) return null;
 
   const mostRecent = submissions[0]?.submittedAt;
 
@@ -128,7 +116,6 @@ export default function ResultsPage() {
       <AdminNav />
 
       <div className="mx-auto max-w-7xl px-6 py-10">
-        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="font-display text-3xl text-navy">Survey Results</h1>
@@ -146,7 +133,6 @@ export default function ResultsPage() {
           </button>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-2 gap-4 mb-8 max-w-xs">
           <div className="bg-cream rounded-xl p-4">
             <p className="brand-eyebrow text-slate mb-1">Total</p>
@@ -158,12 +144,24 @@ export default function ResultsPage() {
           </div>
         </div>
 
-        {/* Table */}
         {dataLoading ? (
           <div className="space-y-3">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="h-14 bg-cream animate-pulse rounded" />
             ))}
+          </div>
+        ) : dataError ? (
+          <div className="text-center py-16 space-y-3">
+            <p className="text-slate text-sm">
+              Could not load submissions:{" "}
+              <span className="text-red-600 font-mono text-xs">{dataError}</span>
+            </p>
+            <button
+              onClick={() => token && loadSubmissions(token)}
+              className="text-sm text-navy underline underline-offset-4 hover:opacity-70 transition-opacity"
+            >
+              Try again
+            </button>
           </div>
         ) : submissions.length === 0 ? (
           <div className="text-center py-20 text-slate">

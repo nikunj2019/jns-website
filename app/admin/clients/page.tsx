@@ -3,16 +3,13 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
+import { getAuthInstance } from "../../lib/firebase";
 import {
-  collection,
-  addDoc,
-  getDocs,
-  getDocsFromServer,
-  doc,
-  deleteDoc,
-  updateDoc,
-} from "firebase/firestore";
-import { getAuthInstance, getDb } from "../../lib/firebase";
+  fsListDocs,
+  fsAddDoc,
+  fsPatchDoc,
+  fsDeleteDoc,
+} from "../../lib/firestoreRest";
 import { AdminNav } from "../AdminNav";
 import {
   DEFAULT_QUESTIONS,
@@ -33,10 +30,10 @@ interface Invite {
   status: "pending" | "completed";
   submissionId?: string | null;
   customQuestions?: SurveyQuestion[];
-  _saving?: boolean; // optimistic create in progress
+  _saving?: boolean;
 }
 
-// ─── Shared styles ───────────────────────────────────────────────────────────
+// ─── Styles ──────────────────────────────────────────────────────────────────
 
 const INPUT =
   "w-full border border-slate-line bg-ivory px-4 py-3 text-sm text-navy placeholder-slate/60 focus:border-navy focus:outline-none transition-colors";
@@ -48,16 +45,12 @@ const QUESTION_TYPES: QuestionType[] = [
   "text", "email", "tel", "radio", "checkbox", "textarea", "select",
 ];
 
-// ─── Sub-components (survey editor) ──────────────────────────────────────────
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
 function QuestionRow({
-  q,
-  onEdit,
-  onDelete,
+  q, onEdit, onDelete,
 }: {
-  q: SurveyQuestion;
-  onEdit: () => void;
-  onDelete: () => void;
+  q: SurveyQuestion; onEdit: () => void; onDelete: () => void;
 }) {
   return (
     <div className="flex items-start justify-between border border-slate-line bg-white px-3 py-2.5 rounded-lg">
@@ -77,13 +70,9 @@ function QuestionRow({
 }
 
 function QuestionEditor({
-  question,
-  onSave,
-  onCancel,
+  question, onSave, onCancel,
 }: {
-  question: SurveyQuestion;
-  onSave: (q: SurveyQuestion) => void;
-  onCancel: () => void;
+  question: SurveyQuestion; onSave: (q: SurveyQuestion) => void; onCancel: () => void;
 }) {
   const [draft, setDraft] = useState<SurveyQuestion>({ ...question });
   const needsOptions = ["radio", "checkbox", "select"].includes(draft.type);
@@ -177,11 +166,7 @@ function QuestionEditor({
   );
 }
 
-function AIGeneratorPanel({
-  onApply,
-}: {
-  onApply: (qs: SurveyQuestion[], mode: "replace" | "append") => void;
-}) {
+function AIGeneratorPanel({ onApply }: { onApply: (qs: SurveyQuestion[], mode: "replace" | "append") => void }) {
   const [prompt, setPrompt] = useState("");
   const [generating, setGenerating] = useState(false);
   const [preview, setPreview] = useState<SurveyQuestion[] | null>(null);
@@ -189,9 +174,7 @@ function AIGeneratorPanel({
 
   async function handleGenerate() {
     if (!prompt.trim()) return;
-    setGenerating(true);
-    setError("");
-    setPreview(null);
+    setGenerating(true); setError(""); setPreview(null);
     try {
       const qs = await generateQuestionsWithAI(prompt);
       setPreview(qs);
@@ -202,14 +185,12 @@ function AIGeneratorPanel({
     }
   }
 
-  if (!AI_AVAILABLE) {
-    return (
-      <div className="text-xs text-slate bg-cream rounded-lg p-3 border border-slate-line">
-        Add <code className="font-mono bg-white px-1 rounded">NEXT_PUBLIC_GEMINI_API_KEY</code> to
-        GitHub secrets to enable AI generation.
-      </div>
-    );
-  }
+  if (!AI_AVAILABLE) return (
+    <div className="text-xs text-slate bg-cream rounded-lg p-3 border border-slate-line">
+      Add <code className="font-mono bg-white px-1 rounded">NEXT_PUBLIC_GEMINI_API_KEY</code> to
+      GitHub secrets to enable AI generation.
+    </div>
+  );
 
   return (
     <div className="bg-navy/5 border border-navy/10 rounded-lg p-3 space-y-3">
@@ -234,10 +215,7 @@ function AIGeneratorPanel({
           className="inline-flex items-center gap-2 bg-navy text-ivory text-xs px-4 py-2 rounded-full hover:opacity-90 disabled:opacity-50 transition-opacity"
         >
           {generating ? (
-            <>
-              <span className="w-3 h-3 border border-ivory/50 border-t-ivory rounded-full animate-spin" />
-              Generating…
-            </>
+            <><span className="w-3 h-3 border border-ivory/50 border-t-ivory rounded-full animate-spin" />Generating…</>
           ) : "Generate Questions"}
         </button>
       ) : (
@@ -254,21 +232,12 @@ function AIGeneratorPanel({
             <button
               onClick={() => { onApply(preview, "replace"); setPreview(null); setPrompt(""); }}
               className="bg-navy text-ivory text-xs px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity"
-            >
-              Replace all
-            </button>
+            >Replace all</button>
             <button
               onClick={() => { onApply(preview, "append"); setPreview(null); setPrompt(""); }}
               className="border border-navy text-navy text-xs px-3 py-1.5 rounded-full hover:bg-navy/5 transition-colors"
-            >
-              Add to existing
-            </button>
-            <button
-              onClick={() => setPreview(null)}
-              className="text-xs text-slate hover:text-navy transition-colors"
-            >
-              Discard
-            </button>
+            >Add to existing</button>
+            <button onClick={() => setPreview(null)} className="text-xs text-slate hover:text-navy transition-colors">Discard</button>
           </div>
         </div>
       )}
@@ -277,13 +246,11 @@ function AIGeneratorPanel({
 }
 
 function CustomSurveyEditor({
-  inviteId,
-  initialQuestions,
-  onSaved,
-  onClose,
+  inviteId, initialQuestions, token, onSaved, onClose,
 }: {
   inviteId: string;
   initialQuestions: SurveyQuestion[];
+  token: string;
   onSaved: (qs: SurveyQuestion[]) => void;
   onClose: () => void;
 }) {
@@ -294,20 +261,14 @@ function CustomSurveyEditor({
   const [saveError, setSaveError] = useState("");
 
   async function save(qs: SurveyQuestion[]) {
-    setSaving(true);
-    setSaved(false);
-    setSaveError("");
+    setSaving(true); setSaved(false); setSaveError("");
     try {
-      await updateDoc(doc(getDb(), "survey-invites", inviteId), { customQuestions: qs });
+      await fsPatchDoc("survey-invites", inviteId, { customQuestions: qs }, token);
       onSaved(qs);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (err) {
-      const msg =
-        (err as { code?: string; message?: string }).code ??
-        (err as Error).message ??
-        "Save failed";
-      setSaveError(msg);
+      setSaveError((err as Error).message ?? "Save failed");
     } finally {
       setSaving(false);
     }
@@ -315,41 +276,28 @@ function CustomSurveyEditor({
 
   function handleSaveQuestion(updated: SurveyQuestion) {
     const next = questions.map((q) => (q.id === updated.id ? updated : q));
-    setQuestions(next);
-    setEditingId(null);
-    save(next);
+    setQuestions(next); setEditingId(null); save(next);
   }
 
   function handleDeleteQuestion(id: string) {
     const next = questions.filter((q) => q.id !== id);
-    setQuestions(next);
-    save(next);
+    setQuestions(next); save(next);
   }
 
   function handleAdd(step: number) {
-    const newQ: SurveyQuestion = {
-      id: `q_${Date.now()}`,
-      step,
-      label: "New question",
-      type: "text",
-      required: false,
-    };
+    const newQ: SurveyQuestion = { id: `q_${Date.now()}`, step, label: "New question", type: "text", required: false };
     const next = [...questions, newQ];
-    setQuestions(next);
-    setEditingId(newQ.id);
+    setQuestions(next); setEditingId(newQ.id);
   }
 
   function handleReset() {
     if (!confirm("Reset to global default questions?")) return;
-    setQuestions(DEFAULT_QUESTIONS);
-    setEditingId(null);
-    save(DEFAULT_QUESTIONS);
+    setQuestions(DEFAULT_QUESTIONS); setEditingId(null); save(DEFAULT_QUESTIONS);
   }
 
   function handleAI(generated: SurveyQuestion[], mode: "replace" | "append") {
     const next = mode === "replace" ? generated : [...questions, ...generated];
-    setQuestions(next);
-    save(next);
+    setQuestions(next); save(next);
   }
 
   return (
@@ -370,13 +318,8 @@ function CustomSurveyEditor({
           <button
             onClick={handleReset}
             className="text-xs text-slate hover:text-navy transition-colors underline underline-offset-2"
-          >
-            Reset to defaults
-          </button>
-          <button
-            onClick={onClose}
-            className="text-xs font-medium text-slate hover:text-navy transition-colors"
-          >
+          >Reset to defaults</button>
+          <button onClick={onClose} className="text-xs font-medium text-slate hover:text-navy transition-colors">
             ✕ Close
           </button>
         </div>
@@ -399,19 +342,9 @@ function CustomSurveyEditor({
               <div className="space-y-2">
                 {stepQs.map((q) =>
                   editingId === q.id ? (
-                    <QuestionEditor
-                      key={q.id}
-                      question={q}
-                      onSave={handleSaveQuestion}
-                      onCancel={() => setEditingId(null)}
-                    />
+                    <QuestionEditor key={q.id} question={q} onSave={handleSaveQuestion} onCancel={() => setEditingId(null)} />
                   ) : (
-                    <QuestionRow
-                      key={q.id}
-                      q={q}
-                      onEdit={() => setEditingId(q.id)}
-                      onDelete={() => handleDeleteQuestion(q.id)}
-                    />
+                    <QuestionRow key={q.id} q={q} onEdit={() => setEditingId(q.id)} onDelete={() => handleDeleteQuestion(q.id)} />
                   )
                 )}
               </div>
@@ -434,78 +367,64 @@ function CustomSurveyEditor({
 export default function ClientsPage() {
   const router = useRouter();
 
-  // Auth
   const [authLoading, setAuthLoading] = useState(true);
-  const [authed, setAuthed] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
 
-  // Data
   const [invites, setInvites] = useState<Invite[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [dataError, setDataError] = useState("");
 
-  // Create form
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ clientName: "", clientEmail: "", notes: "" });
   const [createError, setCreateError] = useState("");
 
-  // UI state
   const [editingQuestionsId, setEditingQuestionsId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [pageError, setPageError] = useState("");
   const [siteUrl, setSiteUrl] = useState("");
 
-  // ── Init ──────────────────────────────────────────────────────────────────
+  useEffect(() => { setSiteUrl(window.location.origin); }, []);
 
   useEffect(() => {
-    setSiteUrl(window.location.origin);
-  }, []);
-
-  useEffect(() => {
-    const unsub = onAuthStateChanged(getAuthInstance(), (user) => {
+    const unsub = onAuthStateChanged(getAuthInstance(), async (user) => {
       if (!user) {
         router.replace("/admin");
       } else {
-        setAuthed(true);
+        const t = await user.getIdToken();
+        setToken(t);
       }
       setAuthLoading(false);
     });
     return () => unsub();
   }, [router]);
 
-  // ── Data loading ──────────────────────────────────────────────────────────
+  async function getToken(): Promise<string> {
+    const user = getAuthInstance().currentUser;
+    if (!user) throw new Error("Not authenticated");
+    return user.getIdToken();
+  }
 
   async function loadInvites() {
     setDataLoading(true);
     setDataError("");
     try {
-      const timeout = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Timed out — check your connection and try again.")), 12_000)
+      const t = await getToken();
+      const docs = await fsListDocs("survey-invites", t);
+      const list = (docs as unknown as Invite[]).sort(
+        (a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? "")
       );
-      const snap = await Promise.race([
-        getDocsFromServer(collection(getDb(), "survey-invites")),
-        timeout,
-      ]);
-      const docs = snap.docs
-        .map((d) => ({ id: d.id, ...d.data() } as Invite))
-        .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
-      setInvites(docs);
+      setInvites(list);
     } catch (err) {
-      const msg =
-        (err as { code?: string; message?: string }).code ??
-        (err as Error).message ??
-        "Failed to load clients";
-      setDataError(msg);
+      setDataError((err as Error).message ?? "Failed to load clients");
     } finally {
       setDataLoading(false);
     }
   }
 
   useEffect(() => {
-    if (authed) loadInvites();
+    if (token) loadInvites();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authed]);
-
-  // ── Create (optimistic) ───────────────────────────────────────────────────
+  }, [token]);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -525,62 +444,49 @@ export default function ClientsPage() {
       _saving: true,
     };
 
-    // Show immediately and close form
     setInvites((prev) => [tempInvite, ...prev]);
     setForm({ clientName: "", clientEmail: "", notes: "" });
     setShowForm(false);
 
     try {
-      const ref = await addDoc(collection(getDb(), "survey-invites"), {
+      const t = await getToken();
+      const newId = await fsAddDoc("survey-invites", {
         clientName: tempInvite.clientName,
         clientEmail: tempInvite.clientEmail,
         notes: tempInvite.notes,
         createdAt: tempInvite.createdAt,
         status: "pending",
         submissionId: null,
-      });
-      // Swap temp ID for real Firestore ID
+      }, t);
       setInvites((prev) =>
-        prev.map((inv) => (inv.id === tempId ? { ...inv, id: ref.id, _saving: false } : inv))
+        prev.map((inv) => (inv.id === tempId ? { ...inv, id: newId, _saving: false } : inv))
       );
     } catch (err) {
-      // Roll back and reopen form
       setInvites((prev) => prev.filter((inv) => inv.id !== tempId));
       setForm({ clientName: name, clientEmail: tempInvite.clientEmail, notes: tempInvite.notes });
       setShowForm(true);
-      const msg =
-        (err as { code?: string; message?: string }).code ??
-        (err as Error).message ??
-        "Failed to create client";
-      setCreateError(msg);
+      setCreateError((err as Error).message ?? "Failed to create client");
     }
   }
 
-  // ── Delete (optimistic) ───────────────────────────────────────────────────
-
   async function handleDelete(id: string) {
-    if (id.startsWith("_tmp_")) return; // can't delete optimistic entry
+    if (id.startsWith("_tmp_")) return;
     if (!confirm("Delete this client and their survey link?")) return;
     setPageError("");
     const backup = invites.find((inv) => inv.id === id);
     setInvites((prev) => prev.filter((inv) => inv.id !== id));
     if (editingQuestionsId === id) setEditingQuestionsId(null);
     try {
-      await deleteDoc(doc(getDb(), "survey-invites", id));
+      const t = await getToken();
+      await fsDeleteDoc("survey-invites", id, t);
     } catch (err) {
       if (backup) setInvites((prev) => [backup, ...prev]);
-      const msg =
-        (err as { code?: string; message?: string }).code ??
-        (err as Error).message ??
-        "Delete failed";
-      setPageError(msg);
+      setPageError((err as Error).message ?? "Delete failed");
     }
   }
 
-  // ── Survey editor ─────────────────────────────────────────────────────────
-
   function toggleEditor(id: string) {
-    if (id.startsWith("_tmp_")) return; // not saved yet
+    if (id.startsWith("_tmp_")) return;
     setEditingQuestionsId((prev) => (prev === id ? null : id));
   }
 
@@ -589,8 +495,6 @@ export default function ClientsPage() {
       prev.map((inv) => (inv.id === inviteId ? { ...inv, customQuestions: qs } : inv))
     );
   }
-
-  // ── Copy link ─────────────────────────────────────────────────────────────
 
   function copyLink(id: string) {
     if (id.startsWith("_tmp_")) return;
@@ -607,15 +511,9 @@ export default function ClientsPage() {
 
   function formatDate(iso: string) {
     try {
-      return new Date(iso).toLocaleDateString("en-US", {
-        month: "short", day: "numeric", year: "numeric",
-      });
-    } catch {
-      return iso;
-    }
+      return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    } catch { return iso; }
   }
-
-  // ── Auth loading ──────────────────────────────────────────────────────────
 
   if (authLoading) {
     return (
@@ -625,9 +523,7 @@ export default function ClientsPage() {
     );
   }
 
-  if (!authed) return null;
-
-  // ── Render ────────────────────────────────────────────────────────────────
+  if (!token) return null;
 
   return (
     <div className="min-h-screen bg-ivory">
@@ -639,9 +535,7 @@ export default function ClientsPage() {
         <div className="flex items-start justify-between mb-6 gap-4">
           <div>
             <h1 className="font-display text-3xl text-navy">Client Surveys</h1>
-            <p className="text-slate text-sm mt-1">
-              Each client gets a unique survey link with custom questions
-            </p>
+            <p className="text-slate text-sm mt-1">Each client gets a unique survey link with custom questions</p>
           </div>
           <button
             onClick={() => { setShowForm((v) => !v); setCreateError(""); }}
@@ -660,9 +554,7 @@ export default function ClientsPage() {
             <h2 className="font-display text-lg text-navy">Create invite link</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate mb-1 uppercase tracking-wide">
-                  Client Name *
-                </label>
+                <label className="block text-xs font-medium text-slate mb-1 uppercase tracking-wide">Client Name *</label>
                 <input
                   required
                   value={form.clientName}
@@ -672,9 +564,7 @@ export default function ClientsPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-slate mb-1 uppercase tracking-wide">
-                  Client Email
-                </label>
+                <label className="block text-xs font-medium text-slate mb-1 uppercase tracking-wide">Client Email</label>
                 <input
                   type="email"
                   value={form.clientEmail}
@@ -685,9 +575,7 @@ export default function ClientsPage() {
               </div>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate mb-1 uppercase tracking-wide">
-                Notes (internal)
-              </label>
+              <label className="block text-xs font-medium text-slate mb-1 uppercase tracking-wide">Notes (internal)</label>
               <textarea
                 rows={2}
                 value={form.notes}
@@ -702,10 +590,7 @@ export default function ClientsPage() {
               </p>
             )}
             <div className="flex gap-3">
-              <button
-                type="submit"
-                className="bg-navy text-ivory text-sm px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity"
-              >
+              <button type="submit" className="bg-navy text-ivory text-sm px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity">
                 Create Link
               </button>
               <button
@@ -737,9 +622,7 @@ export default function ClientsPage() {
           <p>
             Create a client → click <strong className="text-navy">Edit Survey</strong> to build
             custom questions → copy their unique link and send it. The{" "}
-            <a href="/admin/survey-builder" className="underline hover:text-navy transition-colors">
-              Survey Builder
-            </a>{" "}
+            <a href="/admin/survey-builder" className="underline hover:text-navy transition-colors">Survey Builder</a>{" "}
             sets the global default.
           </p>
         </div>
@@ -751,7 +634,10 @@ export default function ClientsPage() {
           </div>
         ) : dataError ? (
           <div className="text-center py-16 space-y-3">
-            <p className="text-slate text-sm">Could not load clients: <span className="text-red-600 font-mono text-xs">{dataError}</span></p>
+            <p className="text-slate text-sm">
+              Could not load clients:{" "}
+              <span className="text-red-600 font-mono text-xs">{dataError}</span>
+            </p>
             <button
               onClick={loadInvites}
               className="text-sm text-navy underline underline-offset-4 hover:opacity-70 transition-opacity"
@@ -770,23 +656,17 @@ export default function ClientsPage() {
               const isTemp = invite.id.startsWith("_tmp_");
               const isEditing = editingQuestionsId === invite.id;
               return (
-                <div
-                  key={invite.id}
-                  className="bg-white border border-slate-line rounded-xl overflow-hidden"
-                >
-                  {/* Client row */}
+                <div key={invite.id} className="bg-white border border-slate-line rounded-xl overflow-hidden">
                   <div className="px-4 py-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-medium text-navy">{invite.clientName}</p>
-                          <span
-                            className={`text-xs px-2 py-0.5 rounded-full ${
-                              invite.status === "completed"
-                                ? "bg-green-100 text-green-700"
-                                : "bg-cream text-slate"
-                            }`}
-                          >
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                            invite.status === "completed"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-cream text-slate"
+                          }`}>
                             {isTemp ? "saving…" : invite.status}
                           </span>
                           {!isTemp && invite.customQuestions && invite.customQuestions.length > 0 && (
@@ -804,7 +684,6 @@ export default function ClientsPage() {
                         <p className="text-xs text-slate-line mt-1">{formatDate(invite.createdAt)}</p>
                       </div>
 
-                      {/* Actions */}
                       {!isTemp && (
                         <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
                           <button
@@ -837,7 +716,6 @@ export default function ClientsPage() {
                       )}
                     </div>
 
-                    {/* Survey link preview */}
                     {!isTemp && !isEditing && (
                       <div className="mt-3 pt-3 border-t border-slate-line/50 flex items-center gap-3">
                         <span className="text-xs text-slate shrink-0">Link:</span>
@@ -854,8 +732,7 @@ export default function ClientsPage() {
                     )}
                   </div>
 
-                  {/* Inline survey editor */}
-                  {isEditing && (
+                  {isEditing && token && (
                     <div className="border-t border-navy/20">
                       <CustomSurveyEditor
                         key={invite.id}
@@ -865,6 +742,7 @@ export default function ClientsPage() {
                             ? invite.customQuestions
                             : DEFAULT_QUESTIONS
                         }
+                        token={token}
                         onSaved={(qs) => handleQuestionsUpdated(invite.id, qs)}
                         onClose={() => setEditingQuestionsId(null)}
                       />
