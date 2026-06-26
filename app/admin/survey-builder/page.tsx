@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
 import { getDoc, setDoc, doc } from "firebase/firestore";
-import { auth, db } from "../../lib/firebase";
+import { auth, getDb } from "../../lib/firebase";
 import { DEFAULT_QUESTIONS, STEP_LABELS, type SurveyQuestion, type QuestionType } from "../../lib/survey-questions";
 import { AdminNav } from "../AdminNav";
 import { generateQuestionsWithAI, AI_AVAILABLE } from "../../lib/generate-questions";
@@ -149,7 +149,7 @@ export default function SurveyBuilderPage() {
 
   const loadQuestions = useCallback(async () => {
     try {
-      const snap = await getDoc(doc(db, "survey-config", "questions"));
+      const snap = await getDoc(doc(getDb(), "survey-config", "questions"));
       if (snap.exists()) {
         const data = snap.data();
         if (Array.isArray(data.questions) && data.questions.length > 0) {
@@ -172,7 +172,7 @@ export default function SurveyBuilderPage() {
     setSaved(false);
     setSaveError("");
     try {
-      await setDoc(doc(db, "survey-config", "questions"), { questions: qs });
+      await setDoc(doc(getDb(), "survey-config", "questions"), { questions: qs });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {

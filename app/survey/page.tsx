@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { collection, addDoc, getDoc, doc, updateDoc } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { getDb } from "../lib/firebase";
 import { DEFAULT_QUESTIONS, STEP_LABELS, type SurveyQuestion } from "../lib/survey-questions";
 import Button from "../components/Button";
 
@@ -29,7 +29,7 @@ function SurveyContent() {
     if (inviteId) return; // invite-specific questions take priority; skip global load
     async function loadQuestions() {
       try {
-        const snap = await getDoc(doc(db, "survey-config", "questions"));
+        const snap = await getDoc(doc(getDb(), "survey-config", "questions"));
         if (snap.exists()) {
           const data = snap.data();
           if (Array.isArray(data.questions) && data.questions.length > 0) {
@@ -47,7 +47,7 @@ function SurveyContent() {
     if (!inviteId) return;
     async function loadInvite() {
       try {
-        const snap = await getDoc(doc(db, "survey-invites", inviteId!));
+        const snap = await getDoc(doc(getDb(), "survey-invites", inviteId!));
         if (snap.exists()) {
           const data = snap.data();
           setInviteClientName(data.clientName || "");
@@ -56,7 +56,7 @@ function SurveyContent() {
           } else {
             // No custom questions on invite — load global config
             try {
-              const globalSnap = await getDoc(doc(db, "survey-config", "questions"));
+              const globalSnap = await getDoc(doc(getDb(), "survey-config", "questions"));
               if (globalSnap.exists()) {
                 const gd = globalSnap.data();
                 if (Array.isArray(gd.questions) && gd.questions.length > 0) {
@@ -139,11 +139,11 @@ function SurveyContent() {
       };
       if (inviteId) payload.inviteId = inviteId;
 
-      const docRef = await addDoc(collection(db, "survey-submissions"), payload);
+      const docRef = await addDoc(collection(getDb(), "survey-submissions"), payload);
 
       if (inviteId) {
         try {
-          await updateDoc(doc(db, "survey-invites", inviteId), {
+          await updateDoc(doc(getDb(), "survey-invites", inviteId), {
             status: "completed",
             submissionId: docRef.id,
           });

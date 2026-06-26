@@ -14,7 +14,7 @@ import {
   updateDoc,
   getDoc,
 } from "firebase/firestore";
-import { auth, db } from "../../lib/firebase";
+import { auth, getDb } from "../../lib/firebase";
 import { AdminNav } from "../AdminNav";
 import { DEFAULT_QUESTIONS, STEP_LABELS, type SurveyQuestion, type QuestionType } from "../../lib/survey-questions";
 import { generateQuestionsWithAI, AI_AVAILABLE } from "../../lib/generate-questions";
@@ -271,7 +271,7 @@ function CustomSurveyEditor({
     setSaved(false);
     setSaveError("");
     try {
-      await updateDoc(doc(db, "survey-invites", inviteId), { customQuestions: qs });
+      await updateDoc(doc(getDb(), "survey-invites", inviteId), { customQuestions: qs });
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (err) {
@@ -424,12 +424,12 @@ export default function ClientsPage() {
   const loadInvites = useCallback(async () => {
     setDataLoading(true);
     try {
-      const q = query(collection(db, "survey-invites"), orderBy("createdAt", "desc"));
+      const q = query(collection(getDb(), "survey-invites"), orderBy("createdAt", "desc"));
       const snap = await getDocs(q);
       setInvites(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Invite)));
     } catch {
       try {
-        const snap = await getDocs(collection(db, "survey-invites"));
+        const snap = await getDocs(collection(getDb(), "survey-invites"));
         setInvites(
           snap.docs
             .map((d) => ({ id: d.id, ...d.data() } as Invite))
@@ -453,7 +453,7 @@ export default function ClientsPage() {
     setCreating(true);
     setCreateError("");
     try {
-      await addDoc(collection(db, "survey-invites"), {
+      await addDoc(collection(getDb(), "survey-invites"), {
         clientName: form.clientName.trim(),
         clientEmail: form.clientEmail.trim(),
         notes: form.notes.trim(),
@@ -477,7 +477,7 @@ export default function ClientsPage() {
     if (!confirm("Delete this client and their survey link?")) return;
     setPageError("");
     try {
-      await deleteDoc(doc(db, "survey-invites", id));
+      await deleteDoc(doc(getDb(), "survey-invites", id));
       setInvites((prev) => prev.filter((i) => i.id !== id));
       if (editingQuestionsId === id) setEditingQuestionsId(null);
     } catch (err) {
@@ -495,7 +495,7 @@ export default function ClientsPage() {
     setPageError("");
     if (!customQuestionsCache[invite.id]) {
       try {
-        const snap = await getDoc(doc(db, "survey-invites", invite.id));
+        const snap = await getDoc(doc(getDb(), "survey-invites", invite.id));
         const data = snap.data();
         const qs =
           Array.isArray(data?.customQuestions) && data.customQuestions.length > 0

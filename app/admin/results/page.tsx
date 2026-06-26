@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
-import { auth, db } from "../../lib/firebase";
+import { auth, getDb } from "../../lib/firebase";
 import { AdminNav } from "../AdminNav";
 
 interface Submission {
@@ -42,14 +42,14 @@ export default function ResultsPage() {
   const loadSubmissions = useCallback(async () => {
     setDataLoading(true);
     try {
-      const q = query(collection(db, "survey-submissions"), orderBy("submittedAt", "desc"));
+      const q = query(collection(getDb(), "survey-submissions"), orderBy("submittedAt", "desc"));
       const snap = await getDocs(q);
       const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Submission));
       setSubmissions(docs);
     } catch {
       // orderBy might fail without index, try without ordering
       try {
-        const snap = await getDocs(collection(db, "survey-submissions"));
+        const snap = await getDocs(collection(getDb(), "survey-submissions"));
         const docs = snap.docs
           .map((d) => ({ id: d.id, ...d.data() } as Submission))
           .sort((a, b) => (b.submittedAt ?? "").localeCompare(a.submittedAt ?? ""));
