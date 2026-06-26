@@ -47,10 +47,13 @@ export async function generateQuestionsWithAI(prompt: string): Promise<SurveyQue
   const data = await res.json();
   const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 
-  // Strip any accidental markdown fences
-  const cleaned = text.replace(/^```[a-z]*\n?/i, "").replace(/```$/i, "").trim();
-  const parsed = JSON.parse(cleaned);
+  // Extract the JSON array robustly — find first [ and last ]
+  const start = text.indexOf("[");
+  const end = text.lastIndexOf("]");
+  if (start === -1 || end === -1 || end <= start)
+    throw new Error("No JSON array found in response");
 
+  const parsed = JSON.parse(text.slice(start, end + 1));
   if (!Array.isArray(parsed)) throw new Error("Response was not a JSON array");
 
   return parsed as SurveyQuestion[];
