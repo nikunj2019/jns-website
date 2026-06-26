@@ -1,14 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
 import {
   collection,
   addDoc,
-  getDocs,
-  orderBy,
-  query,
+  onSnapshot,
   doc,
   deleteDoc,
   updateDoc,
@@ -423,34 +421,28 @@ export default function ClientsPage() {
     return () => unsub();
   }, [router]);
 
-  const loadInvites = useCallback(async () => {
+  useEffect(() => {
+    if (!authed) return;
     setDataLoading(true);
     setLoadError("");
-    try {
-      const q = query(collection(getDb(), "survey-invites"), orderBy("createdAt", "desc"));
-      const snap = await getDocs(q);
-      setInvites(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Invite)));
-    } catch {
-      try {
-        const snap = await getDocs(collection(getDb(), "survey-invites"));
-        setInvites(
-          snap.docs
-            .map((d) => ({ id: d.id, ...d.data() } as Invite))
-            .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-        );
-      } catch (err) {
-        const msg = (err as { code?: string; message?: string }).code ?? (err as Error).message ?? "Failed to load clients";
+    const unsub = onSnapshot(
+      collection(getDb(), "survey-invites"),
+      (snap) => {
+        const docs = snap.docs
+          .map((d) => ({ id: d.id, ...d.data() } as Invite))
+          .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+        setInvites(docs);
+        setDataLoading(false);
+      },
+      (err) => {
+        const msg = (err as { code?: string; message?: string }).code ?? err.message ?? "Failed to load clients";
         setLoadError(msg);
-        console.error("Failed to load invites:", err);
+        setDataLoading(false);
+        console.error("Firestore snapshot error:", err);
       }
-    } finally {
-      setDataLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (authed) loadInvites();
-  }, [authed, loadInvites]);
+    );
+    return () => unsub();
+  }, [authed]);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -468,7 +460,7 @@ export default function ClientsPage() {
       });
       setForm({ clientName: "", clientEmail: "", notes: "" });
       setShowForm(false);
-      await loadInvites();
+      // onSnapshot listener automatically updates the list
     } catch (err) {
       const msg = (err as { code?: string; message?: string }).code ?? (err as Error).message ?? "Failed to create client";
       setCreateError(msg);
@@ -483,8 +475,8 @@ export default function ClientsPage() {
     setPageError("");
     try {
       await deleteDoc(doc(getDb(), "survey-invites", id));
-      setInvites((prev) => prev.filter((i) => i.id !== id));
       if (editingQuestionsId === id) setEditingQuestionsId(null);
+      // onSnapshot listener automatically updates the list
     } catch (err) {
       const msg = (err as { code?: string; message?: string }).code ?? (err as Error).message ?? "Delete failed";
       setPageError(msg);
@@ -657,7 +649,7 @@ export default function ClientsPage() {
           <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3 flex items-start gap-2">
             <span className="shrink-0 font-bold">!</span>
             <span>Could not load clients: {loadError}</span>
-            <button onClick={() => { setLoadError(""); loadInvites(); }} className="ml-auto text-red-500 hover:text-red-700 underline text-xs">Retry</button>
+            <button onClick={() => window.location.reload()} className="ml-auto text-red-500 hover:text-red-700 underline text-xs">Retry</button>
           </div>
         )}
 
