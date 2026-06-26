@@ -31,7 +31,7 @@ export async function generateQuestionsWithAI(prompt: string): Promise<SurveyQue
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 2048, temperature: 0.7 },
+        generationConfig: { maxOutputTokens: 8192, temperature: 0.7 },
       }),
     }
   );
