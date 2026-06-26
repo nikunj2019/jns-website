@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../lib/firebase";
+import { getAuthInstance } from "../lib/firebase";
 
 const INPUT_CLASS =
   "w-full border border-slate-line bg-white px-4 py-3 text-sm text-navy placeholder-slate/60 focus:border-navy focus:outline-none transition-colors";
@@ -22,7 +22,7 @@ export default function AdminLoginPage() {
     setError("");
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(getAuthInstance(), email, password);
       router.push("/admin/results");
     } catch (err) {
       const code = (err as { code?: string }).code ?? "";

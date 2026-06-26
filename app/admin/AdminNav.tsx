@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { signOut } from "firebase/auth";
-import { auth } from "../lib/firebase";
+import { getAuthInstance } from "../lib/firebase";
 
 const NAV_LINKS = [
   { href: "/admin/results", label: "Results" },
@@ -45,7 +45,7 @@ export function AdminNav() {
 
         {/* Right: sign out — separated by auto margin so it never crowds nav */}
         <button
-          onClick={() => signOut(auth).then(() => router.push("/admin"))}
+          onClick={() => signOut(getAuthInstance()).then(() => router.push("/admin"))}
           className="ml-8 shrink-0 text-sm text-slate hover:text-navy transition-colors"
         >
           Sign out

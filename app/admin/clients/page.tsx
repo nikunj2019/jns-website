@@ -12,7 +12,7 @@ import {
   updateDoc,
   getDoc,
 } from "firebase/firestore";
-import { auth, getDb } from "../../lib/firebase";
+import { getAuthInstance, getDb } from "../../lib/firebase";
 import { AdminNav } from "../AdminNav";
 import { DEFAULT_QUESTIONS, STEP_LABELS, type SurveyQuestion, type QuestionType } from "../../lib/survey-questions";
 import { generateQuestionsWithAI, AI_AVAILABLE } from "../../lib/generate-questions";
@@ -410,7 +410,7 @@ export default function ClientsPage() {
   }, []);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
+    const unsub = onAuthStateChanged(getAuthInstance(), (user) => {
       if (!user) {
         router.replace("/admin");
       } else {

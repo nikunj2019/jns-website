@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
-import { auth, getDb } from "../../lib/firebase";
+import { getAuthInstance, getDb } from "../../lib/firebase";
 import { AdminNav } from "../AdminNav";
 
 interface Submission {
@@ -28,7 +28,7 @@ export default function ResultsPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
+    const unsub = onAuthStateChanged(getAuthInstance(), (user) => {
       if (!user) {
         router.replace("/admin");
       } else {
