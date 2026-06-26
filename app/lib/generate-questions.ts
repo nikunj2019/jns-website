@@ -16,8 +16,46 @@ Generate survey questions as a JSON array. Each object must match this exact Typ
 Rules:
 - Spread questions across steps 1, 2, and 3 naturally
 - Use checkbox or radio for predefined choices, textarea for open-ended, text/email/tel for contact info
-- Keep labels concise and conversational
-- Return ONLY a valid JSON array — no markdown fences, no explanation, no extra text`;
+- Keep labels concise and conversational (no apostrophes or special characters in strings)
+- Generate at most 10 questions total
+- Return ONLY a valid JSON array — no markdown, no code fences, no explanation, nothing else`;
+
+// Walk bracket depth to find the matching ] for the first [, then try to
+// repair truncated output by closing off at the last complete object.
+function extractArray(text: string): unknown {
+  const start = text.indexOf("[");
+  if (start === -1) throw new Error("No JSON array found in response");
+
+  // Track depth to find the closing bracket, respecting strings and escapes
+  let depth = 0;
+  let inStr = false;
+  let esc = false;
+  for (let i = start; i < text.length; i++) {
+    const c = text[i];
+    if (esc) { esc = false; continue; }
+    if (c === "\\" && inStr) { esc = true; continue; }
+    if (c === '"') { inStr = !inStr; continue; }
+    if (inStr) continue;
+    if (c === "[" || c === "{") depth++;
+    if (c === "]" || c === "}") {
+      depth--;
+      if (depth === 0) {
+        try { return JSON.parse(text.slice(start, i + 1)); } catch { break; }
+      }
+    }
+  }
+
+  // Truncated — close off at the last complete object "}, " or "}"
+  const slice = text.slice(start);
+  for (const tail of ["}\n]", "},\n]", "  }\n]", "},", "}"]) {
+    const idx = slice.lastIndexOf(tail);
+    if (idx === -1) continue;
+    const attempt = slice.slice(0, idx + tail.replace(/,\n]|,$/,"").length + 1) + "]";
+    try { return JSON.parse(attempt); } catch { /* try next */ }
+  }
+
+  throw new Error("Could not parse questions from response — try again");
+}
 
 export async function generateQuestionsWithAI(prompt: string): Promise<SurveyQuestion[]> {
   const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
@@ -47,15 +85,8 @@ export async function generateQuestionsWithAI(prompt: string): Promise<SurveyQue
   const data = await res.json();
   const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 
-  // Extract the JSON array robustly — find first [ and last ]
-  const start = text.indexOf("[");
-  const end = text.lastIndexOf("]");
-  if (start === -1 || end === -1 || end <= start)
-    throw new Error("No JSON array found in response");
-
-  const parsed = JSON.parse(text.slice(start, end + 1));
+  const parsed = extractArray(text);
   if (!Array.isArray(parsed)) throw new Error("Response was not a JSON array");
-
   return parsed as SurveyQuestion[];
 }
 
