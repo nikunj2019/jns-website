@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { collection, getDocsFromServer, orderBy, query } from "firebase/firestore";
 import { getAuthInstance, getDb } from "../../lib/firebase";
 import { AdminNav } from "../AdminNav";
 
@@ -42,21 +42,26 @@ export default function ResultsPage() {
   const loadSubmissions = useCallback(async () => {
     setDataLoading(true);
     try {
-      const q = query(collection(getDb(), "survey-submissions"), orderBy("submittedAt", "desc"));
-      const snap = await getDocs(q);
-      const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Submission));
-      setSubmissions(docs);
-    } catch {
-      // orderBy might fail without index, try without ordering
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Timed out")), 12_000)
+      );
+      let snap;
       try {
-        const snap = await getDocs(collection(getDb(), "survey-submissions"));
-        const docs = snap.docs
-          .map((d) => ({ id: d.id, ...d.data() } as Submission))
-          .sort((a, b) => (b.submittedAt ?? "").localeCompare(a.submittedAt ?? ""));
-        setSubmissions(docs);
-      } catch (err) {
-        console.error("Failed to load submissions:", err);
+        const q = query(collection(getDb(), "survey-submissions"), orderBy("submittedAt", "desc"));
+        snap = await Promise.race([getDocsFromServer(q), timeout]);
+      } catch {
+        // orderBy might fail without index — retry without ordering
+        snap = await Promise.race([
+          getDocsFromServer(collection(getDb(), "survey-submissions")),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Timed out")), 12_000)),
+        ]);
       }
+      const docs = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() } as Submission))
+        .sort((a, b) => (b.submittedAt ?? "").localeCompare(a.submittedAt ?? ""));
+      setSubmissions(docs);
+    } catch (err) {
+      console.error("Failed to load submissions:", err);
     } finally {
       setDataLoading(false);
     }

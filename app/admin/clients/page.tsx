@@ -7,6 +7,7 @@ import {
   collection,
   addDoc,
   getDocs,
+  getDocsFromServer,
   doc,
   deleteDoc,
   updateDoc,
@@ -477,7 +478,13 @@ export default function ClientsPage() {
     setDataLoading(true);
     setDataError("");
     try {
-      const snap = await getDocs(collection(getDb(), "survey-invites"));
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Timed out — check your connection and try again.")), 12_000)
+      );
+      const snap = await Promise.race([
+        getDocsFromServer(collection(getDb(), "survey-invites")),
+        timeout,
+      ]);
       const docs = snap.docs
         .map((d) => ({ id: d.id, ...d.data() } as Invite))
         .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
-import { getDoc, setDoc, doc } from "firebase/firestore";
+import { getDoc, setDoc, doc, getDocFromServer } from "firebase/firestore";
 import { getAuthInstance, getDb } from "../../lib/firebase";
 import { DEFAULT_QUESTIONS, STEP_LABELS, type SurveyQuestion, type QuestionType } from "../../lib/survey-questions";
 import { AdminNav } from "../AdminNav";
@@ -149,7 +149,13 @@ export default function SurveyBuilderPage() {
 
   const loadQuestions = useCallback(async () => {
     try {
-      const snap = await getDoc(doc(getDb(), "survey-config", "questions"));
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Timed out")), 12_000)
+      );
+      const snap = await Promise.race([
+        getDocFromServer(doc(getDb(), "survey-config", "questions")),
+        timeout,
+      ]);
       if (snap.exists()) {
         const data = snap.data();
         if (Array.isArray(data.questions) && data.questions.length > 0) {
