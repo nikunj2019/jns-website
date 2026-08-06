@@ -1,4 +1,8 @@
 User-agent: *
 Allow: /
 
+# Temporary private event app. Carries a home address and a personal phone
+# number for RSVPs, so it is deliberately kept out of search indexes.
+Disallow: /golf/
+
 Sitemap: https://jnsconsulting.ai/sitemap.xml

@@ -45,3 +45,6 @@ next-env.d.ts
 
 # Claude Code agent tooling
 .claude/
+
+# Verification output from scripts/screenshot-golf.mjs
+/.screenshots/

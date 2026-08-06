@@ -1,0 +1,96 @@
+rules_version = '2';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Firestore security rules for jnsconsulting.ai
+//
+// Deploy with:   firebase deploy --only firestore:rules
+// (The GitHub Actions workflow deploys hosting only, so this is a manual step
+// whenever this file changes.)
+//
+// The golf app is a fully static site with no server, so these rules are the
+// only thing standing between a player and someone else's scorecard. Every
+// restriction that matters is expressed here, not in the UI.
+// ─────────────────────────────────────────────────────────────────────────────
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Organizers who may edit the outing. Keep this list short and exact.
+    // Hard-coded rather than read from a document so authorisation costs no
+    // extra read and can't be escalated by writing to a collection.
+    function isGolfAdmin() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() in [
+             'nvj208@nyu.edu',
+             'ccondict@hanover.com'
+           ];
+    }
+
+    function signedInEmail() {
+      return request.auth != null ? request.auth.token.email.lower() : '';
+    }
+
+    // ── Existing survey collections (unchanged) ─────────────────────────────
+
+    match /survey-submissions/{id} {
+      allow create: if true;
+      allow read, update, delete: if request.auth != null;
+    }
+
+    match /survey-config/{id} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // ── Golf outing ─────────────────────────────────────────────────────────
+    // Everything about the event is public to read: it replaces a paper flyer
+    // handed round the neighborhood, and the leaderboard is meant to be watched
+    // by people who never sign in.
+
+    match /golf-config/{id} {
+      allow read: if true;
+      allow write: if isGolfAdmin();
+    }
+
+    match /golf-course/{id} {
+      allow read: if true;
+      allow write: if isGolfAdmin();
+    }
+
+    match /golf-sponsors/{id} {
+      allow read: if true;
+      allow write: if isGolfAdmin();
+    }
+
+    // Rosters are admin-managed. Players never edit team membership — otherwise
+    // anyone could add themselves to a team and then score for it.
+    match /golf-teams/{teamId} {
+      allow read: if true;
+      allow write: if isGolfAdmin();
+    }
+
+    // Scores: writable by an admin, or by someone whose signed-in address is on
+    // that team's roster. The team document is the source of truth for who that
+    // is, and players can't write to it.
+    match /golf-scores/{teamId} {
+      function onThisTeam() {
+        let team = get(/databases/$(database)/documents/golf-teams/$(teamId));
+        return request.auth != null
+          && team != null
+          && signedInEmail() in team.data.playerEmails;
+      }
+
+      // Only ever these two fields, and strokes must stay a map — this stops a
+      // stray client from parking arbitrary data in the collection.
+      function validShape() {
+        return request.resource.data.keys().hasOnly(['strokes', 'updatedAt'])
+          && request.resource.data.strokes is map;
+      }
+
+      allow read: if true;
+      allow create, update: if validShape() && (isGolfAdmin() || onThisTeam());
+      allow delete: if isGolfAdmin();
+    }
+  }
+}

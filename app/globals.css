@@ -19,6 +19,16 @@
   /* Typography */
   --font-display: var(--font-playfair), "Playfair Display", Georgia, "Times New Roman", serif;
   --font-sans: var(--font-inter), Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* ── Golf outing palette (scoped to /golf) ───────────────────────────────── */
+  --color-fairway-900: #0b2016;
+  --color-fairway-800: #123024;
+  --color-fairway-700: #1b4332;
+  --color-fairway-600: #2d6a4f;
+  --color-cream-golf: #f5f1e6;
+  --color-sand: #e8dcc4;
+  --color-brass: #c9a227;
+  --color-brass-soft: #e0c469;
 }
 
 html,
@@ -99,4 +109,137 @@ html {
 }
 .glow-pulse {
   animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* ─── Golf outing (/golf) ──────────────────────────────────────────────────────
+   The golf app owns the whole viewport and inverts the site's light palette.
+   Keying off .golf-root — rendered by app/golf/layout.tsx — means the dark
+   background is present in the prerendered HTML, so overscroll never flashes
+   ivory and there's no hydration swap. */
+body:has(.golf-root) {
+  background-color: var(--color-fairway-900);
+  color: var(--color-cream-golf);
+}
+
+/* Standalone (installed) mode: pad for the notch and home indicator. */
+.golf-root {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Subtle vertical fairway striping, echoing the mown-grass look of the flyer. */
+.golf-stripes {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(245, 241, 230, 0.028) 0px,
+    rgba(245, 241, 230, 0.028) 26px,
+    transparent 26px,
+    transparent 52px
+  );
+}
+
+/* Brass hairline used under section labels. */
+.golf-rule {
+  border: 0;
+  border-top: 1px solid rgba(201, 162, 39, 0.35);
+}
+
+.golf-eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--color-brass);
+}
+
+/* Tabular figures for scores, yardages, and distances — keeps columns from
+   jittering as numbers update live. */
+.golf-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ── Map markers ──────────────────────────────────────────────────────────────
+   MapLibre markers are plain DOM nodes created imperatively, so they live
+   outside Tailwind's scan and are styled here. Sized for a gloved thumb. */
+.golf-hole-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(245, 241, 230, 0.6);
+  background-color: rgba(11, 32, 22, 0.88);
+  color: var(--color-cream-golf);
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.golf-hole-marker:hover {
+  transform: scale(1.12);
+  border-color: var(--color-brass);
+}
+
+.golf-hole-marker.is-active {
+  background-color: var(--color-brass);
+  border-color: #fff;
+  color: var(--color-fairway-900);
+  transform: scale(1.18);
+}
+
+.golf-measure-marker {
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  border: 2px solid #fff;
+  background-color: var(--color-brass);
+  box-shadow: 0 0 0 4px rgba(201, 162, 39, 0.25);
+}
+
+/* MapLibre's own chrome, darkened to match the app. */
+.golf-root .maplibregl-ctrl-attrib,
+.golf-root .maplibregl-ctrl-group {
+  background-color: rgba(11, 32, 22, 0.85);
+  color: var(--color-cream-golf);
+}
+
+.golf-root .maplibregl-ctrl-attrib a {
+  color: var(--color-brass-soft);
+}
+
+.golf-root .maplibregl-ctrl-group button {
+  background-color: transparent;
+}
+
+.golf-root .maplibregl-ctrl-group button + button {
+  border-top-color: rgba(245, 241, 230, 0.15);
+}
+
+.golf-root .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+  filter: invert(1) brightness(1.6);
+}
+
+.golf-root .maplibregl-ctrl-scale {
+  background-color: rgba(11, 32, 22, 0.7);
+  border-color: rgba(245, 241, 230, 0.4);
+  color: var(--color-cream-golf);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .golf-root *,
+  .golf-root *::before,
+  .golf-root *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

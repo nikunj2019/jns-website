@@ -1,0 +1,9 @@
+{
+  "source": "placeholder — no geometry imported yet",
+  "fetchedFor": "The Trophy Club, Lebanon, IN",
+  "note": "Run `node scripts/fetch-course-data.mjs` from an unblocked network to import OpenStreetMap geometry, or trace the course at /golf/admin/course/trace/. Whatever lands in Firestore takes precedence over this file.",
+  "center": { "lat": 40.0979318, "lng": -86.5304796 },
+  "bbox": [-86.5405, 40.0899, -86.5205, 40.106],
+  "holes": [],
+  "features": { "type": "FeatureCollection", "features": [] }
+}
