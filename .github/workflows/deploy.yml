@@ -55,3 +55,48 @@ jobs:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
+
+  # Firestore rules are the golf app's only access control — the site is a
+  # static export, so there is no server to check anything. Deploying them by
+  # hand meant they could lag the app that depends on them, which fails in the
+  # worst way: /golf loads, and every score write is silently refused.
+  #
+  # Deliberately a separate job rather than a step in the one above. The
+  # hosting service account may not carry the Firebase Rules Admin role, and a
+  # missing role should not be able to block the marketing site from shipping.
+  # If this job fails, the site still deploys and the red check says exactly
+  # what to fix.
+  deploy_rules:
+    name: Deploy Firestore Rules
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Deploy rules
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          if [ -z "${FIREBASE_SERVICE_ACCOUNT}" ]; then
+            echo "::error::FIREBASE_SERVICE_ACCOUNT is not set; cannot deploy firestore.rules."
+            exit 1
+          fi
+          # Written outside the workspace so a stray build step can't sweep it
+          # into the deployed artifact.
+          printf '%s' "${FIREBASE_SERVICE_ACCOUNT}" > "${RUNNER_TEMP}/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="${RUNNER_TEMP}/sa.json"
+          npx --yes firebase-tools@13 deploy \
+            --only firestore:rules \
+            --project "${FIREBASE_PROJECT_ID}" \
+            --non-interactive
+          rm -f "${RUNNER_TEMP}/sa.json"

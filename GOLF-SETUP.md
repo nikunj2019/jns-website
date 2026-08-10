@@ -30,12 +30,17 @@ won't work (the flyer content, course map and scorecard work regardless).
    Email/Password is enabled, so without the check anyone could register an
    account claiming an owner's address.
 4. **Authentication → Settings → Authorized domains** — add `jnsconsulting.ai`.
-5. **Deploy the security rules:**
+5. **Security rules deploy themselves** on every push to `main`, via the
+   `Deploy Firestore Rules` job. They are the golf app's only access control,
+   so leaving them to a manual step meant they could lag the app that depends
+   on them. To run it by hand:
    ```bash
    firebase deploy --only firestore:rules
    ```
-   The GitHub Actions workflow deploys hosting only, so this is manual whenever
-   `firestore.rules` changes.
+   If that CI job fails with a permissions error, the hosting service account
+   in `FIREBASE_SERVICE_ACCOUNT` needs the **Firebase Rules Admin** role
+   (`roles/firebaserules.admin`) in the Google Cloud console. The site still
+   deploys when this job fails — only the rules are held back.
 
 ### Who can administer
 
