@@ -1,14 +1,14 @@
 {
   "id": "/golf/",
-  "name": "Stonegate Men's Golf Scramble",
+  "name": "Stonegate Golf Outing",
   "short_name": "Stonegate Golf",
-  "description": "Live scramble scoring, GPS course map, and event details for the Annual Stonegate Men's Golf Scramble at The Trophy Club.",
-  "start_url": "/golf/",
+  "description": "Live scramble scoring, GPS course map and leaderboard for the Stonegate Golf Outing at The Trophy Club.",
+  "start_url": "/golf/?source=pwa",
   "scope": "/golf/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0b2016",
-  "theme_color": "#0b2016",
+  "background_color": "#f7f8f4",
+  "theme_color": "#073d2b",
   "categories": ["sports", "utilities"],
   "icons": [
     {
@@ -40,19 +40,19 @@
     {
       "name": "Enter Scores",
       "short_name": "Scores",
-      "url": "/golf/score/",
+      "url": "/golf/#score",
       "icons": [{ "src": "/golf/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Leaderboard",
       "short_name": "Leaderboard",
-      "url": "/golf/leaderboard/",
+      "url": "/golf/#leaders",
       "icons": [{ "src": "/golf/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Course Map",
       "short_name": "Course",
-      "url": "/golf/course/",
+      "url": "/golf/#map",
       "icons": [{ "src": "/golf/icons/icon-192.png", "sizes": "192x192" }]
     }
   ]

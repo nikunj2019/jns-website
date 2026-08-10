@@ -1,6 +1,14 @@
 import type { Metadata, Viewport } from "next";
+import "./golf.css";
+import JNSSplash from "./components/JNSSplash";
 import ServiceWorker from "./components/ServiceWorker";
-import { EVENT } from "./lib/event";
+import { EVENT } from "./lib/config";
+
+/**
+ * `golf.css` is imported here rather than in the root layout on purpose: Next
+ * chunks CSS per route, so the app's ~70 KB of unscoped styles ship only to
+ * /golf/** and can't collide with the marketing site's Tailwind utilities.
+ */
 
 export const metadata: Metadata = {
   title: {
@@ -37,15 +45,15 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: "/golf/icons/apple-touch-icon.png", sizes: "180x180" }],
   },
-  // Temporary event site carrying a home address and a personal mobile number —
-  // deliberately kept out of search indexes.
+  // A private event app for one afternoon — deliberately kept out of search.
   robots: { index: false, follow: false },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0b2016",
+  themeColor: "#073d2b",
   // The score-entry and map screens are laid out to fit without zooming, but
-  // pinch-zoom stays enabled — disabling it would fail WCAG 1.4.4.
+  // pinch-zoom stays enabled — `maximumScale: 1` would fail WCAG 1.4.4, and
+  // someone reading a yardage in bright sun is exactly who needs to zoom.
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -53,8 +61,9 @@ export const viewport: Viewport = {
 
 export default function GolfLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="golf-root flex min-h-screen flex-col bg-fairway-900 text-cream-golf">
+    <div className="golf-root">
       <ServiceWorker />
+      <JNSSplash />
       {children}
     </div>
   );

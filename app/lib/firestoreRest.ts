@@ -126,16 +126,25 @@ export async function fsAddDoc(
   return doc.name.split("/").pop()!;
 }
 
-/** Overwrite specific fields on a document (merge/patch). Token optional for public writes. */
+/**
+ * Overwrite specific fields on a document (merge/patch). Token optional for
+ * public writes. Creates the document if it doesn't exist yet.
+ *
+ * `fieldPaths` overrides the default mask of top-level keys. Pass it to patch
+ * *inside* a map — `["strokes.h5"]` updates one hole and leaves the other
+ * seventeen alone, where the default mask would replace the whole `strokes`
+ * map and lose whatever a team-mate's phone wrote a second earlier.
+ */
 export async function fsPatchDoc(
   col: string,
   id: string,
   data: Record<string, unknown>,
-  token?: string
+  token?: string,
+  fieldPaths?: string[]
 ): Promise<void> {
   const fields: Record<string, FV> = {};
   for (const [k, v] of Object.entries(data)) fields[k] = toFV(v);
-  const mask = Object.keys(data)
+  const mask = (fieldPaths ?? Object.keys(data))
     .map((k) => `updateMask.fieldPaths=${encodeURIComponent(k)}`)
     .join("&");
   await req(`${base()}/${col}/${id}?${mask}`, {
