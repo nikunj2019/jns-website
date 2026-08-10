@@ -52,7 +52,16 @@ export function serveOut(port = 4321) {
   return new Promise((resolve) => server.listen(port, () => resolve(server)));
 }
 
-const DEFAULT_ROUTES = ["/golf/", "/golf/info/", "/golf/sponsors/"];
+// The app is one page with the view in the hash; these are its screens.
+const DEFAULT_ROUTES = [
+  "/golf/",
+  "/golf/#join",
+  "/golf/#map",
+  "/golf/#leaders",
+  "/golf/#more",
+  "/golf/#sponsors",
+  "/golf/admin/",
+];
 
 async function main() {
   const routes = process.argv.slice(2).length ? process.argv.slice(2) : DEFAULT_ROUTES;

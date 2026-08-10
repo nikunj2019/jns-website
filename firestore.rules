@@ -10,25 +10,61 @@ rules_version = '2';
 // The golf app is a fully static site with no server, so these rules are the
 // only thing standing between a player and someone else's scorecard. Every
 // restriction that matters is expressed here, not in the UI.
+//
+// ── How team access works ────────────────────────────────────────────────────
+// Players join with a short code their organizer texts them; there is no email
+// sign-in, because a foursome standing on a tee box will not do one. Making a
+// shared secret enforceable without a server takes three collections:
+//
+//   golf-access/{CODE}   knowing the code lets you `get` it, and it hands back
+//                        a team id. `list` is denied, so the collection can't
+//                        be enumerated to harvest codes.
+//   golf-claims/{uid}    the player signs in anonymously and records the code
+//                        they proved. Rules verify the code against
+//                        golf-access at write time, so the claim can't lie.
+//   golf-scores/{teamId} writable only if the caller's claim names this team.
+//
+// The trick that makes it work is that these rules may `get()` documents the
+// client itself cannot read — so the code is never exposed to anyone who did
+// not already have it, and never has to be stored on a publicly readable
+// document. A player who knows team A's code cannot touch team B's scores.
 // ─────────────────────────────────────────────────────────────────────────────
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Organizers who may edit the outing. Keep this list short and exact.
-    // Hard-coded rather than read from a document so authorisation costs no
-    // extra read and can't be escalated by writing to a collection.
-    function isGolfAdmin() {
+    function signedInEmail() {
+      return request.auth != null && request.auth.token.email != null
+        ? request.auth.token.email.lower()
+        : '';
+    }
+
+    // Owners can appoint and remove other organizers. Hard-coded, because a
+    // list that can appoint itself is not an access control.
+    //
+    // `email_verified` is not optional here. Firebase allows self-signup as
+    // soon as Email/Password is enabled, so without it anyone could register
+    // an account claiming an owner's address and inherit the keys.
+    function isGolfOwner() {
       return request.auth != null
         && request.auth.token.email_verified == true
-        && request.auth.token.email.lower() in [
-             'nvj208@nyu.edu',
-             'ccondict@hanover.com'
+        && signedInEmail() in [
+             'hello@jnssolutions.ai',
+             'nikunjjadawala@nyu.edu',
+             'nvj208@nyu.edu'
            ];
     }
 
-    function signedInEmail() {
-      return request.auth != null ? request.auth.token.email.lower() : '';
+    // Organizers: the owners above, plus anyone an owner has added to
+    // golf-admins. Unlike the owner list this is data, so the outing can gain
+    // a scorekeeper on the morning of without a deploy.
+    function isGolfAdmin() {
+      return isGolfOwner()
+        || (
+          request.auth != null
+          && request.auth.token.email_verified == true
+          && exists(/databases/$(database)/documents/golf-admins/$(signedInEmail()))
+        );
     }
 
     // ── Existing survey collections (unchanged) ─────────────────────────────
@@ -44,41 +80,75 @@ service cloud.firestore {
     }
 
     // ── Golf outing ─────────────────────────────────────────────────────────
-    // Everything about the event is public to read: it replaces a paper flyer
-    // handed round the neighborhood, and the leaderboard is meant to be watched
-    // by people who never sign in.
+    // Everything about the event is public to read: the leaderboard is meant to
+    // be watched by people who never sign in.
 
     match /golf-config/{id} {
       allow read: if true;
       allow write: if isGolfAdmin();
     }
 
-    match /golf-course/{id} {
+    // Who may organize the outing. Publicly readable so the app can decide
+    // whether to offer the admin UI at all; only an owner may edit it, and the
+    // owner list itself lives in this file, out of reach.
+    match /golf-admins/{email} {
       allow read: if true;
-      allow write: if isGolfAdmin();
-    }
-
-    match /golf-sponsors/{id} {
-      allow read: if true;
-      allow write: if isGolfAdmin();
+      allow write: if isGolfOwner();
     }
 
     // Rosters are admin-managed. Players never edit team membership — otherwise
-    // anyone could add themselves to a team and then score for it.
+    // anyone could add themselves to a team and then score for it. Access codes
+    // are deliberately NOT stored here; this document is world-readable.
     match /golf-teams/{teamId} {
       allow read: if true;
       allow write: if isGolfAdmin();
     }
 
-    // Scores: writable by an admin, or by someone whose signed-in address is on
-    // that team's roster. The team document is the source of truth for who that
-    // is, and players can't write to it.
+    // Code → team. `get` is public on purpose: the code is the secret, and
+    // being able to redeem one you already hold is the entire feature. `list`
+    // is denied so nobody can walk the collection and collect them all.
+    match /golf-access/{code} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if isGolfAdmin();
+    }
+
+    // The organizer-facing copy, keyed by team so the admin screen can show
+    // each foursome its own link. Never readable by players.
+    match /golf-team-codes/{teamId} {
+      allow read, write: if isGolfAdmin();
+    }
+
+    // A player's proof that they redeemed a valid code. Written by the player
+    // (anonymously signed in), but only if the code they name really does map
+    // to the team they name — which is checked here against golf-access, a
+    // document the player is otherwise free to read only by knowing its id.
+    //
+    // Readable only by its owner, so the code inside never leaks.
+    match /golf-claims/{uid} {
+      function provesCode() {
+        return request.resource.data.keys().hasOnly(['teamId', 'code', 'joinedAt'])
+          && request.resource.data.code is string
+          && request.resource.data.teamId is string
+          && exists(/databases/$(database)/documents/golf-access/$(request.resource.data.code))
+          && get(/databases/$(database)/documents/golf-access/$(request.resource.data.code)).data.teamId
+             == request.resource.data.teamId;
+      }
+
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null
+        && request.auth.uid == uid
+        && provesCode();
+    }
+
+    // Scores: writable by an organizer, or by a player whose claim names this
+    // exact team. One document per team — it's a scramble, so there is one
+    // score per hole per foursome.
     match /golf-scores/{teamId} {
       function onThisTeam() {
-        let team = get(/databases/$(database)/documents/golf-teams/$(teamId));
         return request.auth != null
-          && team != null
-          && signedInEmail() in team.data.playerEmails;
+          && exists(/databases/$(database)/documents/golf-claims/$(request.auth.uid))
+          && get(/databases/$(database)/documents/golf-claims/$(request.auth.uid)).data.teamId == teamId;
       }
 
       // Only ever these two fields, and strokes must stay a map — this stops a

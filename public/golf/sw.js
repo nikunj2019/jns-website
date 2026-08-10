@@ -12,22 +12,24 @@
  *   Firebase / API     network-only, never cached     (a stale score is worse than no score)
  */
 
-const VERSION = "v1";
+// Bumped when the shell changes shape. v2 is the single-screen app: every
+// former route (/golf/score/, /golf/leaderboard/, …) is now a view inside
+// /golf/, so the old per-route shell entries would 404 on install.
+const VERSION = "v2";
 const SHELL_CACHE = `golf-shell-${VERSION}`;
 const ASSET_CACHE = `golf-assets-${VERSION}`;
 const TILE_CACHE = "golf-tiles"; // deliberately unversioned — tiles don't change
 
 const SHELL_URLS = [
   "/golf/",
-  "/golf/info/",
-  "/golf/leaderboard/",
-  "/golf/teams/",
-  "/golf/course/",
-  "/golf/score/",
-  "/golf/sponsors/",
   "/golf/manifest.webmanifest",
   "/golf/icons/icon-192.png",
   "/golf/icons/icon-512.png",
+  // The course aerial is the whole map. Precached rather than left to
+  // stale-while-revalidate, because the screen someone opens in a dead spot on
+  // the ninth is exactly this one, and it may never have been fetched before.
+  "/golf/trophy-club-course-aerial.webp",
+  "/golf/jns-logo.png",
 ];
 
 /** Hosts that must always hit the network — auth and live data. */
