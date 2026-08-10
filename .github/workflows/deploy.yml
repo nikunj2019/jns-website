@@ -15,6 +15,11 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      # action-hosting-deploy publishes the preview URL as a check run, which
+      # needs checks:write. Without it the action 403s and dies *after* a
+      # successful build — so a green build still reports the PR as failed.
+      # Never surfaced before because the preview path had never run.
+      checks: write
 
     steps:
       - uses: actions/checkout@v4
