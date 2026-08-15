@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Icon from "./components/Icon";
+import AnnouncementTakeover from "./components/AnnouncementTakeover";
 import JNSInterstitial from "./components/JNSInterstitial";
 import TeamMessages from "./components/TeamMessages";
 import { EVENT, SCORES_COLLECTION, SPONSORS, TEAMS_COLLECTION } from "./lib/config";
@@ -102,6 +103,9 @@ export default function GolfApp() {
   const [joining, setJoining] = useState(true);
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [note, setNote] = useState("");
+  // Suppresses the JNS card while an announcement owns the screen — two
+  // overlays at once is nobody's idea of clear.
+  const [takeoverShowing, setTakeoverShowing] = useState(false);
   const headingRef = useRef<HTMLDivElement | null>(null);
 
   const teamsState = useGolfCollection<Team>(TEAMS_COLLECTION, mapTeam);
@@ -340,7 +344,13 @@ export default function GolfApp() {
 
       {/* Sits outside .v3-body so it overlays the app rather than scrolling
           inside whichever screen happens to be open when a hole is finished. */}
-      <JNSInterstitial teamId={teamId} thru={myRow?.thru ?? 0} />
+      {!takeoverShowing && <JNSInterstitial teamId={teamId} thru={myRow?.thru ?? 0} />}
+
+      <AnnouncementTakeover
+        announcements={announcementsState.docs}
+        onOpenMessages={() => go("messages")}
+        onVisibilityChange={setTakeoverShowing}
+      />
 
       <BottomNav view={view} go={go} />
     </main>

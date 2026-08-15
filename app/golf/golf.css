@@ -1181,3 +1181,88 @@ body:has(.golf-root) {
   .teams-panel .team-actions button, .hole-grid button):active {
   transform: scale(.97);
 }
+
+/* ── announcement takeover ─────────────────────────────────────────────────
+ * The only thing in this app allowed to take the whole screen. An announcement
+ * is the one message class that can't afford to be missed — "play suspended",
+ * "shotgun moved" — and a badge is the wrong weight for that.
+ *
+ * Above the bottom nav's z-index on purpose: half-covering the screen while
+ * leaving the tab bar tappable would let someone navigate away without reading
+ * it, which defeats the point.
+ */
+.takeover {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: rgba(6, 32, 22, .82);
+  backdrop-filter: blur(6px);
+  animation: fade-in 160ms ease-out both;
+}
+.takeover-card {
+  width: min(100%, 420px);
+  max-height: 84dvh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 22px;
+  padding: 26px 22px 20px;
+  text-align: center;
+  box-shadow: 0 24px 70px rgba(0, 20, 12, .4);
+  animation: screen-in 220ms cubic-bezier(.22, .61, .36, 1) both;
+}
+.takeover-kicker {
+  display: block;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .18em;
+  color: #9b7a2e;
+}
+.takeover-card h2 {
+  margin: 10px 0 12px;
+  font: 26px/1.15 Georgia, serif;
+  overflow-wrap: anywhere;
+}
+.takeover-card p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #2c3a34;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+.takeover-card > time {
+  display: block;
+  margin-top: 14px;
+  font-size: 10.5px;
+  color: #98a09b;
+}
+.takeover-dismiss {
+  width: 100%;
+  min-height: 50px;
+  margin-top: 18px;
+  border: 0;
+  border-radius: 13px;
+  background: var(--pine, #073d2b);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.takeover-secondary {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 8px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--pine, #073d2b);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}

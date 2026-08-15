@@ -2,47 +2,39 @@
 
 import { useEffect, useState } from "react";
 
-const SEEN_KEY = "stonegate:splash-seen";
-const FADE_AT_MS = 1250;
-const REMOVE_AT_MS = 1700;
-
 /**
  * The JNS credit, shown while the app boots.
  *
- * Once per session, not once per navigation — a scorekeeper moving between the
- * map and the scorecard forty times a round should see this exactly once. It
- * also stands aside entirely for anyone who has asked for reduced motion, and
- * is `aria-hidden` because it says nothing a screen reader needs mid-round.
+ * Held for a full three seconds on every load, by request — JNS is the
+ * technology partner and this is the credit. It previously showed once per
+ * session for 1.25s; both of those were changed deliberately, so if this ever
+ * feels long on a tee box, this constant is the dial and nothing else needs
+ * touching.
+ *
+ * A note on `prefers-reduced-motion`: that preference is about motion, not
+ * about branding, so the card still shows for those users — only the loader
+ * animation and the fade are dropped (handled in golf.css). Skipping the credit
+ * entirely would be reading the preference as something it isn't.
  */
+
+/** How long the card stays fully visible before it starts to leave. */
+const HOLD_MS = 3000;
+/** Matches the opacity transition in golf.css, so the node is removed after it. */
+const FADE_MS = 420;
+
 export default function JNSSplash() {
-  const [phase, setPhase] = useState<"hidden" | "visible" | "leaving">("hidden");
+  const [phase, setPhase] = useState<"visible" | "leaving" | "gone">("visible");
 
   useEffect(() => {
-    let seen = false;
-    try {
-      seen = window.sessionStorage.getItem(SEEN_KEY) === "1";
-    } catch {
-      /* Private browsing — treat as unseen. */
-    }
-    if (seen || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-    try {
-      window.sessionStorage.setItem(SEEN_KEY, "1");
-    } catch {
-      /* Nothing to remember. */
-    }
-
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- gated on sessionStorage and a media query, both readable only on the client
-    setPhase("visible");
-    const fade = window.setTimeout(() => setPhase("leaving"), FADE_AT_MS);
-    const done = window.setTimeout(() => setPhase("hidden"), REMOVE_AT_MS);
+    const fade = window.setTimeout(() => setPhase("leaving"), HOLD_MS);
+    const done = window.setTimeout(() => setPhase("gone"), HOLD_MS + FADE_MS);
     return () => {
       clearTimeout(fade);
       clearTimeout(done);
     };
   }, []);
 
-  if (phase === "hidden") return null;
+  if (phase === "gone") return null;
 
   return (
     <div className={`jns-splash${phase === "leaving" ? " is-leaving" : ""}`} aria-hidden>
