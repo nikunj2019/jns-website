@@ -4,8 +4,8 @@ The event app lives at **`/golf/`** on the existing JNS site. It's a Next.js
 static export served by the same Firebase Hosting project, so it needs no new
 domain, DNS, or deploy pipeline — pushing to `main` ships it.
 
-- **Players:** `https://jnsconsulting.ai/golf/`
-- **Organizers:** `https://jnsconsulting.ai/golf/admin/`
+- **Players:** `https://jnssolutions.ai/golf/`
+- **Organizers:** `https://jnssolutions.ai/golf/admin/`
 
 It's deliberately `noindex` and `Disallow`ed in `robots.txt`.
 
@@ -31,10 +31,18 @@ won't work (the flyer content, course map and scorecard work regardless).
    The verified-email requirement isn't red tape: Firebase allows public
    self-signup the moment Email/Password is enabled, so without it anyone could
    register an account claiming an owner's address and inherit the keys.
-2. **Authentication → Settings → Authorized domains** — add `jnsconsulting.ai`
-   and `jns-consulting.web.app`. Google sign-in is rejected from any domain not
-   on this list.
-5. **Security rules deploy themselves** on every push to `main`, via the
+2. **Authentication → Settings → Authorized domains** — this list must contain
+   **every** domain the app is served from, or Google sign-in is rejected there
+   with "This domain isn't on the Firebase authorized domains list":
+
+   - `jnssolutions.ai` — where the app actually runs
+   - `jns-consulting.web.app` — the Firebase default domain
+   - `jnsconsulting.ai` — only if the site is also served there
+
+   Preview deploys get a one-off `*.web.app` domain that will never be on this
+   list, so organizer sign-in always fails on a preview URL. Player scoring and
+   the course map work there regardless.
+3. **Security rules deploy themselves** on every push to `main`, via the
    `Deploy Firestore Rules` job. They are the golf app's only access control,
    so leaving them to a manual step meant they could lag the app that depends
    on them. To run it by hand:
@@ -79,7 +87,7 @@ app — which is the point.
 ## 2. How team access works
 
 There is no player sign-in. Each foursome gets an eight-character code, and the
-captain's link carries it: `https://jnsconsulting.ai/golf/?code=ABCD2345`.
+captain's link carries it: `https://jnssolutions.ai/golf/?code=ABCD2345`.
 
 Making a shared secret enforceable without a server takes three collections:
 
