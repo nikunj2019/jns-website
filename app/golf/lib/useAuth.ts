@@ -13,7 +13,7 @@ import {
   type User,
 } from "firebase/auth";
 import { getAuthInstance } from "../../lib/firebase";
-import { fsGetDoc } from "../../lib/firestoreRest";
+import { fsGetDocResult } from "../../lib/firestoreRest";
 import { ADMINS_COLLECTION, isOwnerEmail } from "./config";
 
 export type AdminRole = "owner" | "admin" | "scorekeeper" | null;
@@ -24,6 +24,12 @@ export type AdminAuthState = {
   role: AdminRole;
   /** True once we know both who is signed in and whether they may organize. */
   ready: boolean;
+  /**
+   * Set when the `golf-admins` lookup couldn't be performed at all — usually
+   * because the deployed rules don't permit reading that collection. Access is
+   * granted provisionally in that case; see the note in `useAdminAuth`.
+   */
+  lookupError: string | null;
 };
 
 /**
@@ -39,6 +45,7 @@ export type AdminAuthState = {
 export function useAdminAuth(): AdminAuthState {
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<AdminRole>(null);
+  const [lookupError, setLookupError] = useState<string | null>(null);
   const [authResolved, setAuthResolved] = useState(false);
   const [roleResolved, setRoleResolved] = useState(false);
 
@@ -75,9 +82,30 @@ export function useAdminAuth(): AdminAuthState {
     let cancelled = false;
     setRoleResolved(false);
     void (async () => {
-      const doc = await fsGetDoc(ADMINS_COLLECTION, email);
+      const result = await fsGetDocResult(ADMINS_COLLECTION, email);
       if (cancelled) return;
-      setRole(doc ? (doc.role === "scorekeeper" ? "scorekeeper" : "admin") : null);
+
+      if (result.ok) {
+        setLookupError(null);
+        setRole(result.doc ? (result.doc.role === "scorekeeper" ? "scorekeeper" : "admin") : null);
+        setRoleResolved(true);
+        return;
+      }
+
+      /*
+       * The lookup itself failed — almost always because the deployed rules
+       * don't allow reading `golf-admins`.
+       *
+       * Access is granted provisionally rather than refused. This screen was
+       * never the thing protecting anything: `firestore.rules` re-checks the
+       * same collection server-side on every write, via an `exists()` that
+       * works whether or not the client may read it. Refusing here locks out
+       * legitimate organizers over a misconfiguration while protecting
+       * nothing, so the honest move is to let them in, say plainly that access
+       * couldn't be verified, and let the rules do the actual refusing.
+       */
+      setLookupError(result.error);
+      setRole("admin");
       setRoleResolved(true);
     })();
 
@@ -92,8 +120,9 @@ export function useAdminAuth(): AdminAuthState {
       email: user && !user.isAnonymous ? (user.email ?? null) : null,
       role,
       ready: authResolved && roleResolved,
+      lookupError,
     }),
-    [user, role, authResolved, roleResolved]
+    [user, role, authResolved, roleResolved, lookupError]
   );
 }
 

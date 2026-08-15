@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Icon from "./components/Icon";
-import { EVENT, SCORES_COLLECTION, TEAMS_COLLECTION } from "./lib/config";
+import { EVENT, SCORES_COLLECTION, SPONSORS, TEAMS_COLLECTION } from "./lib/config";
 import {
   COURSE_PAR,
   formatToPar,
@@ -748,8 +748,11 @@ function MyTeam({ row }: { row: TeamRow }) {
 
 function Sponsors() {
   return (
-    <section className="v3-screen">
+    <section className="v3-screen sponsors-screen">
       <Title top="OUR SPONSORS" title="Thank you" sub={EVENT.beneficiary} />
+
+      {/* JNS is rendered separately rather than as the first grid item, so it
+          keeps its billing no matter how the sponsor list is reordered. */}
       <div className="jns-v3">
         <small>OFFICIAL TECHNOLOGY PARTNER</small>
         {/* eslint-disable-next-line @next/next/no-img-element -- static export, images unoptimized */}
@@ -758,6 +761,24 @@ function Sponsors() {
         <a href="https://jnssolutions.ai" target="_blank" rel="noreferrer">
           Visit jnssolutions.ai
         </a>
+      </div>
+
+      <div className="sponsor-band">
+        <small>WITH THANKS TO OUR SPONSORS</small>
+        <ul className="sponsor-grid">
+          {SPONSORS.map((sponsor) => (
+            <li key={sponsor.name}>
+              {/* eslint-disable-next-line @next/next/no-img-element -- static export, images unoptimized */}
+              <img
+                src={sponsor.logo}
+                alt={sponsor.name}
+                width={sponsor.width}
+                height={sponsor.height}
+                loading="lazy"
+              />
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );

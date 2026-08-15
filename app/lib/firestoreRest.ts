@@ -66,6 +66,17 @@ function docToObj(raw: { name: string; fields?: Record<string, FV> }): Record<st
 
 // ─── HTTP helper ──────────────────────────────────────────────────────────────
 
+/** An HTTP-level Firestore failure, carrying the status so callers can tell
+ *  "this document doesn't exist" (404) from "you may not look" (403). */
+export class FirestoreHttpError extends Error {
+  readonly status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "FirestoreHttpError";
+    this.status = status;
+  }
+}
+
 async function req(
   url: string,
   { token, ms = 12_000, ...opts }: RequestInit & { token?: string; ms?: number } = {}
@@ -82,7 +93,7 @@ async function req(
     if (!res.ok) {
       const msg =
         (body as { error?: { message?: string } })?.error?.message ?? `HTTP ${res.status}`;
-      throw new Error(msg);
+      throw new FirestoreHttpError(msg, res.status);
     }
     return body;
   } catch (err) {
@@ -118,6 +129,35 @@ export async function fsGetDoc(
     return docToObj(data);
   } catch {
     return null;
+  }
+}
+
+/**
+ * Get a document, distinguishing "isn't there" from "couldn't look".
+ *
+ * `fsGetDoc` collapses both into `null`, which is fine when the answer only
+ * decides what to render — but not when it decides whether someone is allowed
+ * in. A rules misconfiguration would otherwise be indistinguishable from a
+ * genuine denial, and the person locked out gets told the wrong thing.
+ */
+export async function fsGetDocResult(
+  col: string,
+  id: string,
+  token?: string
+): Promise<
+  { ok: true; doc: Record<string, unknown> | null } | { ok: false; error: string; status: number }
+> {
+  try {
+    const data = (await req(`${base()}/${col}/${id}`, { token })) as {
+      name: string;
+      fields?: Record<string, FV>;
+    };
+    return { ok: true, doc: docToObj(data) };
+  } catch (err) {
+    const status = err instanceof FirestoreHttpError ? err.status : 0;
+    // 404 is a real answer: the document genuinely isn't there.
+    if (status === 404) return { ok: true, doc: null };
+    return { ok: false, error: (err as Error).message, status };
   }
 }
 
