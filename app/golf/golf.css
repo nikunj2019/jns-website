@@ -1668,3 +1668,102 @@ body:has(.golf-root) {
 .announce-full .takeover-secondary {
   color: #cfe3d6;
 }
+
+/* Build marker. Quiet enough to ignore, findable when someone needs to say
+   which version they are looking at. */
+.build-id {
+  display: block;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line, #dfe5e0);
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #9aa4a0;
+}
+
+/* ── team rename ───────────────────────────────────────────────────────────
+ * Lives on the team's own screen, below the title that shows the current
+ * name — so the thing being edited is on screen while you edit it.
+ */
+.rename-open {
+  width: calc(100% - 24px);
+  margin: 12px;
+  min-height: 58px;
+  border: 1px solid var(--line, #dfe5e0);
+  border-radius: 12px;
+  background: #fff;
+  display: grid;
+  grid-template-columns: 35px 1fr 14px;
+  align-items: center;
+  text-align: left;
+  padding: 9px;
+  cursor: pointer;
+}
+.rename-open .i { color: var(--pine, #073d2b); }
+.rename-open span { display: flex; flex-direction: column; }
+.rename-open b { font-size: 12px; }
+.rename-open small { font-size: 9px; color: var(--muted, #6f7b74); margin-top: 2px; }
+.rename-open em { font-style: normal; color: #99a09c; }
+
+.rename-team {
+  margin: 12px;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid var(--line, #dfe5e0);
+  border-left: 3px solid var(--gold, #c7a24d);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+}
+.rename-team label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #8b948e;
+}
+/* 16px minimum: anything smaller and iOS zooms the page on focus, which on a
+   fixed-height app shell leaves the layout scrolled sideways. */
+.rename-team input {
+  margin-top: 7px;
+  height: 50px;
+  border: 1px solid #cfd9d3;
+  border-radius: 11px;
+  padding: 0 12px;
+  font-size: 16px;
+  font-family: inherit;
+}
+.rename-team > small {
+  margin-top: 7px;
+  font-size: 10.5px;
+  color: var(--muted, #6f7b74);
+}
+.rename-error {
+  margin-top: 8px;
+  font-size: 11px;
+  font-style: normal;
+  color: #9b3931;
+}
+.rename-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+.rename-actions button {
+  min-height: 46px;
+  border: 1px solid var(--line, #dfe5e0);
+  border-radius: 11px;
+  background: #eef2ef;
+  color: var(--pine, #073d2b);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.rename-actions .primary {
+  border: 0;
+  background: var(--pine, #073d2b);
+  color: #fff;
+}
+.rename-actions .primary:disabled { opacity: .55; }

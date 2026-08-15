@@ -348,6 +348,37 @@ export async function updateTeam(id: string, input: TeamInput, token: string): P
   );
 }
 
+/** Longest a team name may be; mirrored in the security rules. */
+export const TEAM_NAME_MAX = 40;
+
+export class TeamNameError extends Error {}
+
+/**
+ * Let a foursome rename itself.
+ *
+ * Deliberately not `updateTeam`: that one writes the roster and starting hole
+ * too, which players are not allowed to change, and sending those fields would
+ * be refused by the rules even when they are unchanged — the rule compares
+ * affected keys, not values. The field mask here names `name` and `updatedAt`
+ * and nothing else, which is exactly what the rule permits.
+ */
+export async function renameTeam(teamId: string, rawName: string): Promise<string> {
+  const name = rawName.trim().replace(/\s+/g, " ");
+  if (name.length < 2) throw new TeamNameError("Give your team a name of at least two characters.");
+  if (name.length > TEAM_NAME_MAX)
+    throw new TeamNameError(`Keep it to ${TEAM_NAME_MAX} characters or fewer.`);
+
+  const user = await ensureAnonymousUser();
+  await fsPatchDoc(
+    TEAMS_COLLECTION,
+    teamId,
+    { name, updatedAt: new Date().toISOString() },
+    await user.getIdToken(),
+    ["name", "updatedAt"]
+  );
+  return name;
+}
+
 /**
  * Remove a team, its code and its scores.
  *

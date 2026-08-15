@@ -115,6 +115,15 @@ export const SPONSORS: readonly Sponsor[] = [
   },
 ];
 
+/**
+ * Which build this is, short enough to read aloud over a phone.
+ *
+ * Inlined by Next at build time from the commit sha; "dev" for a local build.
+ * The point is settling "have you got the new version?" in two seconds rather
+ * than by inference from whether a feature appears to be missing.
+ */
+export const BUILD_ID = (process.env.NEXT_PUBLIC_BUILD || "dev").slice(0, 7);
+
 export const EVENT = {
   name: "Stonegate Golf Outing",
   tagline: "Golf for a greater purpose.",

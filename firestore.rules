@@ -110,7 +110,26 @@ service cloud.firestore {
     // are deliberately NOT stored here; this document is world-readable.
     match /golf-teams/{teamId} {
       allow read: if true;
-      allow write: if isGolfAdmin();
+
+      // A foursome can rename itself, and that is the *only* thing it may
+      // touch on its own document. Everything else here is an organizer's
+      // decision: the starting hole is the shotgun draw, the roster is who
+      // paid, and `active` decides whether the team is in the outing at all.
+      //
+      // `affectedKeys().hasOnly` is doing the load-bearing work — it compares
+      // the incoming document against the stored one, so a request that also
+      // slips in `startHole` or flips `active` is refused even though it
+      // carries a valid claim and a valid name.
+      function renamingOnly() {
+        return request.resource.data.diff(resource.data)
+                 .affectedKeys().hasOnly(['name', 'updatedAt'])
+          && request.resource.data.name is string
+          && request.resource.data.name.trim().size() >= 2
+          && request.resource.data.name.size() <= 40;
+      }
+
+      allow update: if isGolfAdmin() || (claimsTeam(teamId) && renamingOnly());
+      allow create, delete: if isGolfAdmin();
     }
 
     // Code → team. `get` is public on purpose: the code is the secret, and
