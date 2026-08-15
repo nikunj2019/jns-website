@@ -18,6 +18,7 @@ import {
 import {
   clearTeamCode,
   joinTeam,
+  TEAM_NAME_MAX,
   mapScores,
   mapTeam,
   storedTeamCode,
@@ -838,7 +839,42 @@ function Leaderboard({
   );
 }
 
+/**
+ * The team's own screen, and the one place a foursome can rename itself.
+ *
+ * Only the name is editable. The starting hole is the shotgun draw and the
+ * roster is who paid, so both stay with the organizers — the security rules
+ * enforce that independently, but the screen shouldn't offer what it can't do.
+ */
 function MyTeam({ row }: { row: TeamRow }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(row.team.name);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  // The live collection is the source of truth; a rename lands back here when
+  // the next poll or snapshot arrives, so there is no local copy to keep.
+  const open = () => {
+    setDraft(row.team.name);
+    setError("");
+    setEditing(true);
+  };
+
+  async function save(event: React.FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      const { renameTeam } = await import("./lib/data");
+      await renameTeam(row.team.id, draft);
+      setEditing(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't save that name.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <section className="v3-screen team-screen">
       <Title
@@ -846,6 +882,44 @@ function MyTeam({ row }: { row: TeamRow }) {
         title={row.team.name}
         sub={`Starting hole ${row.team.startHole} · Thru ${row.thru}`}
       />
+
+      {editing ? (
+        <form className="rename-team" onSubmit={save}>
+          <label htmlFor="team-name">Team name</label>
+          <input
+            id="team-name"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            maxLength={TEAM_NAME_MAX}
+            autoFocus
+            enterKeyHint="done"
+          />
+          <small>Everyone sees this on the leaderboard.</small>
+          {error && (
+            <em role="alert" className="rename-error">
+              {error}
+            </em>
+          )}
+          <div className="rename-actions">
+            <button type="button" onClick={() => setEditing(false)} disabled={busy}>
+              Cancel
+            </button>
+            <button className="primary" disabled={busy || !draft.trim()}>
+              {busy ? "Saving…" : "Save name"}
+            </button>
+          </div>
+        </form>
+      ) : (
+        <button className="rename-open" onClick={open}>
+          <Icon name="score" />
+          <span>
+            <b>Change team name</b>
+            <small>Shown on the leaderboard</small>
+          </span>
+          <em>›</em>
+        </button>
+      )}
+
       <div className="team-card-v3">
         <div className="team-icon">
           <Icon name="team" />

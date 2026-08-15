@@ -48,3 +48,6 @@ next-env.d.ts
 
 # Verification output from scripts/screenshot-golf.mjs
 /.screenshots/
+
+# Firestore emulator log, written by npm run test:rules
+firestore-debug.log
