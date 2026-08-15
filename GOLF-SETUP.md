@@ -16,20 +16,24 @@ It's deliberately `noindex` and `Disallow`ed in `robots.txt`.
 None of this can be done from the app. Without it, joining a team and scoring
 won't work (the flyer content, course map and scorecard work regardless).
 
-1. **Authentication → Sign-in method** — enable both:
+1. **Authentication → Sign-in method** — enable:
    - **Anonymous.** This is how players score. Redeeming a team code signs the
      phone in anonymously; that anonymous uid is what the security rules bind a
      scorecard to. Without it, nobody can enter a score.
-   - **Email/Password.** Organizers only.
-2. **Authentication → Users** — add each organizer with a password.
-3. **Verify each organizer's email.** The rules require
-   `email_verified == true`, and an account created in the console is *not*
-   verified. Send the verification email (Authentication → Users → ⋮ → Reset
-   password / verification) or have them run through a verification flow once.
-   This is not red tape: Firebase allows public self-signup as soon as
-   Email/Password is enabled, so without the check anyone could register an
-   account claiming an owner's address.
-4. **Authentication → Settings → Authorized domains** — add `jnsconsulting.ai`.
+   - **Google.** How organizers sign in. There is no password for a volunteer
+     to forget between one August and the next, and Google returns
+     `email_verified: true`, which is what the rules insist on.
+   - **Email/Password** — optional, only if an organizer has no Google account.
+     Note that an account created by hand in the console is *not* verified and
+     the console cannot mark it so; the sign-in screen offers to send the
+     verification link. Until they click it, the rules refuse their writes.
+
+   The verified-email requirement isn't red tape: Firebase allows public
+   self-signup the moment Email/Password is enabled, so without it anyone could
+   register an account claiming an owner's address and inherit the keys.
+2. **Authentication → Settings → Authorized domains** — add `jnsconsulting.ai`
+   and `jns-consulting.web.app`. Google sign-in is rejected from any domain not
+   on this list.
 5. **Security rules deploy themselves** on every push to `main`, via the
    `Deploy Firestore Rules` job. They are the golf app's only access control,
    so leaving them to a manual step meant they could lag the app that depends
@@ -57,8 +61,18 @@ enforcement, because a static site has no server to check anything:
 to render the admin UI. **Change both, or an owner will see an admin screen
 whose every save is refused.**
 
-Owners can add further organizers from `/golf/admin/` → *Access*, which writes
-to the `golf-admins` collection — no deploy needed.
+### Adding other organizers
+
+An owner signs in at `/golf/admin/`, opens the **Access** tab, enters the
+person's email, picks *Administrator* or *Scorekeeper*, and clicks **Grant
+access**. That writes to the `golf-admins` collection — no deploy, no console.
+
+The new organizer then signs in at `/golf/admin/` with Google using that exact
+address. Nothing is emailed to them automatically; send them the link yourself.
+
+Only owners see the Access tab, and only owners can add or remove organizers.
+The owner list itself is in `firestore.rules` and cannot be changed from the
+app — which is the point.
 
 ---
 

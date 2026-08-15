@@ -3,9 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   browserLocalPersistence,
+  GoogleAuthProvider,
   onAuthStateChanged,
+  sendEmailVerification,
   setPersistence,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut,
   type User,
 } from "firebase/auth";
@@ -107,6 +110,37 @@ export async function signInOrganizer(email: string, password: string): Promise<
   return credential.user;
 }
 
+/**
+ * Sign in with Google — the intended route for organizers.
+ *
+ * Two problems disappear at once. There is no password for a volunteer to
+ * forget between one August and the next, and Google returns
+ * `email_verified: true`, which is what `firestore.rules` insists on. An
+ * account created by hand in the Firebase console is *not* verified, the
+ * console offers no way to mark it so, and an unverified organizer is refused
+ * by the rules no matter what this app thinks — so password sign-in is kept
+ * only as a fallback.
+ *
+ * The verified-email requirement itself isn't negotiable: Firebase allows
+ * public self-signup the moment Email/Password is enabled, so without it
+ * anyone could register an account claiming an owner's address.
+ */
+export async function signInWithGoogle(): Promise<User> {
+  const auth = getAuthInstance();
+  await setPersistence(auth, browserLocalPersistence);
+  const provider = new GoogleAuthProvider();
+  // Always offer the account chooser: organizers are routinely signed into a
+  // personal Google account that isn't the one on the allowlist.
+  provider.setCustomParameters({ prompt: "select_account" });
+  const credential = await signInWithPopup(auth, provider);
+  return credential.user;
+}
+
+/** Send (or re-send) the verification link for a password-based organizer. */
+export async function sendVerificationEmail(user: User): Promise<void> {
+  await sendEmailVerification(user);
+}
+
 export function useSignOut() {
   return useCallback(async () => {
     try {
@@ -142,6 +176,15 @@ export function authErrorMessage(err: unknown): string {
       return "Too many attempts. Wait a minute and try again.";
     case "auth/network-request-failed":
       return "No connection. Try again when you have signal.";
+    case "auth/popup-blocked":
+      return "Your browser blocked the sign-in window. Allow pop-ups for this site and try again.";
+    case "auth/popup-closed-by-user":
+    case "auth/cancelled-popup-request":
+      return "Sign-in was cancelled.";
+    case "auth/unauthorized-domain":
+      return "This domain isn't on the Firebase authorized domains list. Add it in Authentication → Settings.";
+    case "auth/account-exists-with-different-credential":
+      return "That address already has a password account here. Sign in with the password instead.";
     default:
       return code || "Something went wrong. Try again.";
   }
