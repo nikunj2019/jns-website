@@ -46,19 +46,21 @@
     padding: 18px 22px;
     display: flex; align-items: center; gap: 15px;
   }
-  .crest {
-    width: 42px; height: 50px; flex: 0 0 42px;
-    border: 2px solid var(--gold); border-radius: 6px 6px 18px 18px;
-    display: grid; place-items: center; font: 23px Georgia, serif;
-    background: rgba(0,0,0,.18);
+  /* The JNS mark sits on white, never on the green — the brand is navy on a
+     light ground and recolouring it would be worse than giving it its own tile. */
+  .brandtile {
+    width: 52px; height: 52px; flex: 0 0 52px;
+    background: #fff; border-radius: 11px;
+    display: grid; place-items: center; padding: 4px;
   }
+  .brandtile img { width: 100%; display: block; }
   .masthead h1 { font: 24px/1.1 Georgia, serif; }
   .masthead p { font-size: 11px; color: #cfe3d6; margin-top: 4px; }
   .masthead .pg { margin-left: auto; font-size: 10px; color: #a9c9b8; letter-spacing: .1em; }
 
   h2 {
     font: 17px Georgia, serif;
-    margin: 18px 0 8px;
+    margin: 15px 0 7px;
     padding-bottom: 5px;
     border-bottom: 2px solid var(--gold);
   }
@@ -66,7 +68,7 @@
   p, li { font-size: 11px; line-height: 1.6; color: var(--ink); }
   p.muted { color: var(--muted); }
   ul { margin-left: 16px; }
-  li { margin-bottom: 4px; }
+  li { margin-bottom: 3px; }
 
   code {
     font-family: ui-monospace, "SF Mono", Menlo, monospace;
@@ -74,7 +76,7 @@
   }
 
   table { width: 100%; border-collapse: collapse; margin-top: 7px; }
-  th, td { padding: 7px 9px; border: 1px solid var(--line); font-size: 10.5px; line-height: 1.5; vertical-align: top; text-align: left; }
+  th, td { padding: 6px 9px; border: 1px solid var(--line); font-size: 10.5px; line-height: 1.5; vertical-align: top; text-align: left; }
   th { background: var(--cream); font-weight: 700; color: var(--pine); }
   td:first-child { width: 27%; font-weight: 700; }
 
@@ -101,9 +103,13 @@
 
   .foot {
     margin-top: auto; padding-top: 10px; border-top: 1px solid var(--line);
-    display: flex; justify-content: space-between;
+    display: flex; align-items: center; justify-content: space-between;
     font-size: 9px; color: #8b948e;
   }
+  /* Sign-off: the official mark, at the size the brand's own header uses it.
+     The lockup's tagline would be under 5px tall in a footer this deep. */
+  .foot .jns { display: flex; align-items: center; gap: 8px; text-align: right; }
+  .foot .jns img { width: 27px; display: block; }
 </style>
 </head>
 <body>
@@ -111,7 +117,7 @@
 <!-- ═══════════ PAGE 1 — getting in, teams ═══════════ -->
 <section class="page">
   <div class="masthead">
-    <div class="crest">S</div>
+    <div class="brandtile"><img src="jns-mark.png" alt="JNS"></div>
     <div>
       <h1>Organizer Guide</h1>
       <p>Stonegate Golf Outing &middot; running the event</p>
@@ -120,18 +126,13 @@
   </div>
 
   <h2>Signing in</h2>
-  <p>Go to <code>jnssolutions.ai/golf/admin/</code> and tap <b>Continue with Google</b>, using the
-  Google account your outing address is on. There is no password to remember, and Google accounts
-  arrive already verified, which is what the security rules require.</p>
+  <p>Go to <code>jnssolutions.ai/golf/admin/</code> and tap <b>Continue with Google</b>. Use the
+  Google account you were added under. There is nothing to set up and no password to remember.</p>
 
-  <p class="muted" style="margin-top:7px">A password option exists behind <em>Use a password
-  instead</em> for anyone without a Google account. If that address hasn't been verified, the screen
-  offers to send the verification link — writes are refused until it's clicked.</p>
-
-  <div class="warn">
-    <b>If Google sign-in is refused</b> with "this domain isn't on the Firebase authorized domains
-    list", the domain you're on needs adding in Firebase Console → Authentication → Settings →
-    Authorized domains. Preview links always fail this way; the live site should not.
+  <div class="note">
+    <b>If it won't let you in,</b> it is nearly always the wrong Google account — phones sign you in
+    as whoever used them last. Tap your picture, switch accounts, and try again. If that doesn't do
+    it, call your JNS contact; don't spend the morning on it.
   </div>
 
   <h2>The five tabs</h2>
@@ -168,6 +169,12 @@
     reaches that team's card — nobody can score for another team, whatever they do with the link.
   </div>
 
+  <div class="note">
+    <b>Say one thing to the captains.</b> Players get their own two-page sheet, but the line that
+    matters is on it: <b>open the link at home, on wifi, before you leave.</b> Signal at the course
+    is patchy, and opening it once puts the course map on the phone.
+  </div>
+
   <div class="foot">
     <div>Stonegate Golf Outing &middot; Organizer guide</div>
     <div>Page 1 of 3</div>
@@ -177,7 +184,7 @@
 <!-- ═══════════ PAGE 2 — scoring, messages ═══════════ -->
 <section class="page">
   <div class="masthead">
-    <div class="crest">S</div>
+    <div class="brandtile"><img src="jns-mark.png" alt="JNS"></div>
     <div>
       <h1>During the round</h1>
       <p>Scoring corrections, announcements and support</p>
@@ -257,7 +264,7 @@
 <!-- ═══════════ PAGE 3 — access, day plan, troubleshooting ═══════════ -->
 <section class="page">
   <div class="masthead">
-    <div class="crest">S</div>
+    <div class="brandtile"><img src="jns-mark.png" alt="JNS"></div>
     <div>
       <h1>Access, and the day itself</h1>
       <p>Adding organizers, a running order, and what to do when</p>
@@ -272,8 +279,8 @@
   <ul>
     <li><b>Nothing is emailed automatically</b> — send them the link yourself.</li>
     <li>The address must match their Google account exactly.</li>
-    <li>Only <b>owners</b> see the Access tab. Owners are fixed in the security rules and cannot be
-    changed from inside the app — which is the point of them.</li>
+    <li>Only <b>owners</b> see the Access tab at all. The owner list can't be changed from inside
+    the app — that's deliberate, so nobody can quietly promote themselves. Ask your JNS contact to change it.</li>
   </ul>
 
   <h2>A running order for the day</h2>
@@ -290,10 +297,11 @@
   <table>
     <tr><td>A team can't get in</td><td>Confirm they have the current code — if anyone pressed <b>New code</b>, older links stopped working. Re-send from <b>Share link</b>.</td></tr>
     <tr><td>A team's card is empty</td><td>They probably never opened the link. Enter their scores from the Scoring tab and sort the phone out afterwards.</td></tr>
-    <tr><td>A code reads "Not generated"</td><td>Its code didn't get created. Press <b>Generate code</b> on that team.</td></tr>
-    <tr><td>Leaderboard won't load</td><td>Signal at the scoring table. The screen will say what actually failed rather than guessing — read the message before assuming.</td></tr>
-    <tr><td>"Access not assigned"</td><td>That address isn't on the organizer list, or it's a different Google account from the one added. Check the exact spelling in the Access tab.</td></tr>
+    <tr><td>A team card shows no code</td><td>Rare, but it happens. Press <b>Generate code</b> on that team and send the link again.</td></tr>
+    <tr><td>Leaderboard won't load</td><td>Almost always signal at the scoring table. Move, or wait a minute. The screen tells you what went wrong — read it before assuming the worst.</td></tr>
+    <tr><td>It says you're not an organizer</td><td>You're signed in as a different Google account from the one you were added under. Switch accounts and try again.</td></tr>
     <tr><td>Wrong scores appearing</td><td>Any team-mate can score. Correct it from the Scoring tab; your entry wins.</td></tr>
+    <tr><td>Anything else</td><td>Call your JNS contact. Don't try to fix it from a phone on the 14th tee.</td></tr>
   </table>
 
   <div class="note">
@@ -303,8 +311,8 @@
   </div>
 
   <div class="foot">
-    <div>Stonegate Golf Outing &middot; Organizer guide &middot; jnssolutions.ai/golf/admin/</div>
-    <div>Page 3 of 3</div>
+    <div>Stonegate Golf Outing &middot; Organizer guide &middot; Page 3 of 3</div>
+    <div class="jns"><img src="jns-mark.png" alt="JNS"><span>Built and supported by JNS<br>jnssolutions.ai &middot; hello@jnssolutions.ai</span></div>
   </div>
 </section>
 
