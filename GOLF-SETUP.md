@@ -86,8 +86,13 @@ app — which is the point.
 
 ## 2. How team access works
 
-There is no player sign-in. Each foursome gets an eight-character code, and the
-captain's link carries it: `https://jnssolutions.ai/golf/?code=ABCD2345`.
+There is no player sign-in. Each foursome gets a code built from two words and
+three digits — `CEDAR-EAGLE-472` — and the captain's link carries it:
+`https://jnssolutions.ai/golf/?code=CEDAR-EAGLE-472`.
+
+The words exist so a captain can read the code to three people on a tee box and
+have them all type it correctly. Lookup ignores punctuation and case, so
+`cedar eagle 472` and `cedareagle472` resolve too.
 
 Making a shared secret enforceable without a server takes three collections:
 
@@ -111,7 +116,48 @@ harvest codes.
 
 ---
 
-## 3. Running the outing
+## 3. Support chat and announcements
+
+Players get a **Messages** screen; organizers get a **Messages** tab.
+
+| What | Where it lives | Who can read it |
+|---|---|---|
+| A team's thread | `golf-chats/{teamId}/messages` | that team and organizers |
+| Announcement to everyone | `golf-announcements` | anyone, like the leaderboard |
+| Announcement to some teams | delivered into each of those teams' threads | only those teams |
+
+Targeted announcements are written into threads rather than filtered out of one
+public collection, and that is the whole point: Firestore rules cannot filter
+the rows a query returns, so a "targeted" notice sitting in a public collection
+would be readable by every team it wasn't meant for. Writing it into the threads
+makes the targeting real rather than cosmetic.
+
+Access is decided by the **path**. A player's claim names exactly one team, and
+the rules compare it to the `{teamId}` segment — so a player cannot reach
+another team's thread even by hand-crafting the request, and no query-shape
+constraints are needed.
+
+### There are no push notifications
+
+A static export has no server, and sending a push needs a server credential.
+Messages and announcements arrive **in-app**: live while the app is open, and
+waiting behind an unread badge when a player reopens it. Nobody's phone buzzes.
+
+The composer says so, and the player's Messages screen carries a "call the
+clubhouse" link for anything urgent. Do not rely on this to reach people who
+have put their phones away.
+
+Adding real push later means Firebase Cloud Messaging plus a Cloud Function to
+send it, which needs the Blaze plan. The volume here would cost effectively
+nothing; it is the billing account and the extra moving part that are the cost.
+
+Unread state is tracked **per device** in `localStorage`, deliberately: four
+team-mates share one code, and one of them reading a message should not clear
+the badge on the other three phones.
+
+---
+
+## 4. Running the outing
 
 | When | Where | What |
 |---|---|---|
@@ -122,7 +168,7 @@ harvest codes.
 
 ---
 
-## 4. Developing
+## 5. Developing
 
 ```bash
 npm run dev              # local dev server
