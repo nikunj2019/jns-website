@@ -86,6 +86,41 @@ jobs:
         with:
           node-version: "20"
 
+      # Names the principal that actually needs the role. Granting Firebase
+      # Rules Admin to the wrong service account looks identical to granting it
+      # to the right one — the deploy keeps failing with the same 403 — and
+      # nothing in the log said which identity was being used.
+      #
+      # client_email and project_id are identifiers, not credentials; the
+      # private key is never touched.
+      - name: Identify deploy credentials
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: |
+          node -e '
+            let sa;
+            try {
+              sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || "{}");
+            } catch {
+              console.log("::error::FIREBASE_SERVICE_ACCOUNT is not valid JSON.");
+              process.exit(1);
+            }
+            const target = process.env.FIREBASE_PROJECT_ID || "";
+            console.log("Deploying as service account : " + (sa.client_email || "(none in key)"));
+            console.log("Key belongs to project       : " + (sa.project_id || "(unknown)"));
+            console.log("Deploy target project        : " + target);
+            if (sa.project_id && target && sa.project_id !== target) {
+              console.log("::warning::The key belongs to a different project than the deploy target.");
+            }
+            if (sa.client_email) {
+              console.log(
+                "::notice::If the next step fails with 403, grant roles/firebaserules.admin to " +
+                sa.client_email
+              );
+            }
+          '
+
       - name: Deploy rules
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
