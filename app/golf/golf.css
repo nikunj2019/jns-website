@@ -1078,3 +1078,106 @@ body:has(.golf-root) {
   font-weight: 700;
   cursor: pointer;
 }
+
+/* ══ motion ═════════════════════════════════════════════════════════════════
+ * Deliberately narrow. This app is used one-handed, in sunlight, over four
+ * hours, on a phone that also has to survive the round — so motion earns its
+ * place only where it explains something: which screen you moved to, that a tap
+ * registered, that a number changed. Nothing loops, nothing delays a tap, and
+ * everything is transform/opacity so it stays on the compositor.
+ *
+ * Durations are short on purpose. 160-220ms reads as responsive; past ~300ms
+ * it starts to feel like waiting, which is intolerable when you are entering a
+ * score with a group waiting behind you.
+ *
+ * The global prefers-reduced-motion block further down neutralises all of it.
+ */
+
+@keyframes screen-in {
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes score-pop {
+  0%   { transform: scale(.86); }
+  55%  { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+/* Screen changes. Each view is conditionally rendered, so mounting is the cue —
+ * no transition group needed. */
+.v3-body > section {
+  animation: screen-in 190ms cubic-bezier(.22, .61, .36, 1) both;
+}
+
+/* The map is the exception: `both` leaves a transform on the element, and a
+ * transformed ancestor becomes the containing block for Leaflet's absolutely
+ * positioned panes and controls. Fade it instead — same intent, no layout
+ * consequence. */
+.v3-body > section.course-screen {
+  animation: fade-in 160ms ease-out both;
+}
+
+/* Tap feedback. These are gloved-thumb targets; a press that looks inert gets
+ * pressed again, which is how a hole ends up scored twice. */
+.golf-root :is(.v3-nav button, .v3-actions button, .menu-v3 button, .menu-v3 a,
+  .score-control button, .hole-progress button, .status-card, .home-secondary button,
+  .leader-tabs button, .dock-arrow, .dock-score, .leaflet-controls button) {
+  transition: transform 90ms ease-out, background-color 140ms ease-out, color 140ms ease-out;
+}
+.golf-root :is(.v3-nav button, .v3-actions button, .menu-v3 button, .menu-v3 a,
+  .score-control button, .hole-progress button, .status-card, .home-secondary button,
+  .leader-tabs button, .dock-arrow, .dock-score, .leaflet-controls button):active {
+  transform: scale(.96);
+}
+
+/* The score itself. Keyed on the value in ScoreEntry, so React remounts the
+ * element and the animation replays on every change — the one number on the
+ * screen that must not change unnoticed. */
+.score-control strong {
+  animation: score-pop 200ms cubic-bezier(.34, 1.4, .64, 1);
+  will-change: transform;
+}
+
+/* Save state: colour carries the meaning, so let it cross-fade rather than
+ * snap between saving, saved and queued. */
+.save-state,
+.save-state i,
+.v3-live,
+.v3-live i {
+  transition: color 200ms ease-out, background-color 200ms ease-out;
+}
+
+/* Leaderboard rows and sponsor tiles fade as they arrive. No stagger — a
+ * cascade looks considered and delays the person trying to read their
+ * position. */
+.leader-row,
+.sponsor-grid li,
+.chat-bubble,
+.announce-card,
+.thread-list button {
+  animation: fade-in 170ms ease-out both;
+}
+
+/* Hole progress dots, which are the quickest read of "where am I". */
+.hole-progress i {
+  transition: background-color 180ms ease-out;
+}
+
+/* Admin: panels swap on tab change, and the thread view replaces the inbox. */
+.admin-main > section > * {
+  animation: screen-in 170ms cubic-bezier(.22, .61, .36, 1) both;
+}
+.golf-root :is(.admin-side nav button, .thread-list button, .audience button,
+  .audience-picker button, .team-send button, .team-send a,
+  .teams-panel .team-actions button, .hole-grid button) {
+  transition: transform 90ms ease-out, background-color 140ms ease-out;
+}
+.golf-root :is(.admin-side nav button, .thread-list button, .audience button,
+  .audience-picker button, .team-send button, .team-send a,
+  .teams-panel .team-actions button, .hole-grid button):active {
+  transform: scale(.97);
+}

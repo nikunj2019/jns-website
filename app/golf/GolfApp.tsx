@@ -678,7 +678,14 @@ function ScoreEntry({
           >
             −
           </button>
-          <strong aria-live="polite" aria-label={strokes ? `${strokes} strokes` : "No score yet"}>
+          {/* Keyed on the value so React remounts it and the pop animation
+              replays — this is the one number on the screen that must not
+              change without the person entering it noticing. */}
+          <strong
+            key={strokes}
+            aria-live="polite"
+            aria-label={strokes ? `${strokes} strokes` : "No score yet"}
+          >
             {strokes || "–"}
           </strong>
           <button aria-label="One more stroke" onClick={() => setScore((strokes || info.par - 1) + 1)}>
