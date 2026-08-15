@@ -504,15 +504,18 @@ function JoinTeam({
         </p>
         <form onSubmit={submit}>
           <label htmlFor="team-code">Team code</label>
+          {/* Hyphens, spaces and lower case all resolve to the same team, so
+              there's nothing to get wrong when retyping from a text message. */}
           <input
             id="team-code"
             autoCapitalize="characters"
             autoComplete="one-time-code"
+            autoCorrect="off"
             spellCheck={false}
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
-            placeholder="EXAMPLE7"
-            maxLength={12}
+            placeholder="CEDAR-EAGLE-472"
+            maxLength={28}
             aria-describedby={error ? "team-code-error" : undefined}
           />
           {error && (

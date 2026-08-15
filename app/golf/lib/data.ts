@@ -28,6 +28,7 @@ import {
   TEAM_CODES_COLLECTION,
   TEAMS_COLLECTION,
 } from "./config";
+import { CODE_WORDS } from "./code-words";
 import { HOLE_COUNT } from "./course";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -115,23 +116,66 @@ export function mapAdmin(doc: Record<string, unknown>): AdminUser {
 // ─── Access codes ────────────────────────────────────────────────────────────
 
 /**
- * Eight characters from a 32-symbol alphabet — 40 bits, which is far past what
- * anyone will brute-force through Firestore's own rate limits for a one-day
- * neighborhood outing.
+ * A team code a human can actually relay: `CEDAR-EAGLE-472`.
  *
- * I, O, 0 and 1 are absent so a code read aloud on a tee box or typed off a
- * text message can't be misread. 256 divides by 32 exactly, so the modulo
- * introduces no bias toward the start of the alphabet.
+ * This replaced `9673XSBQ`. Eight random characters carried 40 bits, but a
+ * captain reading one to three people on a tee box mis-says it, and the people
+ * typing it mis-hear it — the entropy was being spent on a threat that barely
+ * exists while costing real usability on the one day it matters.
+ *
+ * Two words from a 128-word list plus three digits is 7 + 7 + ~10 = ~24 bits,
+ * about 16.7 million codes. Against roughly ten live codes that's a one-in-1.7
+ * million chance per guess, and the guesser has to hit Firestore for every
+ * attempt from an origin that can be shut off. It is a deliberate trade of
+ * ~16 bits for a code that survives being spoken.
+ *
+ * What backs it up rather than the entropy: an organizer can rotate a code
+ * instantly from the admin screen, a stolen code reaches exactly one team's
+ * scorecard, and an organizer can correct any score it touched. Turn on
+ * Firebase App Check if you ever want the brute-force path closed properly.
  */
-const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const CODE_DIGITS = 3;
 
-export function generateAccessCode(): string {
-  const bytes = new Uint8Array(8);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (b) => CODE_ALPHABET[b % CODE_ALPHABET.length]).join("");
+/**
+ * Uniform pick with rejection sampling.
+ *
+ * `value % list.length` alone would bias toward the start of the list whenever
+ * the length doesn't divide 2^32 — which for 128 words it does, but the digits
+ * and any future list edit would not. Doing it correctly costs nothing.
+ */
+function pick<T>(list: readonly T[]): T {
+  const limit = Math.floor(0x1_0000_0000 / list.length) * list.length;
+  const buf = new Uint32Array(1);
+  let value: number;
+  do {
+    crypto.getRandomValues(buf);
+    value = buf[0];
+  } while (value >= limit);
+  return list[value % list.length];
 }
 
-const normalizeCode = (code: string): string => code.trim().toUpperCase();
+export function generateAccessCode(): string {
+  const first = pick(CODE_WORDS);
+  // TIMBER-TIMBER-340 is a valid code but reads like a bug, and someone
+  // relaying it will assume they misheard and ask again.
+  let second = pick(CODE_WORDS);
+  while (second === first) second = pick(CODE_WORDS);
+
+  const digits = Array.from({ length: CODE_DIGITS }, () =>
+    pick(["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"])
+  ).join("");
+  return `${first}-${second}-${digits}`;
+}
+
+/**
+ * Canonical lookup form: letters and digits only, upper-cased.
+ *
+ * The document id drops the hyphens so `cedar eagle 472`, `CEDAR-EAGLE-472` and
+ * `cedareagle472` all resolve to the same team. People retype these from a text
+ * message with whatever spacing they feel like.
+ */
+const normalizeCode = (code: string): string =>
+  code.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
 
 /** Local memory of which team this phone belongs to, so a reload stays joined. */
 const STORED_CODE_KEY = "stonegate:team-code";
@@ -313,7 +357,7 @@ export async function updateTeam(id: string, input: TeamInput, token: string): P
  */
 export async function deleteTeam(id: string, token: string): Promise<void> {
   const existing = await readTeamCode(id, token);
-  if (existing) await fsDeleteDoc(ACCESS_COLLECTION, existing, token).catch(() => {});
+  if (existing) await fsDeleteDoc(ACCESS_COLLECTION, normalizeCode(existing), token).catch(() => {});
   await fsDeleteDoc(TEAM_CODES_COLLECTION, id, token).catch(() => {});
   await fsDeleteDoc(SCORES_COLLECTION, id, token).catch(() => {});
   await fsDeleteDoc(TEAMS_COLLECTION, id, token);
@@ -333,12 +377,28 @@ export async function readTeamCode(teamId: string, token: string): Promise<strin
  */
 export async function assignAccessCode(teamId: string, token: string): Promise<string> {
   const previous = await readTeamCode(teamId, token);
-  const code = generateAccessCode();
 
-  await fsSetDoc(ACCESS_COLLECTION, code, { teamId }, token);
+  /*
+   * Vanishingly unlikely at ten teams in a 16-million keyspace, but a collision
+   * would silently repoint another team's code at this one — their captain's
+   * link would start opening someone else's scorecard, and nothing would say
+   * so. One read per attempt is a cheap way to make that impossible.
+   */
+  let code = generateAccessCode();
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const taken = await fsGetDoc(ACCESS_COLLECTION, normalizeCode(code), token);
+    if (!taken || taken.teamId === teamId) break;
+    code = generateAccessCode();
+  }
+
+  // Two forms of the same code. `golf-access` is keyed by the canonical
+  // letters-and-digits id so any spacing a player types resolves; the readable
+  // form with hyphens is what the organizer shares and is stored alongside.
+  await fsSetDoc(ACCESS_COLLECTION, normalizeCode(code), { teamId, code }, token);
   await fsSetDoc(TEAM_CODES_COLLECTION, teamId, { code, updatedAt: new Date().toISOString() }, token);
-  if (previous && previous !== code) {
-    await fsDeleteDoc(ACCESS_COLLECTION, previous, token).catch(() => {});
+
+  if (previous && normalizeCode(previous) !== normalizeCode(code)) {
+    await fsDeleteDoc(ACCESS_COLLECTION, normalizeCode(previous), token).catch(() => {});
   }
   return code;
 }

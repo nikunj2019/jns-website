@@ -823,3 +823,15 @@ body:has(.golf-root) {
   /* Full-width share button reads better than a cramped one beside the code. */
   .team-code button { width: 100%; min-height: 44px; }
 }
+
+/* Codes are now words rather than eight random characters, so they're longer
+ * on screen. Monospace at 18px would push CEDAR-EAGLE-472 out of the box on a
+ * narrow phone; scale it and let it wrap rather than clip. */
+.team-code b {
+  font: 600 15px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .04em;
+  overflow-wrap: anywhere;
+}
+@media (min-width: 420px) {
+  .team-code b { font-size: 17px; }
+}
