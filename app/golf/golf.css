@@ -758,3 +758,68 @@ body:has(.golf-root) {
   from { opacity: 0; transform: translateY(14px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* ── layout fixes ──────────────────────────────────────────────────────────
+ * `.golf-root` was made a flex column, but `.v3-shell` carries `margin:auto`
+ * from the original stylesheet. Auto margins inside a flex container absorb
+ * the free space and suppress cross-axis stretching, so the shell collapsed to
+ * fit its content — and the frame visibly changed width between screens
+ * (369px on Home, 325px on More, 390px on Sponsors). Back to a block, with an
+ * explicit width so the shell can't shrink-wrap whatever is inside it.
+ */
+.golf-root { display: block; }
+.v3-shell { width: 100%; }
+
+/* Sign-out moved from an <a> to a <button>; the responsive rules that shrink
+ * it on small screens were written against the tag. */
+.admin-user button {
+  margin-left: 10px;
+  color: var(--pine, #073d2b);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  background: #fff;
+  border: 1px solid var(--line, #dfe6e1);
+  padding: 9px 11px;
+  border-radius: 9px;
+  cursor: pointer;
+}
+@media (max-width: 620px) {
+  .admin-user button { margin: 0; padding: 8px; }
+}
+
+/* The admin panel is used on a phone at the scoring table, not just a laptop:
+ * the six-button team card needs to stay legible at 360px, and the hole grid
+ * needs thumb-sized targets. */
+@media (max-width: 620px) {
+  .team-send button,
+  .team-send a,
+  .teams-panel .team-actions button {
+    font-size: 10.5px;
+    min-height: 40px;
+  }
+  .team-code { flex-wrap: wrap; }
+  .team-code button { width: 100%; }
+  .hole-grid button { min-height: 46px; }
+  .invite { grid-template-columns: 1fr; }
+}
+
+/* Touch targets. These are used one-handed at a scoring table, so nothing
+ * tappable should be under ~40px. Measured before: Sign out 30px, Share link
+ * 29px. */
+.admin-user button,
+.team-code button,
+.panel-head > button,
+.view-app {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+.panel-head > button { padding-inline: 14px; }
+
+@media (max-width: 620px) {
+  /* Full-width share button reads better than a cramped one beside the code. */
+  .team-code button { width: 100%; min-height: 44px; }
+}
