@@ -477,3 +477,32 @@ body:has(.golf-root) {
   text-overflow: clip;
   line-height: 1.25;
 }
+
+/* Data-load failure, stated plainly with the underlying message. Firestore's
+ * own errors name the cause exactly; hiding them behind "something went wrong"
+ * costs an organizer an afternoon of guesswork. */
+.leader-error {
+  padding: 16px 18px;
+  border-top: 1px solid #edf0ed;
+  text-align: left;
+}
+.leader-error b { display: block; font-size: 13px; color: #b4392f; }
+.leader-error p {
+  margin: 7px 0 0;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--muted3, #6c7771);
+  overflow-wrap: anywhere;
+}
+.leader-error small {
+  display: block;
+  margin-top: 9px;
+  font-size: 10.5px;
+  color: var(--muted3, #6c7771);
+}
+.leader-error code {
+  background: #eef1ee;
+  border-radius: 4px;
+  padding: 1px 5px;
+  overflow-wrap: anywhere;
+}

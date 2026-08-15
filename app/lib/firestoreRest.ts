@@ -2,6 +2,17 @@
 // Admin pages pass a Firebase Auth ID token; public pages omit it.
 
 const pid = () => process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!;
+
+/**
+ * The project every read and write here is aimed at, baked in at build time.
+ *
+ * Exposed so an error screen can name it. A blank value means the build never
+ * received `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, and a value that isn't the
+ * project you deploy to explains every request failing at once — both are
+ * otherwise invisible from the outside, and neither is a secret.
+ */
+export const firestoreProjectId = (): string =>
+  process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? "";
 const base = () =>
   `https://firestore.googleapis.com/v1/projects/${pid()}/databases/(default)/documents`;
 

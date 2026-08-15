@@ -23,6 +23,7 @@ import {
   type TeamScores,
 } from "./lib/data";
 import { navigateHash, useHashView } from "./lib/useHashView";
+import { firestoreProjectId } from "../lib/firestoreRest";
 import { useGolfCollection } from "./lib/useGolfCollection";
 import { useScoreQueue, type SaveStatus } from "./lib/useScoreQueue";
 
@@ -246,7 +247,14 @@ export default function GolfApp() {
             <p className="app-loading">Loading your scorecard…</p>
           ))}
         {view === "map" && <CourseMap hole={hole} setHole={setHole} onScore={() => go("score")} />}
-        {view === "leaders" && <Leaderboard rows={ranked} loading={loading} live={scoresState.live} />}
+        {view === "leaders" && (
+          <Leaderboard
+            rows={ranked}
+            loading={loading}
+            live={scoresState.live}
+            error={teamsState.error ?? scoresState.error}
+          />
+        )}
         {effectiveView === "team" &&
           (myRow ? <MyTeam row={myRow} /> : <p className="app-loading">Loading your team…</p>)}
         {view === "sponsors" && <Sponsors />}
@@ -349,10 +357,16 @@ function Home({
 }) {
   // The original hard-coded "4 teams on the course" regardless of the actual
   // field. This says what's really there, including when that's nothing yet.
+  //
+  // "offline" is a claim, not a shrug: only say it when the browser actually
+  // reports no connection. A failed request on a working connection is a
+  // different problem and deserves to look like one.
   const status = loading
     ? "Loading the field…"
     : error
-      ? "Standings unavailable offline"
+      ? isOffline()
+        ? "Standings unavailable offline"
+        : "Can't reach the scoring service"
       : teamCount === 0
         ? "No teams posted yet"
         : `${teamCount} ${teamCount === 1 ? "team" : "teams"} on the course`;
@@ -608,10 +622,12 @@ function Leaderboard({
   rows,
   loading,
   live,
+  error,
 }: {
   rows: TeamRow[];
   loading: boolean;
   live: boolean;
+  error: string | null;
 }) {
   const [tab, setTab] = useState<"overall" | "front 9" | "back 9">("overall");
   const range: [number, number] = tab === "front 9" ? [0, 9] : tab === "back 9" ? [9, 18] : [0, 18];
@@ -656,7 +672,23 @@ function Leaderboard({
         </div>
 
         {loading && <p className="leader-empty">Loading standings…</p>}
-        {!loading && scoped.length === 0 && (
+
+        {/* The underlying failure, verbatim. Firestore's own messages name the
+            cause exactly ("The database (default) does not exist", "Cloud
+            Firestore API has not been used in project…"), and burying that
+            behind a friendly euphemism costs an organizer an afternoon of
+            guesswork on the one day this app matters. */}
+        {!loading && error && (
+          <div className="leader-error" role="alert">
+            <b>{isOffline() ? "You're offline." : "Couldn't load the leaderboard."}</b>
+            <p>{error}</p>
+            <small>
+              Firebase project: <code>{firestoreProjectId() || "(not set at build time)"}</code>
+            </small>
+          </div>
+        )}
+
+        {!loading && !error && scoped.length === 0 && (
           <p className="leader-empty">No teams have been added to the outing yet.</p>
         )}
 
@@ -783,6 +815,11 @@ function More({ go, install }: { go: (v: View) => void; install: () => void }) {
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** `navigator.onLine` is only trustworthy when it says false — which is all we ask of it. */
+function isOffline(): boolean {
+  return typeof navigator !== "undefined" && navigator.onLine === false;
+}
 
 function initials(name: string): string {
   return name
