@@ -1376,3 +1376,74 @@ body:has(.golf-root) {
   vertical-align: middle;
   font-style: normal;
 }
+
+/* ── iOS safe areas ────────────────────────────────────────────────────────
+ * Installed to an iPhone home screen, the app is `viewport-fit=cover` with a
+ * translucent status bar: the web view owns the whole screen, including the
+ * strip behind the clock and the strip behind the home indicator. Nothing here
+ * accounted for either, and one of them was actively destructive.
+ *
+ * `* { box-sizing: border-box }` is set for the whole app, so the nav's
+ * `height: 74px` *included* its `padding-bottom: calc(6px + safe-inset)`. On a
+ * notched phone that inset is 34px, leaving 28px of content box for a 24px icon
+ * above an 11px label — so the bar clipped its own contents. The padding has to
+ * grow the bar, not eat it.
+ *
+ * Everything derives from two variables so the three heights can't drift apart
+ * again: the body is sized by subtracting the other two, and the ad and the
+ * takeover clear the nav by name rather than by a number that happened to match.
+ */
+.golf-root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --head-h: calc(64px + var(--safe-top));
+  --nav-h: calc(74px + var(--safe-bottom));
+}
+
+/* The header absorbs the top inset rather than the shell, so the status bar
+   sits on white and reads as part of the bar instead of a grey gap above it.
+   Content box is unchanged: the extra height and the extra padding cancel. */
+.v3-head {
+  height: var(--head-h);
+  padding-top: calc(8px + var(--safe-top));
+}
+
+.v3-shell > .v3-body {
+  height: calc(100% - var(--head-h) - var(--nav-h)) !important;
+}
+
+.v3-nav {
+  height: var(--nav-h);
+  padding-bottom: calc(6px + var(--safe-bottom));
+}
+
+.jns-ad { bottom: calc(var(--nav-h) + 12px); }
+
+/* Fixed overlays span the full screen by definition, so they need the insets
+   themselves — otherwise the dismiss button lands under the home indicator,
+   which is the one control that must always be reachable. */
+.takeover {
+  padding-top: max(22px, var(--safe-top));
+  padding-bottom: max(22px, var(--safe-bottom));
+}
+
+/* The organizer side is inside the same manifest scope, so it can be installed
+ * too — and its mobile chrome is sticky at `top: 0`, which is exactly where the
+ * clock lives. Off a phone these all resolve to zero and change nothing. */
+.admin-denied {
+  padding-top: calc(24px + var(--safe-top));
+  padding-bottom: calc(24px + var(--safe-bottom));
+}
+.admin-side { padding-top: calc(28px + var(--safe-top)); }
+.admin-main > section { padding-bottom: calc(60px + var(--safe-bottom)); }
+.team-editor {
+  padding-top: calc(28px + var(--safe-top));
+  padding-bottom: calc(28px + var(--safe-bottom));
+}
+
+@media (max-width: 900px) {
+  /* The tab strip becomes a top bar here; 58px is its height, so the scroller
+     below it has to lose the inset as well or the page runs off the bottom. */
+  .admin-side { padding-top: calc(10px + var(--safe-top)); }
+  .admin-main { height: calc(100dvh - 58px - var(--safe-top)); }
+}
