@@ -453,6 +453,15 @@ body:has(.golf-root) {
     animation-iteration-count: 1 !important;
     transition-duration: .001ms !important;
   }
+
+  /* The hold bar is the exception. Collapsed to a millisecond it would drain
+     instantly and leave an empty track for five seconds, which says the
+     opposite of what it means. Held full instead: still a "wait" marker, just
+     a motionless one, and it disappears when the close button arrives. */
+  .golf-root .ad-hold {
+    animation: none !important;
+    transform: scaleX(1);
+  }
 }
 
 /* ── hero imagery ───────────────────────────────────────────────────────────
@@ -709,6 +718,7 @@ body:has(.golf-root) {
 }
 
 .ad-close {
+  animation: ad-close-in 220ms cubic-bezier(.22, .61, .36, 1) both;
   position: absolute;
   top: calc(14px + var(--safe-top));
   right: 14px;
@@ -731,6 +741,46 @@ body:has(.golf-root) {
   align-items: center;
   text-align: center;
   gap: 10px;
+}
+
+/* Content arrives in reading order — badge, then who it is, then what they do.
+ * A 55ms step is enough to lead the eye down the card without anyone waiting on
+ * it; the whole stagger is over before the close button is even available. */
+@keyframes ad-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.ad-body > * { animation: ad-rise 320ms cubic-bezier(.22, .61, .36, 1) both; }
+.ad-body > *:nth-child(1) { animation-delay:  40ms; }
+.ad-body > *:nth-child(2) { animation-delay:  95ms; }
+.ad-body > *:nth-child(3) { animation-delay: 150ms; }
+.ad-body > *:nth-child(4) { animation-delay: 205ms; }
+.ad-body > *:nth-child(5) { animation-delay: 260ms; }
+.ad-body > *:nth-child(6) { animation-delay: 315ms; }
+.ad-body > *:nth-child(7) { animation-delay: 370ms; }
+
+/* Counts down the hold. Fixed to the top edge so it reads as chrome rather
+   than as part of the sponsor's card. */
+@keyframes ad-hold {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+.ad-hold {
+  position: absolute;
+  top: var(--safe-top, 0px);
+  left: 0;
+  right: 0;
+  height: 3px;
+  transform-origin: left;
+  background: var(--gold, #c7a24d);
+  /* Duration comes from the component, which owns the same number as the timer. */
+  animation: ad-hold linear both;
+}
+
+/* Fades in once the hold is over — appearing without it would be a pop. */
+@keyframes ad-close-in {
+  from { opacity: 0; transform: scale(.8); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 .ad-progress {
@@ -760,23 +810,39 @@ body:has(.golf-root) {
   object-fit: contain;
 }
 
+/* Spelled out because several of these logos are stylised wordmarks that are
+   hard to read at a glance, and two are pictorial. */
+.ad-name {
+  margin-top: 2px;
+  font: 22px/1.2 Georgia, serif;
+  color: var(--pine, #073d2b);
+}
+.ad-where {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: #8b948e;
+}
+
 .ad-body p {
-  margin: 0;
+  margin: 2px 0 0;
   font-size: 14px;
   line-height: 1.55;
   color: #46534d;
   max-width: 34ch;
 }
 
-.ad-body > a {
-  margin-top: 4px;
-  background: var(--pine, #073d2b);
-  color: #fff;
-  border-radius: 12px;
-  padding: 13px 22px;
+/* A quiet underline rather than a filled button: it is an invitation, not the
+   thing the player came here to do. */
+.ad-link {
+  margin-top: 6px;
   font-size: 13px;
   font-weight: 700;
+  color: var(--pine, #073d2b);
   text-decoration: none;
+  border-bottom: 2px solid var(--gold, #c7a24d);
+  padding-bottom: 2px;
 }
 
 .ad-foot {

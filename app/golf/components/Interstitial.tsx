@@ -6,7 +6,19 @@ import { EVENT, SPONSORS } from "../lib/config";
 /** Show a card once for every this-many holes completed. */
 export const HOLES_PER_AD = 3;
 
-const DISMISS_AFTER_MS = 7000;
+/**
+ * The card holds for five seconds before it can be closed, then clears itself.
+ *
+ * The delay is the sponsor's whole placement — a card that can be dismissed on
+ * arrival is worth nothing to them. Five seconds is roughly how long the copy
+ * takes to read, and the bar across the top counts it down so the wait reads as
+ * deliberate rather than as a missing button.
+ *
+ * The auto-dismiss then has to sit well clear of it: at the old seven seconds
+ * the close button would have appeared for two, which is the worst of both.
+ */
+const CLOSE_AFTER_MS = 5000;
+const DISMISS_AFTER_MS = 12000;
 const storageKey = (teamId: string) => `stonegate:last-ad-milestone:${teamId}`;
 
 type Slot = {
@@ -14,7 +26,9 @@ type Slot = {
   kicker: string;
   logo: string;
   alt: string;
-  /** Only the partner slot says anything; a sponsor's logo is the message. */
+  /** Trading name, spelled out — several of these logos are stylised. */
+  name: string;
+  city?: string;
   blurb?: string;
   href?: string;
   hrefLabel?: string;
@@ -34,15 +48,21 @@ const SLOTS: Slot[] = [
     kicker: "OFFICIAL TECHNOLOGY PARTNER",
     logo: "/golf/jns-logo.png",
     alt: "JNS — Smart Solutions, Built for You",
+    name: "JNS",
     blurb: "Custom applications, AI and automation for growing businesses.",
     href: "https://jnssolutions.ai",
-    hrefLabel: "Visit jnssolutions.ai",
+    hrefLabel: "jnssolutions.ai",
   },
   ...SPONSORS.map((s) => ({
     key: s.name,
     kicker: "PROUD SPONSOR",
     logo: s.logo,
     alt: s.name,
+    name: s.name,
+    city: s.city,
+    blurb: s.blurb,
+    href: s.site ? `https://${s.site}` : undefined,
+    hrefLabel: s.site,
   })),
 ];
 
@@ -92,21 +112,28 @@ function writeMilestone(teamId: string, value: number): void {
 /**
  * The sponsor card, shown full screen after every third hole a team completes.
  *
- * Three things it deliberately does. It never covers the score control
- * mid-entry — it appears only when a hole is *completed*, and it dismisses
- * itself after a few seconds so a group walking to the next tee doesn't have to
- * deal with it. It fires once per milestone, remembered per team in
- * localStorage, so correcting a score on the ninth doesn't re-trigger a card
- * someone already saw. And it advances one slot each time, so a round shows a
- * different sponsor at each break rather than the same logo six times.
+ * Four things it deliberately does. It never covers the score control
+ * mid-entry — it appears only when a hole is *completed*. It holds for five
+ * seconds before it can be closed, which is the sponsor's actual placement,
+ * then clears itself so a group walking to the next tee isn't left holding it.
+ * It fires once per milestone, remembered per team in localStorage, so
+ * correcting a score on the ninth doesn't re-trigger a card someone already
+ * saw. And it advances one slot each time, so a round shows a different
+ * sponsor at each break rather than the same logo six times.
  *
  * `thru` counts holes with a score, not the hole number: a shotgun start means
  * a team starting on 12 hits their third completed hole on 14.
  */
 export default function Interstitial({ teamId, thru }: { teamId: string | null; thru: number }) {
   const [milestone, setMilestone] = useState<number | null>(null);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [closable, setClosable] = useState(false);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const seen = useRef<number>(0);
+
+  const clearTimers = () => {
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
+  };
 
   useEffect(() => {
     if (!teamId) return;
@@ -122,17 +149,21 @@ export default function Interstitial({ teamId, thru }: { teamId: string | null; 
     seen.current = reached;
     writeMilestone(teamId, reached);
     setMilestone(reached);
+    setClosable(false);
 
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => setMilestone(null), DISMISS_AFTER_MS);
+    clearTimers();
+    timers.current.push(
+      setTimeout(() => setClosable(true), CLOSE_AFTER_MS),
+      setTimeout(() => setMilestone(null), DISMISS_AFTER_MS)
+    );
   }, [teamId, thru]);
 
-  useEffect(
-    () => () => {
-      if (timer.current) clearTimeout(timer.current);
-    },
-    []
-  );
+  useEffect(() => clearTimers, []);
+
+  const dismiss = () => {
+    clearTimers();
+    setMilestone(null);
+  };
 
   if (milestone === null || !teamId) return null;
 
@@ -142,18 +173,35 @@ export default function Interstitial({ teamId, thru }: { teamId: string | null; 
 
   return (
     <div className="ad-full" role="status">
-      <button className="ad-close" aria-label="Dismiss" onClick={() => setMilestone(null)}>
-        ×
-      </button>
+      {/* Drains over the five seconds. Without it the missing close button
+          reads as a bug rather than as a pause with an end in sight. */}
+      {!closable && (
+        <div
+          className="ad-hold"
+          aria-hidden="true"
+          // Driven from the same constant as the timer above rather than a
+          // duration repeated in the stylesheet, so the bar can't finish
+          // draining a second before or after the button actually appears.
+          style={{ animationDuration: `${CLOSE_AFTER_MS}ms` }}
+        />
+      )}
 
-      <div className="ad-body">
+      {closable && (
+        <button className="ad-close" aria-label="Dismiss" onClick={dismiss}>
+          ×
+        </button>
+      )}
+
+      <div className="ad-body" key={slot.key}>
         <span className="ad-progress">{milestone} HOLES DOWN</span>
         <span className="ad-kicker">{slot.kicker}</span>
         {/* eslint-disable-next-line @next/next/no-img-element -- static export, images unoptimized */}
         <img src={slot.logo} alt={slot.alt} />
+        <span className="ad-name">{slot.name}</span>
+        {slot.city && <span className="ad-where">{slot.city}</span>}
         {slot.blurb && <p>{slot.blurb}</p>}
         {slot.href && (
-          <a href={slot.href} target="_blank" rel="noreferrer">
+          <a className="ad-link" href={slot.href} target="_blank" rel="noreferrer">
             {slot.hrefLabel}
           </a>
         )}
