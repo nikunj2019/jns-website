@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stonegate Golf Outing — Player Guide</title>
+<style>
+  /* Printable two-page flyer, US Letter. Rendered to PDF by docs/build-docs.mjs.
+     Colours track the app so the printed sheet and the phone look related. */
+  @page { size: Letter; margin: 0; }
+
+  :root {
+    --pine: #073d2b;
+    --pine2: #0c513b;
+    --gold: #c7a24d;
+    --cream: #f6f7f3;
+    --ink: #13231c;
+    --muted: #5f6b64;
+    --line: #dfe6e1;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .page {
+    width: 8.5in;
+    height: 11in;
+    padding: 0.5in 0.55in;
+    position: relative;
+    overflow: hidden;
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+  }
+  .page:last-child { page-break-after: auto; }
+
+  /* ── masthead ─────────────────────────────────────────────── */
+  .masthead {
+    background: linear-gradient(135deg, var(--pine), var(--pine2));
+    color: #fff;
+    border-radius: 14px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .crest {
+    width: 48px; height: 56px;
+    flex: 0 0 48px;
+    border: 2px solid var(--gold);
+    border-radius: 6px 6px 20px 20px;
+    display: grid; place-items: center;
+    font: 26px Georgia, serif;
+    background: rgba(0,0,0,.18);
+  }
+  .masthead h1 { font: 27px/1.1 Georgia, serif; letter-spacing: .01em; }
+  .masthead p { font-size: 11.5px; color: #cfe3d6; margin-top: 4px; }
+  .masthead .venue { margin-left: auto; text-align: right; font-size: 10.5px; color: #cfe3d6; line-height: 1.5; }
+
+  h2 {
+    font: 19px Georgia, serif;
+    margin: 20px 0 9px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--gold);
+  }
+  h2.tight { margin-top: 14px; }
+
+  .lede { font-size: 12.5px; line-height: 1.6; color: var(--muted); margin-top: 12px; }
+
+  /* ── steps ────────────────────────────────────────────────── */
+  ol.steps { list-style: none; counter-reset: step; }
+  ol.steps > li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 40px;
+    margin-bottom: 13px;
+  }
+  ol.steps > li::before {
+    content: counter(step);
+    position: absolute; left: 0; top: -1px;
+    width: 27px; height: 27px;
+    border-radius: 50%;
+    background: var(--pine);
+    color: #fff;
+    display: grid; place-items: center;
+    font: 700 13px/1 Arial;
+  }
+  ol.steps b { display: block; font-size: 13.5px; margin-bottom: 3px; }
+  ol.steps p { font-size: 11.5px; line-height: 1.55; color: var(--muted); }
+
+  code {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    background: #eef2ee;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: .94em;
+  }
+
+  /* ── code + QR callout ────────────────────────────────────── */
+  .joinbox {
+    margin-top: 14px;
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    background: var(--cream);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--gold);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .joinbox .qr { width: 104px; flex: 0 0 104px; }
+  .joinbox .qr img { width: 100%; display: block; }
+  .joinbox small {
+    display: block; font-size: 9px; font-weight: 700;
+    letter-spacing: .14em; color: #8b7327; margin-bottom: 5px;
+  }
+  .joinbox .url { font: 700 15px ui-monospace, Menlo, monospace; word-break: break-all; }
+  .joinbox p { font-size: 11px; line-height: 1.55; color: var(--muted); margin-top: 7px; }
+  .codeblank {
+    margin-top: 9px; padding: 8px 12px;
+    background: #fff; border: 1px dashed #bcc7c0; border-radius: 8px;
+    font: 700 15px ui-monospace, Menlo, monospace; letter-spacing: .04em; color: var(--pine);
+  }
+
+  /* ── feature cards ────────────────────────────────────────── */
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .cards.three { grid-template-columns: repeat(3, 1fr); }
+  .card {
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    padding: 12px 14px;
+    background: #fff;
+  }
+  .card b { display: block; font-size: 13px; margin-bottom: 4px; color: var(--pine); }
+  .card p { font-size: 11px; line-height: 1.55; color: var(--muted); }
+
+  /* ── notes ────────────────────────────────────────────────── */
+  .note {
+    margin-top: 12px;
+    background: #fbf7ec;
+    border: 1px solid #e8dcbb;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 11px;
+    line-height: 1.6;
+  }
+  .note b { color: #7c6320; }
+
+  table.faq { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  table.faq td { padding: 8px 0; border-bottom: 1px solid var(--line); vertical-align: top; font-size: 11.5px; line-height: 1.55; }
+  table.faq td:first-child { width: 38%; padding-right: 14px; font-weight: 700; }
+  table.faq tr:last-child td { border-bottom: 0; }
+
+  /* ── footer ───────────────────────────────────────────────── */
+  .foot {
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 9.5px; color: #8b948e;
+  }
+  .foot .jns { text-align: right; }
+  .foot .jns b { display: block; color: var(--pine); font-size: 11px; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ PAGE 1 — getting in ══════════════ -->
+<section class="page">
+  <div class="masthead">
+    <div class="crest">S</div>
+    <div>
+      <h1>Stonegate Golf Outing</h1>
+      <p>Live scoring, GPS course map and leaderboard — on your phone</p>
+    </div>
+    <div class="venue">
+      <b>The Trophy Club</b><br>
+      Lebanon, Indiana<br>
+      18 holes &middot; Par 72
+    </div>
+  </div>
+
+  <p class="lede">
+    Everything runs in your web browser. There is <strong>no app to download</strong>, no account to
+    create and no password to remember. Your captain has a private link for your foursome — open it
+    once and your phone remembers your team for the rest of the day.
+  </p>
+
+  <h2>Getting started</h2>
+
+  <ol class="steps">
+    <li>
+      <b>Open your team's link</b>
+      <p>Your captain will text it to you. It looks like
+      <code>jnssolutions.ai/golf/?code=CEDAR-EAGLE-472</code> — the code is what signs you in,
+      so there is nothing else to enter.</p>
+    </li>
+    <li>
+      <b>Add it to your home screen</b>
+      <p><strong>iPhone:</strong> tap Share, then <em>Add to Home Screen</em>.
+      <strong>Android:</strong> tap the ⋮ menu, then <em>Add to Home screen</em> or <em>Install app</em>.
+      It then opens like any other app, full screen and without the browser bars.</p>
+    </li>
+    <li>
+      <b>Do this before you leave the house</b>
+      <p>Phone signal at the course is patchy. Opening the app once on good wifi means the course
+      map and scorecard are already stored on your phone when you get there.</p>
+    </li>
+    <li>
+      <b>Check you're on the right team</b>
+      <p>Tap <em>My team</em> from the ⋯ menu. You should see your foursome and your starting
+      hole — the outing is a shotgun start, so most teams do not begin on hole 1.</p>
+    </li>
+  </ol>
+
+  <div class="joinbox">
+    <div class="qr"><img src="golf-qr.svg" alt="QR code for jnssolutions.ai/golf/"></div>
+    <div>
+      <small>NO LINK? SCAN THIS AND TYPE YOUR CODE</small>
+      <div class="url">jnssolutions.ai/golf/</div>
+      <p>Your code is three parts — two words and three digits. Capitals, spaces and dashes don't
+      matter, so <code>cedar eagle 472</code> works just as well as <code>CEDAR-EAGLE-472</code>.</p>
+      <div class="codeblank">Our team code: ______________________</div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>One code per foursome.</b> All four of you use the same one, and all four can enter scores —
+    it's a scramble, so the team records a single score per hole. If two of you enter the same hole,
+    the most recent entry is the one that sticks.
+  </div>
+
+  <h2>Good to know</h2>
+
+  <div class="cards three">
+    <div class="card">
+      <b>One phone is enough</b>
+      <p>You don't all need it open. One person keeping the card works fine — and if two of you do
+      have it open, you'll both see the same running total.</p>
+    </div>
+    <div class="card">
+      <b>Watch the battery</b>
+      <p>The GPS distance reading is the hungry part. Leave it off unless you're using it, and start
+      the round with a full charge.</p>
+    </div>
+    <div class="card">
+      <b>Nothing to sign up for</b>
+      <p>No account to make, no password, no email address — the team code is the whole login. Lose
+      your phone and you lose nothing: open the link on another one.</p>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div>Stonegate Golf Outing &middot; Player guide &middot; Page 1 of 2</div>
+    <div class="jns"><b>JNS</b>Technology partner</div>
+  </div>
+</section>
+
+<!-- ══════════════ PAGE 2 — using it ══════════════ -->
+<section class="page">
+  <div class="masthead">
+    <div class="crest">S</div>
+    <div>
+      <h1>Using the app</h1>
+      <p>Four buttons along the bottom — that's the whole thing</p>
+    </div>
+  </div>
+
+  <h2 class="tight">What each screen does</h2>
+
+  <div class="cards">
+    <div class="card">
+      <b>Score</b>
+      <p>Tap <strong>+</strong> or <strong>−</strong> to set your team's score for the hole, then use
+      the arrows to move between holes. It saves by itself — there is no save button. The line
+      underneath tells you where it stands: <em>Saved</em>, or <em>Queued</em> if you have no signal.</p>
+    </div>
+    <div class="card">
+      <b>Course</b>
+      <p>An aerial map of every hole with the playing line, distances between points, and par and
+      stroke index. Tap the GPS button top-right to see your live distance to the middle of the
+      green.</p>
+    </div>
+    <div class="card">
+      <b>Leaderboard</b>
+      <p>Live standings for every team, updating on their own. Switch between overall, front nine
+      and back nine.</p>
+    </div>
+    <div class="card">
+      <b>Messages</b>
+      <p>Announcements from the organizers, and a direct line to ask them anything. Find it via the
+      speech-bubble icon at the top right.</p>
+    </div>
+  </div>
+
+  <h2>Out of signal</h2>
+  <p class="lede" style="margin-top:8px">
+    The course has dead spots, and the app is built for them. Scores you enter without signal are
+    <strong>held on your phone and sent automatically</strong> when you get a bar back — you do not
+    need to re-enter anything, and you can keep scoring holes in the meantime. The badge says
+    <em>Queued</em> until it goes through. The course map works offline too.
+  </p>
+
+  <h2>If something goes wrong</h2>
+
+  <table class="faq">
+    <tr>
+      <td>I lost the link</td>
+      <td>Go to <code>jnssolutions.ai/golf/</code> and enter your team code by hand. Ask your captain
+      or an organizer if you don't have it.</td>
+    </tr>
+    <tr>
+      <td>It says my code isn't found</td>
+      <td>Check it against the card — <code>0</code> and <code>O</code> are easy to mix up. If it
+      still fails, an organizer may have reissued it; ask for the current one.</td>
+    </tr>
+    <tr>
+      <td>I'm on the wrong team</td>
+      <td>Open your own team's link again. The phone switches to whichever code it was last given.</td>
+    </tr>
+    <tr>
+      <td>A score is wrong</td>
+      <td>Go back to that hole and change it — you can edit any hole at any time. Organizers can also
+      correct it from the scoring table.</td>
+    </tr>
+    <tr>
+      <td>Distances look off</td>
+      <td>GPS needs permission and a clear sky. It measures to the <em>centre</em> of the green, not
+      the pin, so treat it as a guide.</td>
+    </tr>
+    <tr>
+      <td>Nothing is loading</td>
+      <td>You're probably in a dead spot. The leaderboard needs signal; scoring does not.</td>
+    </tr>
+  </table>
+
+  <div class="note">
+    <b>Something urgent?</b> Messages in the app are read when an organizer is at the scoring table,
+    which is not all the time. For anything that can't wait — an injury, a lost cart, a hold-up on
+    the course — call the clubhouse on <strong>(765) 482-7272</strong> or find an organizer.
+  </div>
+
+  <div class="foot">
+    <div>Stonegate Golf Outing &middot; Player guide &middot; Page 2 of 2</div>
+    <div class="jns"><b>JNS</b>jnssolutions.ai</div>
+  </div>
+</section>
+
+</body>
+</html>
