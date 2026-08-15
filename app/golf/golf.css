@@ -1267,6 +1267,73 @@ body:has(.golf-root) {
   cursor: pointer;
 }
 
+/* ── install sheet ─────────────────────────────────────────────────────────
+ * Shares the takeover's card, because it is the same kind of thing: something
+ * the player has to read before it goes away. It differs only in being
+ * dismissible by tapping outside, since nothing here is urgent.
+ */
+.install-card { text-align: left; }
+.install-card h2 { text-align: left; }
+.install-intro {
+  margin: 0 0 4px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #4a5852;
+}
+.install-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: install;
+}
+.install-steps li {
+  counter-increment: install;
+  position: relative;
+  padding: 12px 0 12px 38px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #2c3a34;
+  border-bottom: 1px solid #eef2ef;
+}
+.install-steps li:last-child { border-bottom: 0; }
+.install-steps li::before {
+  content: counter(install);
+  position: absolute;
+  left: 0;
+  top: 11px;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: var(--pine, #073d2b);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+.install-steps b { font-weight: 700; color: var(--pine, #073d2b); }
+/* Keeps "Share ⬆" on one line — the glyph is the point of the sentence, and a
+   line break between the word and the icon loses it. */
+.install-steps .nb { white-space: nowrap; }
+/* Inline with the sentence, so "tap the Share ⬆ button" reads as one thought.
+ * The explicit inline-block matters: this stylesheet sets `svg { display: block }`
+ * globally for the icon set, and a block glyph breaks the line either side of
+ * itself no matter what white-space says. */
+.ios-glyph {
+  display: inline-block;
+  width: 17px;
+  height: 17px;
+  vertical-align: -3px;
+  margin: 0 1px;
+  color: #0a7cff;
+}
+.install-foot {
+  margin: 12px 0 0;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: #75817b;
+}
+
 /* ── admin nav: five tabs, one line ────────────────────────────────────────
  * The mobile rule hardcoded four columns. Adding Messages made a fifth, which
  * wrapped Access onto its own row and pushed the "view live app" arrow into the
