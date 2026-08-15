@@ -20,6 +20,8 @@ import {
   mapTeam,
   readTeamCode,
   removeAdmin,
+  clearHoleScore,
+  clearTeamScores,
   saveHoleScore,
   strokesToArray,
   updateTeam,
@@ -41,6 +43,7 @@ const emptyDraft = (): TeamDraft => ({ id: null, name: "", startHole: 1, players
 
 type Confirming =
   | { kind: "delete"; team: Team }
+  | { kind: "clearScores"; team: Team }
   | { kind: "regenerate"; team: Team }
   | { kind: "removeAdmin"; admin: AdminUser };
 
@@ -274,6 +277,22 @@ export default function AdminDashboard({
     }
   };
 
+  const scoredHole = !!strokesById.get(scoreTeam ?? "")?.[selectedHole - 1];
+
+  const clearHole = async () => {
+    if (!scoreTeam) return;
+    setSaveState("Clearing…");
+    try {
+      await clearHoleScore(scoreTeam, selectedHole, await idToken(user));
+      setSaveState(`Hole ${selectedHole} is unplayed again`);
+    } catch {
+      setSaveState("Could not clear — try again");
+    }
+  };
+
+  const doClearScores = (team: Team) =>
+    run(`${team.name}'s card is empty again.`, (token) => clearTeamScores(team.id, token));
+
   // ── Access ─────────────────────────────────────────────────────────────────
 
   const grantAccess = async (event: React.FormEvent) => {
@@ -404,6 +423,8 @@ export default function AdminDashboard({
                       `Delete ${confirming.team.name}, its players and all its scores? This cannot be undone.`}
                     {confirming.kind === "regenerate" &&
                       `Generate a new code for ${confirming.team.name}? Their current link stops working immediately.`}
+                    {confirming.kind === "clearScores" &&
+                      `Erase every hole ${confirming.team.name} has scored? The team, its players and its code stay as they are. This cannot be undone.`}
                     {confirming.kind === "removeAdmin" &&
                       `Remove admin access for ${confirming.admin.email}?`}
                   </b>
@@ -415,6 +436,7 @@ export default function AdminDashboard({
                       onClick={() => {
                         if (confirming.kind === "delete") void doDelete(confirming.team);
                         else if (confirming.kind === "regenerate") void doRegenerate(confirming.team);
+                        else if (confirming.kind === "clearScores") void doClearScores(confirming.team);
                         else
                           void run(`${confirming.admin.email} was removed.`, (token) =>
                             removeAdmin(confirming.admin.email, token)
@@ -729,6 +751,27 @@ export default function AdminDashboard({
                           </button>
                         </div>
                         <p aria-live="polite">{saveState || "Changes save immediately"}</p>
+
+                        {/* Setting a hole to 1 is not the same as never having
+                            played it: the grid keeps showing a number and the
+                            leaderboard keeps counting it in Thru. */}
+                        <button
+                          className="clear-hole"
+                          disabled={!scoredHole}
+                          onClick={() => void clearHole()}
+                        >
+                          {scoredHole ? `Clear hole ${selectedHole}` : `Hole ${selectedHole} is unplayed`}
+                        </button>
+
+                        <button
+                          className="danger clear-card"
+                          onClick={() => {
+                            const team = teams.find((t) => t.id === scoreTeam);
+                            if (team) setConfirming({ kind: "clearScores", team });
+                          }}
+                        >
+                          Clear the whole card
+                        </button>
                       </div>
                     </div>
                   )}

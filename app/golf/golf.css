@@ -1767,3 +1767,40 @@ body:has(.golf-root) {
   color: #fff;
 }
 .rename-actions .primary:disabled { opacity: .55; }
+
+/* ── clearing scores ───────────────────────────────────────────────────────
+ * Both live under the +/− control rather than beside it: they undo work, and a
+ * destructive button the same size and place as the one being pressed forty
+ * times an afternoon is a mis-tap waiting to happen.
+ *
+ * Scoped to `.score-adjust` on purpose. `.score-adjust button` styles the plus
+ * and minus keys at (0,1,1); an unscoped `.clear-card` at (0,1,0) loses to it,
+ * and the destructive button silently came out looking like the two it sits
+ * under — same white, same 24px glyph size.
+ */
+.score-adjust .clear-hole,
+.score-adjust .clear-card {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.score-adjust .clear-hole {
+  border: 1px solid var(--line, #dfe5e0);
+  background: #fff;
+  color: var(--pine, #063c2a);
+}
+.score-adjust .clear-hole:disabled {
+  color: #a3aca8;
+  background: #f4f6f4;
+  cursor: default;
+}
+.score-adjust .clear-card {
+  margin-top: 8px;
+  border: 1px solid #e6cdc8;
+  background: #fdf3f1;
+  color: #8d352e;
+}

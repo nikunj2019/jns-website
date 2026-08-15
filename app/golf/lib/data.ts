@@ -348,6 +348,43 @@ export async function updateTeam(id: string, input: TeamInput, token: string): P
   );
 }
 
+/**
+ * Put a hole back to unplayed.
+ *
+ * Not the same as setting it to 1. The scoring controls floor at one stroke —
+ * on purpose, since nobody holes out in zero — which leaves an organizer no way
+ * to undo a score entered against the wrong hole: the grid keeps showing a
+ * number and the leaderboard keeps counting it in `thru`.
+ *
+ * Firestore deletes a field when the update mask names it and the body does
+ * not, so this sends `updatedAt` with a mask covering both. `strokes` survives
+ * as a map even when the last hole goes, which is what the rules require.
+ */
+export async function clearHoleScore(teamId: string, hole: number, token: string): Promise<void> {
+  if (!Number.isInteger(hole) || hole < 1 || hole > HOLE_COUNT) {
+    throw new Error(`Hole ${hole} isn't on this course.`);
+  }
+  await fsPatchDoc(
+    SCORES_COLLECTION,
+    teamId,
+    { updatedAt: new Date().toISOString() },
+    token,
+    [`strokes.${holeKey(hole)}`, "updatedAt"]
+  );
+}
+
+/**
+ * Wipe a team's card back to empty, leaving the team, its players and its code
+ * alone — the difference between "start this scorecard over" and deleting the
+ * foursome, which was previously the only way to do it.
+ *
+ * The rules have always allowed an organizer to delete a score document; there
+ * simply was not a button for it.
+ */
+export async function clearTeamScores(teamId: string, token: string): Promise<void> {
+  await fsDeleteDoc(SCORES_COLLECTION, teamId, token);
+}
+
 /** Longest a team name may be; mirrored in the security rules. */
 export const TEAM_NAME_MAX = 40;
 

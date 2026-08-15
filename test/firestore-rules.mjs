@@ -12,7 +12,7 @@
  * is not the same as watching the emulator refuse the write.
  */
 import { initializeTestEnvironment, assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { deleteDoc, deleteField, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -61,8 +61,7 @@ await t("rewrite its roster", () =>
   assertFails(updateDoc(doc(player, "golf-teams", TEAM), { players: ["Me", "Me", "Me", "Me"] })));
 await t("remove itself from the outing", () =>
   assertFails(updateDoc(doc(player, "golf-teams", TEAM), { active: false })));
-await t("delete its team", () =>
-  assertFails(import("firebase/firestore").then(({ deleteDoc }) => deleteDoc(doc(player, "golf-teams", TEAM)))));
+await t("delete its team", () => assertFails(deleteDoc(doc(player, "golf-teams", TEAM))));
 await t("create a new team", () =>
   assertFails(setDoc(doc(player, "golf-teams", "invented"), { name: "Ghost", startHole: 1, players: [], active: true })));
 
@@ -87,5 +86,35 @@ await t("anonymous visitor cannot rename", () =>
   assertFails(updateDoc(doc(anon, "golf-teams", TEAM), { name: "Nope" })));
 await t("anyone can still read the leaderboard", () =>
   assertSucceeds(getDoc(doc(anon, "golf-teams", TEAM))));
+
+// ── Clearing scores ────────────────────────────────────────────────────────
+// An organizer must be able to put a hole back to unplayed and wipe a card;
+// a team must not be able to wipe its own or anyone else's.
+await env.withSecurityRulesDisabled(async (ctx) => {
+  const db = ctx.firestore();
+  for (const id of [TEAM, OTHER])
+    await setDoc(doc(db, "golf-scores", id), { strokes: { h1: 4, h2: 5 }, updatedAt: "seed" });
+  await setDoc(doc(db, "golf-admins", "organizer@example.com"), { role: "admin" });
+});
+
+const organizer = env
+  .authenticatedContext("org", { email: "organizer@example.com", email_verified: true })
+  .firestore();
+
+console.log("\nClearing scores");
+await t("organizer clears one hole", () =>
+  assertSucceeds(updateDoc(doc(organizer, "golf-scores", TEAM), { "strokes.h1": deleteField(), updatedAt: "x" })));
+await t("organizer wipes a card", () =>
+  assertSucceeds(deleteDoc(doc(organizer, "golf-scores", TEAM))));
+await t("team can still score its own card", () =>
+  assertSucceeds(setDoc(doc(player, "golf-scores", TEAM), { strokes: { h3: 4 }, updatedAt: "x" })));
+await t("team cannot delete its own card", () =>
+  assertFails(deleteDoc(doc(player, "golf-scores", TEAM))));
+await t("team cannot delete another team's card", () =>
+  assertFails(deleteDoc(doc(player, "golf-scores", OTHER))));
+await t("team cannot clear another team's hole", () =>
+  assertFails(updateDoc(doc(player, "golf-scores", OTHER), { "strokes.h1": deleteField(), updatedAt: "x" })));
+await t("anonymous visitor cannot delete a card", () =>
+  assertFails(deleteDoc(doc(anon, "golf-scores", OTHER))));
 
 await env.cleanup();
