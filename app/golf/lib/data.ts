@@ -327,6 +327,7 @@ function validateTeam(input: TeamInput): { name: string; startHole: number; play
 
 export async function createTeam(input: TeamInput, token: string): Promise<{ id: string; code: string }> {
   const { name, startHole, players } = validateTeam(input);
+  await assertNameFree(name, null, token);
   const now = new Date().toISOString();
 
   const id = await fsAddDoc(
@@ -340,12 +341,44 @@ export async function createTeam(input: TeamInput, token: string): Promise<{ id:
 
 export async function updateTeam(id: string, input: TeamInput, token: string): Promise<void> {
   const { name, startHole, players } = validateTeam(input);
+  await assertNameFree(name, id, token);
   await fsPatchDoc(
     TEAMS_COLLECTION,
     id,
     { name, startHole, players, updatedAt: new Date().toISOString() },
     token
   );
+}
+
+/**
+ * The form of a name used for comparison.
+ *
+ * "The Sandbaggers", "the  sandbaggers" and " The Sandbaggers " are the same
+ * name to everyone reading a leaderboard, so they are the same name here.
+ */
+function nameKey(name: string): string {
+  return name.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+/**
+ * Refuse a name another team already has.
+ *
+ * Checked against a fresh read rather than whatever the caller had on screen,
+ * which on a phone can be twenty seconds stale. Worth being straight about the
+ * limit: this is a read-then-write, so two teams choosing the same name in the
+ * same moment can both pass. Firestore can only make that impossible with an
+ * index collection written in the same commit, and the app has no batch-write
+ * path — a real fix, not a small one. The failure it does not catch produces a
+ * duplicate on the leaderboard, which an organizer can rename; the one it does
+ * catch is the whole of what actually happens.
+ */
+async function assertNameFree(name: string, selfId: string | null, token: string): Promise<void> {
+  const key = nameKey(name);
+  const docs = await fsListDocs(TEAMS_COLLECTION, token);
+  const clash = docs
+    .map(mapTeam)
+    .find((t) => t.id !== selfId && t.active && nameKey(t.name) === key);
+  if (clash) throw new TeamNameError(`"${clash.name}" is taken. Pick another name.`);
 }
 
 /**
@@ -406,11 +439,14 @@ export async function renameTeam(teamId: string, rawName: string): Promise<strin
     throw new TeamNameError(`Keep it to ${TEAM_NAME_MAX} characters or fewer.`);
 
   const user = await ensureAnonymousUser();
+  const token = await user.getIdToken();
+  await assertNameFree(name, teamId, token);
+
   await fsPatchDoc(
     TEAMS_COLLECTION,
     teamId,
     { name, updatedAt: new Date().toISOString() },
-    await user.getIdToken(),
+    token,
     ["name", "updatedAt"]
   );
   return name;
