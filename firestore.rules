@@ -67,6 +67,15 @@ service cloud.firestore {
         );
     }
 
+    // Does the caller's claim name this exact team? Hoisted so scores and chat
+    // enforce team membership through the same check rather than two copies
+    // that could drift apart.
+    function claimsTeam(teamId) {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/golf-claims/$(request.auth.uid))
+        && get(/databases/$(database)/documents/golf-claims/$(request.auth.uid)).data.teamId == teamId;
+    }
+
     // ── Existing survey collections (unchanged) ─────────────────────────────
 
     match /survey-submissions/{id} {
@@ -145,12 +154,6 @@ service cloud.firestore {
     // exact team. One document per team — it's a scramble, so there is one
     // score per hole per foursome.
     match /golf-scores/{teamId} {
-      function onThisTeam() {
-        return request.auth != null
-          && exists(/databases/$(database)/documents/golf-claims/$(request.auth.uid))
-          && get(/databases/$(database)/documents/golf-claims/$(request.auth.uid)).data.teamId == teamId;
-      }
-
       // Only ever these two fields, and strokes must stay a map — this stops a
       // stray client from parking arbitrary data in the collection.
       function validShape() {
@@ -159,8 +162,55 @@ service cloud.firestore {
       }
 
       allow read: if true;
-      allow create, update: if validShape() && (isGolfAdmin() || onThisTeam());
+      allow create, update: if validShape() && (isGolfAdmin() || claimsTeam(teamId));
       allow delete: if isGolfAdmin();
+    }
+
+    // ── Support chat ────────────────────────────────────────────────────────
+    // One thread per team, and access is decided by the *path*: a player's
+    // claim names exactly one team, and it must equal the {teamId} segment.
+    // That means a player cannot reach another team's thread even by crafting
+    // the request by hand, and no query-shape constraints are needed — which
+    // is what makes this safe without a server in front of it.
+
+    match /golf-chats/{teamId} {
+      // The thread summary: last message, timestamps, who has read what.
+      // Players `get` their own; only organizers may list every thread, so a
+      // player can't enumerate who has been complaining about what.
+      allow get: if isGolfAdmin() || claimsTeam(teamId);
+      allow list: if isGolfAdmin();
+      allow write: if isGolfAdmin() || claimsTeam(teamId);
+
+      match /messages/{messageId} {
+        function validMessage() {
+          return request.resource.data.keys().hasOnly(['body', 'from', 'author', 'createdAt'])
+            && request.resource.data.body is string
+            && request.resource.data.body.size() > 0
+            && request.resource.data.body.size() <= 1000
+            && request.resource.data.from in ['team', 'admin']
+            // A player cannot post a message that claims to be from an
+            // organizer, which would otherwise make an official-looking
+            // announcement forgeable inside their own thread.
+            && (isGolfAdmin() || request.resource.data.from == 'team');
+        }
+
+        allow read: if isGolfAdmin() || claimsTeam(teamId);
+        allow create: if (isGolfAdmin() || claimsTeam(teamId)) && validMessage();
+        // Messages are a record. Only an organizer can remove one, and nobody
+        // edits history.
+        allow update: if false;
+        allow delete: if isGolfAdmin();
+      }
+    }
+
+    // ── Announcements ───────────────────────────────────────────────────────
+    // Event-wide notices. Public to read, like the leaderboard — they're
+    // things said over a loudspeaker, not private mail. Anything meant for one
+    // team goes into that team's chat thread instead, where it is actually
+    // restricted.
+    match /golf-announcements/{id} {
+      allow read: if true;
+      allow write: if isGolfAdmin();
     }
   }
 }

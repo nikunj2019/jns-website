@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Icon from "./components/Icon";
 import JNSInterstitial from "./components/JNSInterstitial";
+import TeamMessages from "./components/TeamMessages";
 import { EVENT, SCORES_COLLECTION, SPONSORS, TEAMS_COLLECTION } from "./lib/config";
 import {
   COURSE_PAR,
@@ -23,6 +24,16 @@ import {
   type Team,
   type TeamScores,
 } from "./lib/data";
+import {
+  announcementsSeenKey,
+  ANNOUNCEMENTS_COLLECTION,
+  lastSeen,
+  mapAnnouncement,
+  teamSeenKey,
+  unreadCount,
+  type Announcement,
+} from "./lib/chat";
+import { useAnonymousToken, useThreadSummary } from "./lib/useChat";
 import { navigateHash, useHashView } from "./lib/useHashView";
 import { firestoreProjectId } from "../lib/firestoreRest";
 import { useGolfCollection } from "./lib/useGolfCollection";
@@ -36,9 +47,28 @@ const CourseMap = dynamic(() => import("./CourseMap"), {
   loading: () => <div className="map-loading">Loading course…</div>,
 });
 
-type View = "home" | "join" | "score" | "map" | "leaders" | "team" | "sponsors" | "more";
+type View =
+  | "home"
+  | "join"
+  | "score"
+  | "map"
+  | "leaders"
+  | "team"
+  | "sponsors"
+  | "more"
+  | "messages";
 
-const VIEWS: View[] = ["home", "join", "score", "map", "leaders", "team", "sponsors", "more"];
+const VIEWS: View[] = [
+  "home",
+  "join",
+  "score",
+  "map",
+  "leaders",
+  "team",
+  "sponsors",
+  "more",
+  "messages",
+];
 
 /** A team with its scorecard resolved — what every screen here actually needs. */
 type TeamRow = {
@@ -78,6 +108,16 @@ export default function GolfApp() {
   const scoresState = useGolfCollection<TeamScores>(SCORES_COLLECTION, mapScores);
   const queue = useScoreQueue(teamId);
 
+  // Announcements are public, so they ride the same live hook as everything
+  // else. The private thread needs auth, so only its summary is polled here —
+  // enough for a badge without pulling every message while someone is scoring.
+  const announcementsState = useGolfCollection<Announcement>(
+    ANNOUNCEMENTS_COLLECTION,
+    mapAnnouncement
+  );
+  const anonToken = useAnonymousToken();
+  const thread = useThreadSummary(teamId, anonToken);
+
   const teams = useMemo(
     () => teamsState.docs.filter((t) => t.active).sort((a, b) => a.name.localeCompare(b.name)),
     [teamsState.docs]
@@ -113,6 +153,23 @@ export default function GolfApp() {
       ),
     [rows]
   );
+
+  /**
+   * Unread badge. Counted against what this device has seen rather than a
+   * server-side read receipt: four team-mates share one code, and one of them
+   * opening the thread should not clear the badge on the other three phones.
+   */
+  const unread = useMemo(() => {
+    const announcements = unreadCount(
+      announcementsState.docs,
+      lastSeen(announcementsSeenKey)
+    );
+    const replies =
+      teamId && thread?.lastFrom === "admin" && thread.lastAt > lastSeen(teamSeenKey(teamId))
+        ? 1
+        : 0;
+    return announcements + replies;
+  }, [announcementsState.docs, thread, teamId]);
 
   // ── Navigation ─────────────────────────────────────────────────────────────
   // The screens are one component, but each gets a hash so the Android back
@@ -218,7 +275,13 @@ export default function GolfApp() {
 
   return (
     <main className="v3-shell">
-      <AppHeader onHome={() => go("home")} onMore={() => go("more")} live={teamsState.live} />
+      <AppHeader
+        onHome={() => go("home")}
+        onMore={() => go("more")}
+        onMessages={() => go("messages")}
+        live={teamsState.live}
+        unread={unread}
+      />
 
       <div className="v3-body" ref={headingRef} tabIndex={-1}>
         {awaitingTeam && <p className="app-loading">Finding your team…</p>}
@@ -259,7 +322,14 @@ export default function GolfApp() {
         {effectiveView === "team" &&
           (myRow ? <MyTeam row={myRow} /> : <p className="app-loading">Loading your team…</p>)}
         {view === "sponsors" && <Sponsors />}
-        {view === "more" && <More go={go} install={install} />}
+        {view === "messages" && (
+          <TeamMessages
+            teamId={teamId}
+            teamName={myRow?.team.name ?? "Team"}
+            announcements={announcementsState.docs}
+          />
+        )}
+        {view === "more" && <More go={go} install={install} unread={unread} />}
 
         {note && (
           <p className="app-note" role="status">
@@ -282,11 +352,15 @@ export default function GolfApp() {
 function AppHeader({
   onHome,
   onMore,
+  onMessages,
   live,
+  unread,
 }: {
   onHome: () => void;
   onMore: () => void;
+  onMessages: () => void;
   live: boolean;
+  unread: number;
 }) {
   return (
     <header className="v3-head">
@@ -303,6 +377,14 @@ function AppHeader({
           <i />
           {live ? "LIVE" : "SYNCING"}
         </span>
+        <button
+          className={`header-msg${unread ? " has-unread" : ""}`}
+          aria-label={unread ? `Messages, ${unread} unread` : "Messages"}
+          onClick={onMessages}
+        >
+          <Icon name="chat" />
+          {unread > 0 && <i className="unread-dot" aria-hidden />}
+        </button>
         <button className="header-more" aria-label="More options" onClick={onMore}>
           <Icon name="more" />
         </button>
@@ -504,15 +586,18 @@ function JoinTeam({
         </p>
         <form onSubmit={submit}>
           <label htmlFor="team-code">Team code</label>
+          {/* Hyphens, spaces and lower case all resolve to the same team, so
+              there's nothing to get wrong when retyping from a text message. */}
           <input
             id="team-code"
             autoCapitalize="characters"
             autoComplete="one-time-code"
+            autoCorrect="off"
             spellCheck={false}
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
-            placeholder="EXAMPLE7"
-            maxLength={12}
+            placeholder="CEDAR-EAGLE-472"
+            maxLength={28}
             aria-describedby={error ? "team-code-error" : undefined}
           />
           {error && (
@@ -789,7 +874,15 @@ function Sponsors() {
   );
 }
 
-function More({ go, install }: { go: (v: View) => void; install: () => void }) {
+function More({
+  go,
+  install,
+  unread,
+}: {
+  go: (v: View) => void;
+  install: () => void;
+  unread: number;
+}) {
   return (
     <section className="v3-screen">
       <Title top="STONEGATE OUTING" title="More" sub="Event resources" />
@@ -799,6 +892,14 @@ function More({ go, install }: { go: (v: View) => void; install: () => void }) {
           <span>
             <b>My team</b>
             <small>Foursome and starting hole</small>
+          </span>
+          <em>›</em>
+        </button>
+        <button onClick={() => go("messages")}>
+          <Icon name="chat" />
+          <span>
+            <b>Messages{unread > 0 ? ` (${unread})` : ""}</b>
+            <small>Announcements and support</small>
           </span>
           <em>›</em>
         </button>

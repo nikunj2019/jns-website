@@ -27,10 +27,12 @@ import {
   type Team,
   type TeamScores,
 } from "../lib/data";
+import AdminMessages from "./AdminMessages";
+import { ANNOUNCEMENTS_COLLECTION, mapAnnouncement, type Announcement } from "../lib/chat";
 import { idToken, useSignOut, type AdminRole } from "../lib/useAuth";
 import { useGolfCollection } from "../lib/useGolfCollection";
 
-type Tab = "overview" | "teams" | "scores" | "admins";
+type Tab = "overview" | "teams" | "scores" | "messages" | "admins";
 
 type TeamDraft = { id: string | null; name: string; startHole: number; players: string[] };
 
@@ -58,6 +60,14 @@ export default function AdminDashboard({
   const teamsState = useGolfCollection<Team>(TEAMS_COLLECTION, mapTeam);
   const scoresState = useGolfCollection<TeamScores>(SCORES_COLLECTION, mapScores);
   const adminsState = useGolfCollection<AdminUser>(ADMINS_COLLECTION, mapAdmin);
+  const announcementsState = useGolfCollection<Announcement>(
+    ANNOUNCEMENTS_COLLECTION,
+    mapAnnouncement
+  );
+
+  // Chat reads are authenticated, so they need a live token rather than the
+  // anonymous path the public collections use.
+  const tokenFor = useCallback(() => idToken(user), [user]);
 
   const [tab, setTab] = useState<Tab>("overview");
   const [notice, setNotice] = useState("");
@@ -259,6 +269,7 @@ export default function AdminDashboard({
     overview: "Tournament dashboard",
     teams: "Teams & players",
     scores: "Live scoring",
+    messages: "Messages",
     admins: "Access & roles",
   };
 
@@ -278,6 +289,7 @@ export default function AdminDashboard({
               ["overview", "Dashboard", "Live event status"],
               ["teams", "Teams", "Players and private links"],
               ["scores", "Scoring", "Review and correct"],
+              ["messages", "Messages", "Announcements and support"],
               ["admins", "Access", "Administrators and roles"],
             ] as const
           ).map(([key, label, hint]) => (
@@ -690,6 +702,15 @@ export default function AdminDashboard({
                     </div>
                   )}
                 </div>
+              )}
+
+              {tab === "messages" && (
+                <AdminMessages
+                  teams={teams}
+                  author={email}
+                  tokenFor={tokenFor}
+                  announcements={announcementsState.docs}
+                />
               )}
 
               {tab === "admins" && (

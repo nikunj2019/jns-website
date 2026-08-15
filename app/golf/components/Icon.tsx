@@ -17,7 +17,8 @@ export type IconName =
   | "pin"
   | "locate"
   | "install"
-  | "settings";
+  | "settings"
+  | "chat";
 
 const stroke = {
   fill: "none",
@@ -84,6 +85,12 @@ const ART: Record<IconName, ReactNode> = {
     <>
       <path {...stroke} d="M12 3v12m0 0 4-4m-4 4-4-4" />
       <path {...stroke} d="M5 19v2h14v-2" />
+    </>
+  ),
+  chat: (
+    <>
+      <path {...stroke} d="M20.5 12.2a7.6 7.6 0 0 1-8.2 7.5c-.9 0-1.7-.1-2.5-.4L4.5 21l1.4-4.2A7.3 7.3 0 0 1 4.5 12a7.6 7.6 0 0 1 8-7.5 7.6 7.6 0 0 1 8 7.7z" />
+      <path {...stroke} d="M9 11h6M9 14h4" />
     </>
   ),
   settings: (
