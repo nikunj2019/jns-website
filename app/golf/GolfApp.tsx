@@ -772,7 +772,7 @@ function Leaderboard({
     .sort((a, b) => a.toPar - b.toPar || b.thru - a.thru || a.team.name.localeCompare(b.team.name));
 
   return (
-    <section className="v3-screen">
+    <section className="v3-screen leaders-screen">
       <Title top="LIVE SCORING" title="Leaderboard" sub={`Par ${COURSE_PAR} · ${EVENT.venue.name}`} />
 
       <div className="leader-tabs">
@@ -840,7 +840,7 @@ function Leaderboard({
 
 function MyTeam({ row }: { row: TeamRow }) {
   return (
-    <section className="v3-screen">
+    <section className="v3-screen team-screen">
       <Title
         top="YOUR FOURSOME"
         title={row.team.name}
@@ -921,7 +921,7 @@ function More({
   unread: number;
 }) {
   return (
-    <section className="v3-screen">
+    <section className="v3-screen more-screen">
       <Title top="STONEGATE OUTING" title="More" sub="Event resources" />
       <div className="menu-v3">
         <button onClick={() => go("team")}>

@@ -1447,3 +1447,58 @@ body:has(.golf-root) {
   .admin-side { padding-top: calc(10px + var(--safe-top)); }
   .admin-main { height: calc(100dvh - 58px - var(--safe-top)); }
 }
+
+/* ── pull-to-refresh ───────────────────────────────────────────────────────
+ * Chrome on Android treats a downward drag at the top as an overscroll: it
+ * slides the page down under a spinner and reloads on release. The shell is
+ * exactly one viewport tall with the nav pinned to its bottom edge, so any
+ * downward translation carries the nav straight off the screen — which is
+ * what "I pull down and the bottom menu goes" looks like from the inside.
+ *
+ * Nothing here is worth pulling for: scores post as they are entered and the
+ * leaderboard streams on its own. `none` rather than `contain` so the
+ * overscroll glow goes with it — the app never scrolls as a document, and a
+ * glow at the edge only advertises a gesture that does nothing.
+ *
+ * Set on both elements deliberately. The viewport takes its overscroll
+ * behaviour from <html>, falling back to <body> only while <html> is `auto`,
+ * so relying on the propagation alone would be a coin toss.
+ */
+html:has(.golf-root),
+body:has(.golf-root) {
+  overscroll-behavior: none;
+}
+
+/* The panes that genuinely scroll keep the gesture to themselves — reaching
+   the end of the sponsor list or a chat thread must not hand it back up. */
+.sponsors-screen,
+.chat-scroll,
+.takeover-card,
+.team-login,
+.team-editor {
+  overscroll-behavior: contain;
+}
+
+/* ── screens that outgrow the frame ────────────────────────────────────────
+ * `.v3-screen` is `overflow: hidden`, which is right for the score pad and the
+ * map — both are laid out to fit a viewport exactly and must not move — and
+ * wrong for anything list-shaped. A twenty-team leaderboard stopped at
+ * whoever happened to fit and there was no way to reach the rest: measured at
+ * 412x883, the content ran 813px past the frame with nothing scrollable
+ * anywhere in the tree. Two teams fit, so it never showed up in testing.
+ */
+.leaders-screen,
+.team-screen,
+.more-screen {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-bottom: 12px;
+}
+
+/* The front/back-nine switch stays put while the field moves under it. */
+.leaders-screen .leader-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
