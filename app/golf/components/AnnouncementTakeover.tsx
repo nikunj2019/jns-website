@@ -11,10 +11,19 @@ import { announcementsSeenKey, lastSeen, markSeen, type Announcement } from "../
  * chat reply and the wrong weight for that, so this takes the screen and stays
  * until the player dismisses it. Nothing else in the app behaves this way.
  *
+ * It needs no team and no code: announcements are world-readable and this
+ * renders above the whole app, so a phone that has never joined a foursome —
+ * a spectator, an organizer's spouse, someone who only ever opened the link —
+ * gets "play is suspended" the same as everyone else.
+ *
  * Three things keep it from becoming an obstacle:
  *
- *   - It only fires for announcements posted *after* this device first opened
- *     the app. Installing mid-round doesn't replay a morning's notices.
+ *   - A device opening the app for the first time treats what's already posted
+ *     as history, so installing mid-round doesn't replay the morning. The one
+ *     exception is a notice from the last couple of hours, which is far more
+ *     likely to be live than archival — that still takes the screen, and only
+ *     that one, so a late arrival learns about the rain delay without sitting
+ *     through the welcome message.
  *   - One at a time, oldest first, so a burst of three is read in order rather
  *     than collapsing into whichever arrived last.
  *   - It never auto-dismisses and can't be tapped through, because the whole
@@ -22,6 +31,9 @@ import { announcementsSeenKey, lastSeen, markSeen, type Announcement } from "../
  *
  * Nothing is lost by dismissing: everything stays on the Messages screen.
  */
+
+/** How recent a notice has to be for a first-time device to still be shown it. */
+const LIVE_WINDOW_MS = 2 * 60 * 60 * 1000;
 export default function AnnouncementTakeover({
   announcements,
   onOpenMessages,
@@ -34,8 +46,7 @@ export default function AnnouncementTakeover({
   const [seenAt, setSeenAt] = useState<string | null>(null);
   const dismissRef = useRef<HTMLButtonElement | null>(null);
 
-  // Establish the baseline once. A device opening the app for the first time
-  // adopts whatever is already posted as "seen" — those are history, not news.
+  // Establish the baseline once, from what is already posted.
   useEffect(() => {
     const stored = lastSeen(announcementsSeenKey);
     if (stored) {
@@ -43,9 +54,22 @@ export default function AnnouncementTakeover({
       setSeenAt(stored);
       return;
     }
-    const newest = announcements.reduce((max, a) => (a.createdAt > max ? a.createdAt : max), "");
-    if (newest) markSeen(announcementsSeenKey, newest);
-    setSeenAt(newest || new Date().toISOString());
+
+    const sorted = [...announcements].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    const newest = sorted[sorted.length - 1];
+    const cutoff = new Date(Date.now() - LIVE_WINDOW_MS).toISOString();
+
+    // A recent notice is far more likely to be in force than archival, so the
+    // baseline stops just short of it and the newcomer sees that one. Anything
+    // older than the window — and everything behind the newest either way — is
+    // adopted as read.
+    const baseline =
+      newest && newest.createdAt > cutoff
+        ? sorted[sorted.length - 2]?.createdAt ?? ""
+        : newest?.createdAt ?? "";
+
+    if (baseline) markSeen(announcementsSeenKey, baseline);
+    setSeenAt(baseline);
   }, [announcements]);
 
   const pending = useMemo(() => {
@@ -78,13 +102,13 @@ export default function AnnouncementTakeover({
 
   return (
     <div
-      className="takeover"
+      className="takeover takeover-full"
       role="alertdialog"
       aria-modal="true"
       aria-labelledby="takeover-title"
       aria-describedby="takeover-body"
     >
-      <div className="takeover-card">
+      <div className="takeover-card announce-full">
         <span className="takeover-kicker">ANNOUNCEMENT</span>
         <h2 id="takeover-title">{current.title || "From the organizers"}</h2>
         <p id="takeover-body">{current.body}</p>

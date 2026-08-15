@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import Icon from "./components/Icon";
 import AnnouncementTakeover from "./components/AnnouncementTakeover";
 import InstallSheet from "./components/InstallSheet";
-import JNSInterstitial from "./components/JNSInterstitial";
+import Interstitial from "./components/Interstitial";
 import TeamMessages from "./components/TeamMessages";
 import { EVENT, SCORES_COLLECTION, SPONSORS, TEAMS_COLLECTION } from "./lib/config";
 import {
@@ -354,7 +354,7 @@ export default function GolfApp() {
 
       {/* Sits outside .v3-body so it overlays the app rather than scrolling
           inside whichever screen happens to be open when a hole is finished. */}
-      {!takeoverShowing && <JNSInterstitial teamId={teamId} thru={myRow?.thru ?? 0} />}
+      {!takeoverShowing && <Interstitial teamId={teamId} thru={myRow?.thru ?? 0} />}
 
       <AnnouncementTakeover
         announcements={announcementsState.docs}
