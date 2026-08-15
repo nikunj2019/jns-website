@@ -624,3 +624,137 @@ body:has(.golf-root) {
   border-radius: 4px;
   padding: 1px 5px;
 }
+
+/* ── team card actions ─────────────────────────────────────────────────────
+ * Six buttons over two rows. They were previously two rows built by different
+ * rules — one flex row of small buttons, one of large flex:1 buttons — so the
+ * widths didn't line up and Delete floated off to the right on its own. Both
+ * rows are now the same three-column grid with the same button metrics, so the
+ * card reads as one block.
+ */
+.team-code { gap: 10px; }
+.team-code button { flex: 0 0 auto; white-space: nowrap; }
+
+.team-send,
+.team-card-head + .team-code + .team-send + .team-actions,
+.teams-panel .team-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+  margin-top: 7px;
+}
+
+.team-send button,
+.team-send a,
+.teams-panel .team-actions button {
+  width: 100%;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  border: 1px solid var(--line, #dfe6e1);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--pine, #073d2b);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* Destructive action keeps its colour, but not its own row. */
+.teams-panel .team-actions .danger {
+  margin-left: 0;
+  background: #faecea;
+  color: #8d352e;
+  border-color: #f2d5d1;
+}
+
+/* Slightly larger sponsor marks — several of these are wordmarks that were
+ * hard to read at the previous cap. */
+.sponsor-grid li { min-height: 118px; padding: 16px; }
+.sponsor-grid img { max-height: 84px; }
+
+@media (min-width: 420px) {
+  .sponsor-grid li { min-height: 130px; }
+  .sponsor-grid img { max-height: 92px; }
+}
+
+/* ── JNS card, shown after every third completed hole ──────────────────────
+ * Anchored above the bottom nav rather than centred over the screen: a group
+ * that has just holed out is most likely still looking at the score control,
+ * and a modal across the middle would be in the way. It also self-dismisses.
+ */
+.jns-ad {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 80px;
+  z-index: 900;
+  animation: jns-ad-in .28s ease-out;
+}
+.jns-ad-card {
+  position: relative;
+  background: #fff;
+  border: 1px solid #e0e4df;
+  border-radius: 18px;
+  padding: 18px 18px 16px;
+  text-align: center;
+  box-shadow: 0 14px 40px rgba(7, 31, 22, .26);
+}
+.jns-ad-progress {
+  display: block;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .16em;
+  color: #9b7a2e;
+}
+.jns-ad-card img {
+  max-width: 190px;
+  width: 100%;
+  height: auto;
+  margin: 10px auto 6px;
+}
+.jns-ad-card p {
+  margin: 0 0 12px;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--muted3, #6c7771);
+}
+.jns-ad-card > a {
+  display: inline-block;
+  padding: 10px 18px;
+  border-radius: 10px;
+  background: var(--pine, #073d2b);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.jns-ad-card > small {
+  display: block;
+  margin-top: 10px;
+  font-size: 8.5px;
+  color: #98a09b;
+}
+.jns-ad-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  background: none;
+  color: #9aa29d;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+@keyframes jns-ad-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
