@@ -7,7 +7,7 @@ import AnnouncementTakeover from "./components/AnnouncementTakeover";
 import InstallSheet from "./components/InstallSheet";
 import Interstitial from "./components/Interstitial";
 import TeamMessages from "./components/TeamMessages";
-import { EVENT, SCORES_COLLECTION, SPONSORS, TEAMS_COLLECTION } from "./lib/config";
+import { BUILD_ID, EVENT, SCORES_COLLECTION, SPONSORS, TEAMS_COLLECTION } from "./lib/config";
 import {
   COURSE_PAR,
   formatToPar,
@@ -975,6 +975,7 @@ function More({
           <br />
           {EVENT.venue.summary} · {EVENT.venue.phone}
         </p>
+        <span className="build-id">Version {BUILD_ID}</span>
       </div>
     </section>
   );

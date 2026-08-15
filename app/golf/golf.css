@@ -1668,3 +1668,16 @@ body:has(.golf-root) {
 .announce-full .takeover-secondary {
   color: #cfe3d6;
 }
+
+/* Build marker. Quiet enough to ignore, findable when someone needs to say
+   which version they are looking at. */
+.build-id {
+  display: block;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line, #dfe5e0);
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #9aa4a0;
+}
