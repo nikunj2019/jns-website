@@ -45,10 +45,12 @@ export default function AdminDashboard({
   user,
   email,
   role,
+  lookupError,
 }: {
   user: User;
   email: string;
   role: AdminRole;
+  lookupError?: string | null;
 }) {
   const owner = role === "owner";
   const signOut = useSignOut();
@@ -167,13 +169,22 @@ export default function AdminDashboard({
       setCodes((prev) => ({ ...prev, [team.id]: code }));
     });
 
-  const copyLink = async (team: Team) => {
+  const teamLink = (team: Team): string | null => {
     const code = codes[team.id];
-    if (!code) {
+    return code ? `${window.location.origin}/golf/?code=${code}` : null;
+  };
+
+  /** The message a captain receives, wherever it's sent from. */
+  const inviteText = (team: Team, link: string) =>
+    `${team.name} — your scorecard for the ${EVENT.name} at ${EVENT.venue.name}. ` +
+    `Open this on your phone and it'll remember your team:\n${link}`;
+
+  const copyLink = async (team: Team) => {
+    const link = teamLink(team);
+    if (!link) {
       setNotice("No code loaded for that team yet.");
       return;
     }
-    const link = `${window.location.origin}/golf/?code=${code}`;
     try {
       await navigator.clipboard.writeText(link);
       setNotice(`Copied ${team.name}'s private link.`);
@@ -182,6 +193,33 @@ export default function AdminDashboard({
       // link is more useful than an error nobody can act on.
       setNotice(link);
     }
+  };
+
+  /**
+   * Hand the link to whatever the organizer already uses to reach people.
+   *
+   * Deliberately not an email or SMS service. Sending on the site's behalf
+   * needs a server and a paid provider (SendGrid, Twilio); the share sheet is
+   * free, needs no backend, and puts Messages, Mail and WhatsApp one tap away
+   * on the phone the organizer is already holding. Desktop has no share sheet,
+   * so it falls back to the mail and SMS links below.
+   */
+  const shareLink = async (team: Team) => {
+    const link = teamLink(team);
+    if (!link) {
+      setNotice("No code loaded for that team yet.");
+      return;
+    }
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title: `${team.name} — ${EVENT.name}`, text: inviteText(team, link), url: link });
+        return;
+      } catch (err) {
+        // A cancelled share sheet is not a failure worth reporting.
+        if ((err as Error)?.name === "AbortError") return;
+      }
+    }
+    await copyLink(team);
   };
 
   // ── Score corrections ──────────────────────────────────────────────────────
@@ -292,6 +330,19 @@ export default function AdminDashboard({
             </div>
           ) : (
             <>
+              {lookupError && (
+                <div className="admin-state error" role="alert">
+                  <b>Your access couldn&rsquo;t be verified.</b>
+                  <p>
+                    Reading the <code>golf-admins</code> list failed: {lookupError}. You can work
+                    normally — every save is re-checked by the security rules regardless — but the
+                    Access tab will look empty, and anyone you add here won&rsquo;t be able to sign
+                    in until the rules allow reading that collection. Re-publish{" "}
+                    <code>firestore.rules</code> to fix it.
+                  </p>
+                </div>
+              )}
+
               {error && (
                 <div className="admin-state error">
                   <b>{error}</b>
@@ -450,7 +501,27 @@ export default function AdminDashboard({
                             <small>PRIVATE TEAM CODE</small>
                             <b>{codes[row.team.id] ?? "…"}</b>
                           </span>
-                          <button onClick={() => void copyLink(row.team)}>Copy team link</button>
+                          <button onClick={() => void shareLink(row.team)}>Share link</button>
+                        </div>
+                        <div className="team-send">
+                          <button onClick={() => void copyLink(row.team)}>Copy</button>
+                          <a
+                            href={`mailto:?subject=${encodeURIComponent(
+                              `${row.team.name} — ${EVENT.name}`
+                            )}&body=${encodeURIComponent(
+                              inviteText(row.team, teamLink(row.team) ?? "")
+                            )}`}
+                          >
+                            Email
+                          </a>
+                          {/* `?body=` is the form both iOS and Android accept. */}
+                          <a
+                            href={`sms:?body=${encodeURIComponent(
+                              inviteText(row.team, teamLink(row.team) ?? "")
+                            )}`}
+                          >
+                            Text
+                          </a>
                         </div>
                         <div className="team-actions">
                           <button

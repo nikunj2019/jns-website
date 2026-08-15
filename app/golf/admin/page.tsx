@@ -26,7 +26,7 @@ import {
  * header away from a full admin bypass.)
  */
 export default function AdminPage() {
-  const { user, email, role, ready } = useAdminAuth();
+  const { user, email, role, ready, lookupError } = useAdminAuth();
 
   if (!ready) {
     return (
@@ -46,7 +46,7 @@ export default function AdminPage() {
   if (!user.emailVerified) return <VerifyEmail user={user} email={email} />;
   if (!role) return <NotAssigned email={email} />;
 
-  return <AdminDashboard user={user} email={email} role={role} />;
+  return <AdminDashboard user={user} email={email} role={role} lookupError={lookupError} />;
 }
 
 function OrganizerSignIn() {
