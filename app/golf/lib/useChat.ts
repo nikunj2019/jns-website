@@ -20,6 +20,7 @@ import { mapMessage, messagesPath, readThread, type ChatMessage, type ChatThread
 
 const OPEN_INTERVAL_MS = 8_000;
 const BADGE_INTERVAL_MS = 45_000;
+const THREADS_INTERVAL_MS = 30_000;
 
 export type ChatState = {
   messages: ChatMessage[];
@@ -124,6 +125,51 @@ export function useThreadSummary(
   }, [teamId, tokenFor]);
 
   return thread;
+}
+
+/**
+ * Every team thread, for the organizer side.
+ *
+ * Lifted out of the Messages screen so the sidebar can show a dot when a team
+ * is waiting on a reply. An organizer sitting on the Scoring tab has no other
+ * way to learn that a question arrived, and a support inbox nobody notices is
+ * the same as not having one.
+ */
+export function useThreads(tokenFor: () => Promise<string>): {
+  threads: ChatThread[];
+  waiting: number;
+  reload: () => Promise<void>;
+} {
+  const [threads, setThreads] = useState<ChatThread[]>([]);
+
+  const reload = useCallback(async () => {
+    try {
+      const { listThreads } = await import("./chat");
+      setThreads(await listThreads(await tokenFor()));
+    } catch {
+      /* Previews are a convenience; the threads themselves still open. */
+    }
+  }, [tokenFor]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetches first; the update lands in a later tick
+    void reload();
+    const timer = setInterval(() => void reload(), THREADS_INTERVAL_MS);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void reload();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [reload]);
+
+  const waiting = threads.filter(
+    (t) => t.lastFrom === "team" && t.lastAt > t.adminSeenAt
+  ).length;
+
+  return { threads, waiting, reload };
 }
 
 /** Stable token getter for anonymous players. */

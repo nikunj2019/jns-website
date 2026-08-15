@@ -453,6 +453,15 @@ body:has(.golf-root) {
     animation-iteration-count: 1 !important;
     transition-duration: .001ms !important;
   }
+
+  /* The hold bar is the exception. Collapsed to a millisecond it would drain
+     instantly and leave an empty track for five seconds, which says the
+     opposite of what it means. Held full instead: still a "wait" marker, just
+     a motionless one, and it disappears when the close button arrives. */
+  .golf-root .ad-hold {
+    animation: none !important;
+    transform: scaleX(1);
+  }
 }
 
 /* ── hero imagery ───────────────────────────────────────────────────────────
@@ -683,80 +692,163 @@ body:has(.golf-root) {
   .sponsor-grid img { max-height: 92px; }
 }
 
-/* ── JNS card, shown after every third completed hole ──────────────────────
- * Anchored above the bottom nav rather than centred over the screen: a group
- * that has just holed out is most likely still looking at the score control,
- * and a modal across the middle would be in the way. It also self-dismisses.
+/* ── sponsor card, shown after every third completed hole ──────────────────
+ * Full screen, and rotating a slot at a time so a round shows several sponsors
+ * rather than the same logo six times. It appears only once a hole is complete
+ * — never over a score mid-entry — and clears itself after a few seconds.
  */
-.jns-ad {
-  position: absolute;
-  left: 12px;
-  right: 12px;
-  bottom: 80px;
-  z-index: 900;
-  animation: jns-ad-in .28s ease-out;
+
+@keyframes ad-in {
+  from { opacity: 0; transform: scale(.97); }
+  to   { opacity: 1; transform: scale(1); }
 }
-.jns-ad-card {
-  position: relative;
+
+.ad-full {
+  position: fixed;
+  inset: 0;
+  z-index: 950;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: calc(28px + var(--safe-top)) 26px calc(24px + var(--safe-bottom));
+  background: linear-gradient(165deg, #f8faf7, #e9efe9 62%, #dfe8e0);
+  animation: ad-in 260ms cubic-bezier(.22, .61, .36, 1) both;
+}
+
+.ad-close {
+  animation: ad-close-in 220ms cubic-bezier(.22, .61, .36, 1) both;
+  position: absolute;
+  top: calc(14px + var(--safe-top));
+  right: 14px;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--line, #dfe5e0);
+  border-radius: 50%;
   background: #fff;
-  border: 1px solid #e0e4df;
-  border-radius: 18px;
-  padding: 18px 18px 16px;
-  text-align: center;
-  box-shadow: 0 14px 40px rgba(7, 31, 22, .26);
-}
-.jns-ad-progress {
-  display: block;
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: .16em;
-  color: #9b7a2e;
-}
-.jns-ad-card img {
-  max-width: 190px;
-  width: 100%;
-  height: auto;
-  margin: 10px auto 6px;
-}
-.jns-ad-card p {
-  margin: 0 0 12px;
-  font-size: 10.5px;
-  line-height: 1.5;
-  color: var(--muted3, #6c7771);
-}
-.jns-ad-card > a {
-  display: inline-block;
-  padding: 10px 18px;
-  border-radius: 10px;
-  background: var(--pine, #073d2b);
-  color: #fff;
-  font-size: 11.5px;
-  font-weight: 700;
-  text-decoration: none;
-}
-.jns-ad-card > small {
-  display: block;
-  margin-top: 10px;
-  font-size: 8.5px;
-  color: #98a09b;
-}
-.jns-ad-close {
-  position: absolute;
-  top: 6px;
-  right: 8px;
-  width: 30px;
-  height: 30px;
-  border: 0;
-  background: none;
-  color: #9aa29d;
-  font-size: 20px;
+  color: var(--muted, #6f7b74);
+  font-size: 24px;
   line-height: 1;
   cursor: pointer;
 }
 
-@keyframes jns-ad-in {
-  from { opacity: 0; transform: translateY(14px); }
+.ad-body {
+  width: min(100%, 420px);
+  margin: auto 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+}
+
+/* Content arrives in reading order — badge, then who it is, then what they do.
+ * A 55ms step is enough to lead the eye down the card without anyone waiting on
+ * it; the whole stagger is over before the close button is even available. */
+@keyframes ad-rise {
+  from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+.ad-body > * { animation: ad-rise 320ms cubic-bezier(.22, .61, .36, 1) both; }
+.ad-body > *:nth-child(1) { animation-delay:  40ms; }
+.ad-body > *:nth-child(2) { animation-delay:  95ms; }
+.ad-body > *:nth-child(3) { animation-delay: 150ms; }
+.ad-body > *:nth-child(4) { animation-delay: 205ms; }
+.ad-body > *:nth-child(5) { animation-delay: 260ms; }
+.ad-body > *:nth-child(6) { animation-delay: 315ms; }
+.ad-body > *:nth-child(7) { animation-delay: 370ms; }
+
+/* Counts down the hold. Fixed to the top edge so it reads as chrome rather
+   than as part of the sponsor's card. */
+@keyframes ad-hold {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+.ad-hold {
+  position: absolute;
+  top: var(--safe-top, 0px);
+  left: 0;
+  right: 0;
+  height: 3px;
+  transform-origin: left;
+  background: var(--gold, #c7a24d);
+  /* Duration comes from the component, which owns the same number as the timer. */
+  animation: ad-hold linear both;
+}
+
+/* Fades in once the hold is over — appearing without it would be a pop. */
+@keyframes ad-close-in {
+  from { opacity: 0; transform: scale(.8); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.ad-progress {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .18em;
+  color: var(--pine, #073d2b);
+  background: #dfeee3;
+  border-radius: 999px;
+  padding: 7px 14px;
+}
+.ad-kicker {
+  margin-top: 10px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: .18em;
+  color: #9b7a2e;
+}
+
+/* The logos are supplied at wildly different aspect ratios — 133x88 up to
+   451x373 — so both axes are capped and the image is left to letterbox itself
+   inside them rather than being handed a fixed size that suits one of them. */
+.ad-body img {
+  width: 100%;
+  max-width: 330px;
+  max-height: 40dvh;
+  object-fit: contain;
+}
+
+/* Spelled out because several of these logos are stylised wordmarks that are
+   hard to read at a glance, and two are pictorial. */
+.ad-name {
+  margin-top: 2px;
+  font: 22px/1.2 Georgia, serif;
+  color: var(--pine, #073d2b);
+}
+.ad-where {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: #8b948e;
+}
+
+.ad-body p {
+  margin: 2px 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #46534d;
+  max-width: 34ch;
+}
+
+/* A quiet underline rather than a filled button: it is an invitation, not the
+   thing the player came here to do. */
+.ad-link {
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--pine, #073d2b);
+  text-decoration: none;
+  border-bottom: 2px solid var(--gold, #c7a24d);
+  padding-bottom: 2px;
+}
+
+.ad-foot {
+  font-size: 10.5px;
+  letter-spacing: .05em;
+  color: #8b948e;
 }
 
 /* ── layout fixes ──────────────────────────────────────────────────────────
@@ -1180,4 +1272,399 @@ body:has(.golf-root) {
   .audience-picker button, .team-send button, .team-send a,
   .teams-panel .team-actions button, .hole-grid button):active {
   transform: scale(.97);
+}
+
+/* ── announcement takeover ─────────────────────────────────────────────────
+ * The only thing in this app allowed to take the whole screen. An announcement
+ * is the one message class that can't afford to be missed — "play suspended",
+ * "shotgun moved" — and a badge is the wrong weight for that.
+ *
+ * Above the bottom nav's z-index on purpose: half-covering the screen while
+ * leaving the tab bar tappable would let someone navigate away without reading
+ * it, which defeats the point.
+ */
+.takeover {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: rgba(6, 32, 22, .82);
+  backdrop-filter: blur(6px);
+  animation: fade-in 160ms ease-out both;
+}
+.takeover-card {
+  width: min(100%, 420px);
+  max-height: 84dvh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 22px;
+  padding: 26px 22px 20px;
+  text-align: center;
+  box-shadow: 0 24px 70px rgba(0, 20, 12, .4);
+  animation: screen-in 220ms cubic-bezier(.22, .61, .36, 1) both;
+}
+.takeover-kicker {
+  display: block;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .18em;
+  color: #9b7a2e;
+}
+.takeover-card h2 {
+  margin: 10px 0 12px;
+  font: 26px/1.15 Georgia, serif;
+  overflow-wrap: anywhere;
+}
+.takeover-card p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #2c3a34;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+.takeover-card > time {
+  display: block;
+  margin-top: 14px;
+  font-size: 10.5px;
+  color: #98a09b;
+}
+.takeover-dismiss {
+  width: 100%;
+  min-height: 50px;
+  margin-top: 18px;
+  border: 0;
+  border-radius: 13px;
+  background: var(--pine, #073d2b);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.takeover-secondary {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 8px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--pine, #073d2b);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* ── install sheet ─────────────────────────────────────────────────────────
+ * Shares the takeover's card, because it is the same kind of thing: something
+ * the player has to read before it goes away. It differs only in being
+ * dismissible by tapping outside, since nothing here is urgent.
+ */
+.install-card { text-align: left; }
+.install-card h2 { text-align: left; }
+.install-intro {
+  margin: 0 0 4px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #4a5852;
+}
+.install-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: install;
+}
+.install-steps li {
+  counter-increment: install;
+  position: relative;
+  padding: 12px 0 12px 38px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #2c3a34;
+  border-bottom: 1px solid #eef2ef;
+}
+.install-steps li:last-child { border-bottom: 0; }
+.install-steps li::before {
+  content: counter(install);
+  position: absolute;
+  left: 0;
+  top: 11px;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: var(--pine, #073d2b);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+.install-steps b { font-weight: 700; color: var(--pine, #073d2b); }
+/* Keeps "Share ⬆" on one line — the glyph is the point of the sentence, and a
+   line break between the word and the icon loses it. */
+.install-steps .nb { white-space: nowrap; }
+/* Inline with the sentence, so "tap the Share ⬆ button" reads as one thought.
+ * The explicit inline-block matters: this stylesheet sets `svg { display: block }`
+ * globally for the icon set, and a block glyph breaks the line either side of
+ * itself no matter what white-space says. */
+.ios-glyph {
+  display: inline-block;
+  width: 17px;
+  height: 17px;
+  vertical-align: -3px;
+  margin: 0 1px;
+  color: #0a7cff;
+}
+.install-foot {
+  margin: 12px 0 0;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: #75817b;
+}
+
+/* ── admin nav: five tabs, one line ────────────────────────────────────────
+ * The mobile rule hardcoded four columns. Adding Messages made a fifth, which
+ * wrapped Access onto its own row and pushed the "view live app" arrow into the
+ * gap beside it — two rows of chrome above every screen on a phone.
+ */
+@media (max-width: 620px) {
+  .admin-side nav {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 1px;
+  }
+  .admin-side nav button {
+    padding: 7px 3px;
+    justify-content: center;
+    text-align: center;
+  }
+  .admin-side nav b {
+    font-size: 11px;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+  }
+  /* The sub-labels never fitted at this width and are redundant with the tab
+     name; hiding them is what buys the fifth column its room. */
+  .admin-side nav small { display: none; }
+}
+
+@media (max-width: 400px) {
+  .admin-side nav b { font-size: 10px; }
+  .admin-side nav button { padding: 7px 2px; }
+}
+
+/* A team is waiting on a reply. Sits on the tab itself, because an organizer
+ * on the Scoring tab has no other way to find out. */
+.nav-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-left: 5px;
+  border-radius: 50%;
+  background: #e0553f;
+  vertical-align: middle;
+  font-style: normal;
+}
+
+/* ── iOS safe areas ────────────────────────────────────────────────────────
+ * Installed to an iPhone home screen, the app is `viewport-fit=cover` with a
+ * translucent status bar: the web view owns the whole screen, including the
+ * strip behind the clock and the strip behind the home indicator. Nothing here
+ * accounted for either, and one of them was actively destructive.
+ *
+ * `* { box-sizing: border-box }` is set for the whole app, so the nav's
+ * `height: 74px` *included* its `padding-bottom: calc(6px + safe-inset)`. On a
+ * notched phone that inset is 34px, leaving 28px of content box for a 24px icon
+ * above an 11px label — so the bar clipped its own contents. The padding has to
+ * grow the bar, not eat it.
+ *
+ * Everything derives from two variables so the three heights can't drift apart
+ * again: the body is sized by subtracting the other two, and the ad and the
+ * takeover clear the nav by name rather than by a number that happened to match.
+ */
+.golf-root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --head-h: calc(64px + var(--safe-top));
+  --nav-h: calc(74px + var(--safe-bottom));
+}
+
+/* The header absorbs the top inset rather than the shell, so the status bar
+   sits on white and reads as part of the bar instead of a grey gap above it.
+   Content box is unchanged: the extra height and the extra padding cancel. */
+.v3-head {
+  height: var(--head-h);
+  padding-top: calc(8px + var(--safe-top));
+}
+
+.v3-shell > .v3-body {
+  height: calc(100% - var(--head-h) - var(--nav-h)) !important;
+}
+
+.v3-nav {
+  height: var(--nav-h);
+  padding-bottom: calc(6px + var(--safe-bottom));
+}
+
+
+/* Fixed overlays span the full screen by definition, so they need the insets
+   themselves — otherwise the dismiss button lands under the home indicator,
+   which is the one control that must always be reachable. */
+.takeover {
+  padding-top: max(22px, var(--safe-top));
+  padding-bottom: max(22px, var(--safe-bottom));
+}
+
+/* The organizer side is inside the same manifest scope, so it can be installed
+ * too — and its mobile chrome is sticky at `top: 0`, which is exactly where the
+ * clock lives. Off a phone these all resolve to zero and change nothing. */
+.admin-denied {
+  padding-top: calc(24px + var(--safe-top));
+  padding-bottom: calc(24px + var(--safe-bottom));
+}
+.admin-side { padding-top: calc(28px + var(--safe-top)); }
+.admin-main > section { padding-bottom: calc(60px + var(--safe-bottom)); }
+.team-editor {
+  padding-top: calc(28px + var(--safe-top));
+  padding-bottom: calc(28px + var(--safe-bottom));
+}
+
+@media (max-width: 900px) {
+  /* The tab strip becomes a top bar here; 58px is its height, so the scroller
+     below it has to lose the inset as well or the page runs off the bottom. */
+  .admin-side { padding-top: calc(10px + var(--safe-top)); }
+  .admin-main { height: calc(100dvh - 58px - var(--safe-top)); }
+}
+
+/* ── pull-to-refresh ───────────────────────────────────────────────────────
+ * Chrome on Android treats a downward drag at the top as an overscroll: it
+ * slides the page down under a spinner and reloads on release. The shell is
+ * exactly one viewport tall with the nav pinned to its bottom edge, so any
+ * downward translation carries the nav straight off the screen — which is
+ * what "I pull down and the bottom menu goes" looks like from the inside.
+ *
+ * Nothing here is worth pulling for: scores post as they are entered and the
+ * leaderboard streams on its own. `none` rather than `contain` so the
+ * overscroll glow goes with it — the app never scrolls as a document, and a
+ * glow at the edge only advertises a gesture that does nothing.
+ *
+ * Set on both elements deliberately. The viewport takes its overscroll
+ * behaviour from <html>, falling back to <body> only while <html> is `auto`,
+ * so relying on the propagation alone would be a coin toss.
+ */
+html:has(.golf-root),
+body:has(.golf-root) {
+  overscroll-behavior: none;
+}
+
+/* The panes that genuinely scroll keep the gesture to themselves — reaching
+   the end of the sponsor list or a chat thread must not hand it back up. */
+.sponsors-screen,
+.chat-scroll,
+.takeover-card,
+.team-login,
+.team-editor {
+  overscroll-behavior: contain;
+}
+
+/* ── screens that outgrow the frame ────────────────────────────────────────
+ * `.v3-screen` is `overflow: hidden`, which is right for the score pad and the
+ * map — both are laid out to fit a viewport exactly and must not move — and
+ * wrong for anything list-shaped. A twenty-team leaderboard stopped at
+ * whoever happened to fit and there was no way to reach the rest: measured at
+ * 412x883, the content ran 813px past the frame with nothing scrollable
+ * anywhere in the tree. Two teams fit, so it never showed up in testing.
+ */
+.leaders-screen,
+.team-screen,
+.more-screen {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-bottom: 12px;
+}
+
+/* The front/back-nine switch stays put while the field moves under it. */
+.leaders-screen .leader-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+/* ── announcement, full screen ─────────────────────────────────────────────
+ * The generic takeover is a card on a dimmed backdrop, which is right for the
+ * install sheet — that is a helper, and the app behind it is still the point.
+ * An announcement is not a helper. "Play is suspended" has to be the only
+ * thing on the screen, so this variant drops the backdrop-as-frame idea and
+ * fills the display edge to edge in the event's own colours.
+ */
+.takeover-full {
+  padding: 0;
+  background: linear-gradient(160deg, var(--pine, #073d2b), #0b563d 58%, #062d20);
+  backdrop-filter: none;
+}
+
+.takeover-card.announce-full {
+  width: 100%;
+  max-width: none;
+  max-height: none;
+  height: 100%;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: left;
+  padding: calc(30px + var(--safe-top)) 26px calc(26px + var(--safe-bottom));
+  overflow-y: auto;
+}
+
+/* Paired with the auto margin on the dismiss button below: the two split the
+   free space evenly, so the notice sits centred in the space above the button
+   instead of clinging to the top of the screen with a hole beneath it. */
+.announce-full .takeover-kicker {
+  margin-top: auto;
+  color: var(--gold, #c7a24d);
+  font-size: 10px;
+  letter-spacing: .22em;
+}
+
+/* Sized to be readable at arm's length in sunlight, and capped so a long
+   notice still fits rather than pushing the dismiss button off the screen. */
+.announce-full h2 {
+  margin: 12px 0 14px;
+  font: clamp(30px, 8vw, 42px)/1.08 Georgia, serif;
+  color: #fff;
+}
+
+.announce-full p {
+  color: #dcece2;
+  font-size: clamp(15px, 4.2vw, 18px);
+  line-height: 1.6;
+  text-align: left;
+}
+
+.announce-full > time {
+  margin-top: 16px;
+  color: #9dc2ad;
+  font-size: 11.5px;
+}
+
+/* Pinned to the foot of the panel, not floated after the text, so it is always
+   in the same place no matter how long the notice runs. */
+.announce-full .takeover-dismiss {
+  margin-top: auto;
+  background: #fff;
+  color: var(--pine, #073d2b);
+  min-height: 54px;
+  font-size: 15px;
+}
+
+.announce-full .takeover-secondary {
+  color: #cfe3d6;
 }

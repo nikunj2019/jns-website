@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Icon from "./components/Icon";
-import JNSInterstitial from "./components/JNSInterstitial";
+import AnnouncementTakeover from "./components/AnnouncementTakeover";
+import InstallSheet from "./components/InstallSheet";
+import Interstitial from "./components/Interstitial";
 import TeamMessages from "./components/TeamMessages";
 import { EVENT, SCORES_COLLECTION, SPONSORS, TEAMS_COLLECTION } from "./lib/config";
 import {
@@ -33,6 +35,7 @@ import {
   unreadCount,
   type Announcement,
 } from "./lib/chat";
+import { detectPlatform, useDevice, type Platform } from "./lib/platform";
 import { useAnonymousToken, useThreadSummary } from "./lib/useChat";
 import { navigateHash, useHashView } from "./lib/useHashView";
 import { firestoreProjectId } from "../lib/firestoreRest";
@@ -101,8 +104,14 @@ export default function GolfApp() {
   const [teamId, setTeamId] = useState<string | null>(null);
   const [joining, setJoining] = useState(true);
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
+  const [installHelp, setInstallHelp] = useState<Platform | null>(null);
   const [note, setNote] = useState("");
+  // Suppresses the JNS card while an announcement owns the screen — two
+  // overlays at once is nobody's idea of clear.
+  const [takeoverShowing, setTakeoverShowing] = useState(false);
   const headingRef = useRef<HTMLDivElement | null>(null);
+
+  const { standalone } = useDevice();
 
   const teamsState = useGolfCollection<Team>(TEAMS_COLLECTION, mapTeam);
   const scoresState = useGolfCollection<TeamScores>(SCORES_COLLECTION, mapScores);
@@ -239,21 +248,23 @@ export default function GolfApp() {
     return () => window.removeEventListener("beforeinstallprompt", onPrompt);
   }, []);
 
+  /**
+   * One tap where the browser allows it, step-by-step instructions where it
+   * doesn't.
+   *
+   * Chrome hands us `beforeinstallprompt` and the whole thing is one call.
+   * Safari has no equivalent, so the button used to fall back to a one-line
+   * note appended below the current screen — which on an iPhone sat under the
+   * fold, making the button look dead. Anything we can't do for the player now
+   * opens a sheet they can actually see.
+   */
   const install = useCallback(async () => {
-    if (window.matchMedia("(display-mode: standalone)").matches) {
-      setNote("Stonegate Golf is already installed on this phone.");
-      return;
-    }
     if (installEvent) {
       await installEvent.prompt();
       setInstallEvent(null);
       return;
     }
-    setNote(
-      /android/i.test(navigator.userAgent)
-        ? "In Chrome, tap the ⋮ menu, then “Add to Home screen”."
-        : "On iPhone, tap Share, then “Add to Home Screen”."
-    );
+    setInstallHelp(detectPlatform());
   }, [installEvent]);
 
   const setScore = useCallback(
@@ -290,6 +301,7 @@ export default function GolfApp() {
           <Home
             go={go}
             install={install}
+            installed={standalone}
             teamCount={teams.length}
             loading={loading}
             error={teamsState.error}
@@ -329,7 +341,9 @@ export default function GolfApp() {
             announcements={announcementsState.docs}
           />
         )}
-        {view === "more" && <More go={go} install={install} unread={unread} />}
+        {view === "more" && (
+          <More go={go} install={install} installed={standalone} unread={unread} />
+        )}
 
         {note && (
           <p className="app-note" role="status">
@@ -340,7 +354,17 @@ export default function GolfApp() {
 
       {/* Sits outside .v3-body so it overlays the app rather than scrolling
           inside whichever screen happens to be open when a hole is finished. */}
-      <JNSInterstitial teamId={teamId} thru={myRow?.thru ?? 0} />
+      {!takeoverShowing && <Interstitial teamId={teamId} thru={myRow?.thru ?? 0} />}
+
+      <AnnouncementTakeover
+        announcements={announcementsState.docs}
+        onOpenMessages={() => go("messages")}
+        onVisibilityChange={setTakeoverShowing}
+      />
+
+      {installHelp && (
+        <InstallSheet platform={installHelp} onClose={() => setInstallHelp(null)} />
+      )}
 
       <BottomNav view={view} go={go} />
     </main>
@@ -432,12 +456,14 @@ function Title({ top, title, sub }: { top: string; title: string; sub: string })
 function Home({
   go,
   install,
+  installed,
   teamCount,
   loading,
   error,
 }: {
   go: (v: View) => void;
   install: () => void;
+  installed: boolean;
   teamCount: number;
   loading: boolean;
   error: string | null;
@@ -515,10 +541,12 @@ function Home({
         </div>
 
         <div className="home-secondary">
-          <button onClick={install}>
-            <Icon name="install" />
-            Install app
-          </button>
+          {!installed && (
+            <button onClick={install}>
+              <Icon name="install" />
+              Add to home screen
+            </button>
+          )}
           <button onClick={() => go("more")}>
             <Icon name="more" />
             Event details
@@ -744,7 +772,7 @@ function Leaderboard({
     .sort((a, b) => a.toPar - b.toPar || b.thru - a.thru || a.team.name.localeCompare(b.team.name));
 
   return (
-    <section className="v3-screen">
+    <section className="v3-screen leaders-screen">
       <Title top="LIVE SCORING" title="Leaderboard" sub={`Par ${COURSE_PAR} · ${EVENT.venue.name}`} />
 
       <div className="leader-tabs">
@@ -812,7 +840,7 @@ function Leaderboard({
 
 function MyTeam({ row }: { row: TeamRow }) {
   return (
-    <section className="v3-screen">
+    <section className="v3-screen team-screen">
       <Title
         top="YOUR FOURSOME"
         title={row.team.name}
@@ -884,14 +912,16 @@ function Sponsors() {
 function More({
   go,
   install,
+  installed,
   unread,
 }: {
   go: (v: View) => void;
   install: () => void;
+  installed: boolean;
   unread: number;
 }) {
   return (
-    <section className="v3-screen">
+    <section className="v3-screen more-screen">
       <Title top="STONEGATE OUTING" title="More" sub="Event resources" />
       <div className="menu-v3">
         <button onClick={() => go("team")}>
@@ -918,14 +948,16 @@ function More({
           </span>
           <em>›</em>
         </button>
-        <button onClick={install}>
-          <Icon name="install" />
-          <span>
-            <b>Install the app</b>
-            <small>Add to your phone</small>
-          </span>
-          <em>›</em>
-        </button>
+        {!installed && (
+          <button onClick={install}>
+            <Icon name="install" />
+            <span>
+              <b>Add to home screen</b>
+              <small>Opens like an app, works offline</small>
+            </span>
+            <em>›</em>
+          </button>
+        )}
         <a href="/golf/admin/">
           <Icon name="settings" />
           <span>

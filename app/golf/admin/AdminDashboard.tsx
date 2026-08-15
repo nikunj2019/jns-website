@@ -31,6 +31,7 @@ import AdminMessages from "./AdminMessages";
 import { ANNOUNCEMENTS_COLLECTION, mapAnnouncement, type Announcement } from "../lib/chat";
 import { idToken, useSignOut, type AdminRole } from "../lib/useAuth";
 import { useGolfCollection } from "../lib/useGolfCollection";
+import { useThreads } from "../lib/useChat";
 
 type Tab = "overview" | "teams" | "scores" | "messages" | "admins";
 
@@ -69,12 +70,19 @@ export default function AdminDashboard({
   // anonymous path the public collections use.
   const tokenFor = useCallback(() => idToken(user), [user]);
 
+  // Owned here rather than inside the Messages screen, so the sidebar can warn
+  // an organizer sitting on another tab that a team is waiting.
+  const { threads, waiting, reload: reloadThreads } = useThreads(tokenFor);
+
   const [tab, setTab] = useState<Tab>("overview");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [draft, setDraft] = useState<TeamDraft | null>(null);
   const [confirming, setConfirming] = useState<Confirming | null>(null);
   const [codes, setCodes] = useState<Record<string, string>>({});
+  // "…" and "no code at all" are different states, and a team without a code
+  // is unusable rather than merely still loading.
+  const [codesLoaded, setCodesLoaded] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [newRole, setNewRole] = useState<"admin" | "scorekeeper">("admin");
   const [scoreTeam, setScoreTeam] = useState<string | null>(null);
@@ -121,7 +129,11 @@ export default function AdminDashboard({
       const entries = await Promise.all(
         teams.map(async (team) => [team.id, await readTeamCode(team.id, token)] as const)
       );
-      setCodes(Object.fromEntries(entries.filter(([, code]) => code)) as Record<string, string>);
+      setCodes((prev) => ({
+        ...prev,
+        ...(Object.fromEntries(entries.filter(([, code]) => code)) as Record<string, string>),
+      }));
+      setCodesLoaded(true);
     } catch {
       /* Codes are a convenience; the rest of the screen still works. */
     }
@@ -156,8 +168,22 @@ export default function AdminDashboard({
     if (!draft) return;
     const input = { name: draft.name, startHole: draft.startHole, players: draft.players };
     await run(draft.id ? "Team updated." : "Team created — its private link is ready.", async (token) => {
-      if (draft.id) await updateTeam(draft.id, input, token);
-      else await createTeam(input, token);
+      if (draft.id) {
+        await updateTeam(draft.id, input, token);
+      } else {
+        /*
+         * createTeam already generates the code. Keep it.
+         *
+         * This used to discard the return value and rely on loadCodes(), which
+         * closes over `teams` — and `teams` hasn't updated yet, because the
+         * Firestore listener hasn't delivered the new team. So the card showed
+         * "…" until the roster refreshed, up to 20s on the polling path, and
+         * the obvious move was to hit "New code" and rotate a code that was
+         * already perfectly good.
+         */
+        const { id, code } = await createTeam(input, token);
+        setCodes((prev) => ({ ...prev, [id]: code }));
+      }
       setDraft(null);
       await loadCodes();
     });
@@ -301,7 +327,12 @@ export default function AdminDashboard({
             >
               <i />
               <span>
-                <b>{label}</b>
+                <b>
+                  {label}
+                  {key === "messages" && waiting > 0 && (
+                    <em className="nav-dot" aria-label={`${waiting} waiting`} />
+                  )}
+                </b>
                 <small>{hint}</small>
               </span>
             </button>
@@ -511,7 +542,7 @@ export default function AdminDashboard({
                         <div className="team-code">
                           <span>
                             <small>PRIVATE TEAM CODE</small>
-                            <b>{codes[row.team.id] ?? "…"}</b>
+                            <b>{codes[row.team.id] ?? (codesLoaded ? "Not generated" : "…")}</b>
                           </span>
                           <button onClick={() => void shareLink(row.team)}>Share link</button>
                         </div>
@@ -549,7 +580,7 @@ export default function AdminDashboard({
                             Edit roster
                           </button>
                           <button onClick={() => setConfirming({ kind: "regenerate", team: row.team })}>
-                            New code
+                            {codes[row.team.id] ? "New code" : "Generate code"}
                           </button>
                           <button
                             className="danger"
@@ -710,6 +741,8 @@ export default function AdminDashboard({
                   author={email}
                   tokenFor={tokenFor}
                   announcements={announcementsState.docs}
+                  threads={threads}
+                  reloadThreads={reloadThreads}
                 />
               )}
 

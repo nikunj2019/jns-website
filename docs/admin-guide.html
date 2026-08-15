@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stonegate Golf Outing — Organizer Guide</title>
+<style>
+  /* Organizer reference, US Letter. Rendered to PDF by docs/build-docs.mjs. */
+  @page { size: Letter; margin: 0; }
+
+  :root {
+    --pine: #073d2b;
+    --pine2: #0c513b;
+    --gold: #c7a24d;
+    --cream: #f6f7f3;
+    --ink: #13231c;
+    --muted: #5f6b64;
+    --line: #dfe6e1;
+    --warn: #8d352e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .page {
+    width: 8.5in;
+    height: 11in;
+    padding: 0.5in 0.55in;
+    position: relative;
+    overflow: hidden;
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+  }
+  .page:last-child { page-break-after: auto; }
+
+  .masthead {
+    background: linear-gradient(135deg, var(--pine), var(--pine2));
+    color: #fff;
+    border-radius: 14px;
+    padding: 18px 22px;
+    display: flex; align-items: center; gap: 15px;
+  }
+  /* The JNS mark sits on white, never on the green — the brand is navy on a
+     light ground and recolouring it would be worse than giving it its own tile. */
+  .brandtile {
+    width: 52px; height: 52px; flex: 0 0 52px;
+    background: #fff; border-radius: 11px;
+    display: grid; place-items: center; padding: 4px;
+  }
+  .brandtile img { width: 100%; display: block; }
+  .masthead h1 { font: 24px/1.1 Georgia, serif; }
+  .masthead p { font-size: 11px; color: #cfe3d6; margin-top: 4px; }
+  .masthead .pg { margin-left: auto; font-size: 10px; color: #a9c9b8; letter-spacing: .1em; }
+
+  h2 {
+    font: 17px Georgia, serif;
+    margin: 15px 0 7px;
+    padding-bottom: 5px;
+    border-bottom: 2px solid var(--gold);
+  }
+  h3 { font: 700 12.5px Arial; margin: 13px 0 5px; color: var(--pine); }
+  p, li { font-size: 11px; line-height: 1.6; color: var(--ink); }
+  p.muted { color: var(--muted); }
+  ul { margin-left: 16px; }
+  li { margin-bottom: 3px; }
+
+  code {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    background: #eef2ee; border-radius: 3px; padding: 1px 5px; font-size: .93em;
+  }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 7px; }
+  th, td { padding: 6px 9px; border: 1px solid var(--line); font-size: 10.5px; line-height: 1.5; vertical-align: top; text-align: left; }
+  th { background: var(--cream); font-weight: 700; color: var(--pine); }
+  td:first-child { width: 27%; font-weight: 700; }
+
+  .note, .warn {
+    margin-top: 11px; border-radius: 10px; padding: 11px 13px;
+    font-size: 10.5px; line-height: 1.6;
+  }
+  .note { background: #fbf7ec; border: 1px solid #e8dcbb; }
+  .note b { color: #7c6320; }
+  .warn { background: #fdf1ef; border: 1px solid #eccfc9; }
+  .warn b { color: var(--warn); }
+
+  ol.steps { list-style: none; counter-reset: s; margin-top: 6px; }
+  ol.steps > li {
+    counter-increment: s; position: relative; padding-left: 32px; margin-bottom: 9px;
+  }
+  ol.steps > li::before {
+    content: counter(s);
+    position: absolute; left: 0; top: -1px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--pine); color: #fff;
+    display: grid; place-items: center; font: 700 11px/1 Arial;
+  }
+
+  .foot {
+    margin-top: auto; padding-top: 10px; border-top: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 9px; color: #8b948e;
+  }
+  /* Sign-off: the official mark, at the size the brand's own header uses it.
+     The lockup's tagline would be under 5px tall in a footer this deep. */
+  .foot .jns { display: flex; align-items: center; gap: 8px; text-align: right; }
+  .foot .jns img { width: 27px; display: block; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ PAGE 1 — getting in, teams ═══════════ -->
+<section class="page">
+  <div class="masthead">
+    <div class="brandtile"><img src="jns-mark.png" alt="JNS"></div>
+    <div>
+      <h1>Organizer Guide</h1>
+      <p>Stonegate Golf Outing &middot; running the event</p>
+    </div>
+    <div class="pg">1 / 3</div>
+  </div>
+
+  <h2>Signing in</h2>
+  <p>Go to <code>jnssolutions.ai/golf/admin/</code> and tap <b>Continue with Google</b>. Use the
+  Google account you were added under. There is nothing to set up and no password to remember.</p>
+
+  <div class="note">
+    <b>If it won't let you in,</b> it is nearly always the wrong Google account — phones sign you in
+    as whoever used them last. Tap your picture, switch accounts, and try again. If that doesn't do
+    it, call your JNS contact; don't spend the morning on it.
+  </div>
+
+  <h2>The five tabs</h2>
+  <table>
+    <tr><th>Tab</th><th>What it's for</th></tr>
+    <tr><td>Dashboard</td><td>Live status — scores entered, teams actively scoring, completion, and per-team progress.</td></tr>
+    <tr><td>Teams</td><td>Create foursomes, share their private links, edit rosters, reissue codes.</td></tr>
+    <tr><td>Scoring</td><td>Correct or enter any team's score, hole by hole.</td></tr>
+    <tr><td>Messages</td><td>Announcements to everyone or selected teams, plus a private thread with each team.</td></tr>
+    <tr><td>Access</td><td>Add and remove other organizers. Owners only.</td></tr>
+  </table>
+
+  <h2>Setting up teams</h2>
+  <ol class="steps">
+    <li><b>Teams → + New team.</b> Enter the team name, the starting hole for the shotgun, and up to
+    four players. The first player is treated as the captain.</li>
+    <li><b>The code is created for you.</b> It appears on the card immediately, in the form
+    <code>CEDAR-EAGLE-472</code> — two words and three digits, built to be read aloud without being
+    misheard. You never have to generate one by hand.</li>
+    <li><b>Send it.</b> <b>Share link</b> opens your phone's share sheet with the message already
+    written, so you can send it by Messages, Mail or WhatsApp in one tap. <b>Copy</b>, <b>Email</b>
+    and <b>Text</b> are there for a laptop.</li>
+  </ol>
+
+  <h3>The other buttons on a team card</h3>
+  <table>
+    <tr><td>Edit roster</td><td>Change the name, starting hole or players. The code is unaffected.</td></tr>
+    <tr><td>New code</td><td>Issues a fresh code and <b>kills the old link immediately</b>. Only use this if a code has gone somewhere it shouldn't — anyone already using the old link will be locked out until you re-send.</td></tr>
+    <tr><td>Delete</td><td>Removes the team, its players and all its scores. Asks first, and cannot be undone.</td></tr>
+  </table>
+
+  <div class="note">
+    <b>One code per foursome, shared by all four.</b> Any of them can enter scores. A code only ever
+    reaches that team's card — nobody can score for another team, whatever they do with the link.
+  </div>
+
+  <div class="note">
+    <b>Say one thing to the captains.</b> Players get their own two-page sheet, but the line that
+    matters is on it: <b>open the link at home, on wifi, before you leave.</b> Signal at the course
+    is patchy, and opening it once puts the course map on the phone.
+  </div>
+
+  <div class="foot">
+    <div>Stonegate Golf Outing &middot; Organizer guide</div>
+    <div>Page 1 of 3</div>
+  </div>
+</section>
+
+<!-- ═══════════ PAGE 2 — scoring, messages ═══════════ -->
+<section class="page">
+  <div class="masthead">
+    <div class="brandtile"><img src="jns-mark.png" alt="JNS"></div>
+    <div>
+      <h1>During the round</h1>
+      <p>Scoring corrections, announcements and support</p>
+    </div>
+    <div class="pg">2 / 3</div>
+  </div>
+
+  <h2>Fixing a score</h2>
+  <p><b>Scoring</b> → pick the team → tap the hole in the grid → adjust with <b>−</b> and <b>+</b>.
+  It saves immediately; there's no confirm step. Holes already scored are shaded, so a team's gaps
+  are visible at a glance.</p>
+  <p class="muted" style="margin-top:6px">Worth having someone at the scoring table regardless — a
+  flat phone or a team that never opened the link is the usual reason a card is missing.</p>
+
+  <h3>What happens when two team-mates score at once</h3>
+  <ul>
+    <li><b>Different holes — both are kept.</b> Each hole is written on its own, so the captain
+    entering the 7th and someone catching up the 5th don't overwrite each other.</li>
+    <li><b>Same hole — the last entry wins.</b> Usually right, since the second person is normally
+    correcting the first.</li>
+    <li>Every phone catches up within a few seconds. Your corrections behave the same way and
+    override whatever the team entered.</li>
+  </ul>
+
+  <h2>Announcements</h2>
+  <p><b>Messages</b> → write a heading and a message → choose <b>All teams</b> or <b>Pick teams</b>
+  → send.</p>
+
+  <table>
+    <tr><td>All teams</td><td>Posted publicly. It takes over every player's screen the moment they see it, and stays until they tap "Got it". Afterwards it stays on their Messages screen.</td></tr>
+    <tr><td>Pick teams</td><td>Delivered privately into just those teams' threads. Other teams never see it.</td></tr>
+  </table>
+
+  <p class="muted" style="margin-top:8px">Posted announcements are listed underneath the composer
+  with a <b>Remove</b> button — take one down when it stops being true, since "rain delay" reads
+  badly an hour after play resumed.</p>
+
+  <div class="warn">
+    <b>Nobody's phone buzzes.</b> There are no push notifications. Messages and announcements appear
+    when a player has the app open, and are waiting with an unread badge when they next open it. For
+    anything that genuinely can't wait, use the loudspeaker or the phone. Players are told the same
+    thing.
+  </div>
+
+  <h2>Support threads</h2>
+  <p>Each team has a private thread with the organizers. The <b>Messages</b> tab shows every team,
+  including those who've never written, so you can start a conversation with any of them.</p>
+  <ul>
+    <li>A <b>red dot on the Messages tab</b> means at least one team is waiting on a reply — it's
+    visible from any tab, so you don't have to keep checking.</li>
+    <li>Teams waiting are highlighted in the list. Opening a thread clears it.</li>
+    <li>Threads are private to that team. No team can see another's, and a player cannot send a
+    message that appears to come from an organizer.</li>
+  </ul>
+
+  <h2>What players see that you don't</h2>
+  <p>Three behaviours on the player side account for most of the questions you'll be asked. None of
+  them is a fault.</p>
+  <ul>
+    <li><b>Scores entered without signal say <i>Queued</i>.</b> They sit on the phone and send
+    themselves when a bar comes back. A card that looks behind on your Dashboard is more often a
+    phone in a dead spot than a team that has stopped scoring — give it until they reach higher
+    ground before chasing them.</li>
+    <li><b>A JNS card appears after every third hole they complete.</b> It's the sponsor slot. It
+    clears itself after seven seconds, has an &times; if they're impatient, and never interrupts a
+    score mid-entry — it waits until the hole is done.</li>
+    <li><b>The app holds a Stonegate splash for about three seconds on every open.</b> That is
+    deliberate, not a slow load.</li>
+  </ul>
+
+  <div class="foot">
+    <div>Stonegate Golf Outing &middot; Organizer guide</div>
+    <div>Page 2 of 3</div>
+  </div>
+</section>
+
+<!-- ═══════════ PAGE 3 — access, day plan, troubleshooting ═══════════ -->
+<section class="page">
+  <div class="masthead">
+    <div class="brandtile"><img src="jns-mark.png" alt="JNS"></div>
+    <div>
+      <h1>Access, and the day itself</h1>
+      <p>Adding organizers, a running order, and what to do when</p>
+    </div>
+    <div class="pg">3 / 3</div>
+  </div>
+
+  <h2>Adding another organizer</h2>
+  <p><b>Access</b> → enter their email → choose <b>Administrator</b> or <b>Scorekeeper</b> →
+  <b>Grant access</b>. They then sign in at <code>/golf/admin/</code> with Google using that exact
+  address.</p>
+  <ul>
+    <li><b>Nothing is emailed automatically</b> — send them the link yourself.</li>
+    <li>The address must match their Google account exactly.</li>
+    <li>Only <b>owners</b> see the Access tab at all. The owner list can't be changed from inside
+    the app — that's deliberate, so nobody can quietly promote themselves. Ask your JNS contact to change it.</li>
+  </ul>
+
+  <h2>A running order for the day</h2>
+  <table>
+    <tr><th>When</th><th>Do this</th></tr>
+    <tr><td>Week before</td><td>Create every team with its starting hole. Send each captain their link and ask them to open it once and add it to their home screen.</td></tr>
+    <tr><td>Morning of</td><td>Check the Dashboard shows the right number of teams. Post a welcome announcement — it doubles as a test that announcements reach phones.</td></tr>
+    <tr><td>At the shotgun</td><td>Nothing to switch on. Scoring is open as soon as teams have their links.</td></tr>
+    <tr><td>During</td><td>Watch the Dashboard for a team stuck on zero — usually someone who never opened their link. Keep an eye on the Messages dot.</td></tr>
+    <tr><td>After</td><td>Leaderboard is final as soon as the last card is in. Fix any disputes from the Scoring tab.</td></tr>
+  </table>
+
+  <h2>Troubleshooting</h2>
+  <table>
+    <tr><td>A team can't get in</td><td>Confirm they have the current code — if anyone pressed <b>New code</b>, older links stopped working. Re-send from <b>Share link</b>.</td></tr>
+    <tr><td>A team's card is empty</td><td>They probably never opened the link. Enter their scores from the Scoring tab and sort the phone out afterwards.</td></tr>
+    <tr><td>A team card shows no code</td><td>Rare, but it happens. Press <b>Generate code</b> on that team and send the link again.</td></tr>
+    <tr><td>Leaderboard won't load</td><td>Almost always signal at the scoring table. Move, or wait a minute. The screen tells you what went wrong — read it before assuming the worst.</td></tr>
+    <tr><td>It says you're not an organizer</td><td>You're signed in as a different Google account from the one you were added under. Switch accounts and try again.</td></tr>
+    <tr><td>Wrong scores appearing</td><td>Any team-mate can score. Correct it from the Scoring tab; your entry wins.</td></tr>
+    <tr><td>Anything else</td><td>Call your JNS contact. Don't try to fix it from a phone on the 14th tee.</td></tr>
+  </table>
+
+  <div class="note">
+    <b>Two things that surprise people.</b> There are no push notifications — anything urgent needs a
+    phone call. And a shared code means any of the four can score, so if a card looks wrong, it is
+    more often a team-mate than a bug.
+  </div>
+
+  <div class="foot">
+    <div>Stonegate Golf Outing &middot; Organizer guide &middot; Page 3 of 3</div>
+    <div class="jns"><img src="jns-mark.png" alt="JNS"><span>Built and supported by JNS<br>jnssolutions.ai &middot; hello@jnssolutions.ai</span></div>
+  </div>
+</section>
+
+</body>
+</html>
