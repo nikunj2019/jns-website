@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   deleteAnnouncement,
-  listThreads,
   markThreadSeen,
   postAnnouncement,
   sendAdminMessage,
@@ -27,30 +26,21 @@ export default function AdminMessages({
   author,
   tokenFor,
   announcements,
+  threads,
+  reloadThreads,
 }: {
   teams: Team[];
   author: string;
   tokenFor: () => Promise<string>;
   announcements: Announcement[];
+  /** Owned by the dashboard, so the sidebar dot and this list agree. */
+  threads: ChatThread[];
+  reloadThreads: () => Promise<void>;
 }) {
-  const [threads, setThreads] = useState<ChatThread[]>([]);
   const [openTeam, setOpenTeam] = useState<Team | null>(null);
   const [notice, setNotice] = useState("");
 
-  const loadThreads = useCallback(async () => {
-    try {
-      setThreads(await listThreads(await tokenFor()));
-    } catch {
-      /* Inbox previews are a convenience; the threads themselves still open. */
-    }
-  }, [tokenFor]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- loadThreads fetches first; the state update lands in a later tick
-    void loadThreads();
-    const timer = setInterval(() => void loadThreads(), 30_000);
-    return () => clearInterval(timer);
-  }, [loadThreads]);
+  const loadThreads = reloadThreads;
 
   const byId = useMemo(() => {
     const map = new Map<string, ChatThread>();

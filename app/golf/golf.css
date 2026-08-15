@@ -1266,3 +1266,46 @@ body:has(.golf-root) {
   text-underline-offset: 3px;
   cursor: pointer;
 }
+
+/* ── admin nav: five tabs, one line ────────────────────────────────────────
+ * The mobile rule hardcoded four columns. Adding Messages made a fifth, which
+ * wrapped Access onto its own row and pushed the "view live app" arrow into the
+ * gap beside it — two rows of chrome above every screen on a phone.
+ */
+@media (max-width: 620px) {
+  .admin-side nav {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 1px;
+  }
+  .admin-side nav button {
+    padding: 7px 3px;
+    justify-content: center;
+    text-align: center;
+  }
+  .admin-side nav b {
+    font-size: 11px;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+  }
+  /* The sub-labels never fitted at this width and are redundant with the tab
+     name; hiding them is what buys the fifth column its room. */
+  .admin-side nav small { display: none; }
+}
+
+@media (max-width: 400px) {
+  .admin-side nav b { font-size: 10px; }
+  .admin-side nav button { padding: 7px 2px; }
+}
+
+/* A team is waiting on a reply. Sits on the tab itself, because an organizer
+ * on the Scoring tab has no other way to find out. */
+.nav-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-left: 5px;
+  border-radius: 50%;
+  background: #e0553f;
+  vertical-align: middle;
+  font-style: normal;
+}

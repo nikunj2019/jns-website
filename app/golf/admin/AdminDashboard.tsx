@@ -31,6 +31,7 @@ import AdminMessages from "./AdminMessages";
 import { ANNOUNCEMENTS_COLLECTION, mapAnnouncement, type Announcement } from "../lib/chat";
 import { idToken, useSignOut, type AdminRole } from "../lib/useAuth";
 import { useGolfCollection } from "../lib/useGolfCollection";
+import { useThreads } from "../lib/useChat";
 
 type Tab = "overview" | "teams" | "scores" | "messages" | "admins";
 
@@ -68,6 +69,10 @@ export default function AdminDashboard({
   // Chat reads are authenticated, so they need a live token rather than the
   // anonymous path the public collections use.
   const tokenFor = useCallback(() => idToken(user), [user]);
+
+  // Owned here rather than inside the Messages screen, so the sidebar can warn
+  // an organizer sitting on another tab that a team is waiting.
+  const { threads, waiting, reload: reloadThreads } = useThreads(tokenFor);
 
   const [tab, setTab] = useState<Tab>("overview");
   const [notice, setNotice] = useState("");
@@ -322,7 +327,12 @@ export default function AdminDashboard({
             >
               <i />
               <span>
-                <b>{label}</b>
+                <b>
+                  {label}
+                  {key === "messages" && waiting > 0 && (
+                    <em className="nav-dot" aria-label={`${waiting} waiting`} />
+                  )}
+                </b>
                 <small>{hint}</small>
               </span>
             </button>
@@ -731,6 +741,8 @@ export default function AdminDashboard({
                   author={email}
                   tokenFor={tokenFor}
                   announcements={announcementsState.docs}
+                  threads={threads}
+                  reloadThreads={reloadThreads}
                 />
               )}
 
