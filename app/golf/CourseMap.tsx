@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type * as Leaflet from "leaflet";
 import {
   AERIAL_HEIGHT,
+  AERIAL_MAX_ZOOM,
   AERIAL_WIDTH,
   COURSE_ROUTES,
   distanceYards,
@@ -57,7 +58,7 @@ export default function CourseMap({
     map.fitBounds(COURSE_ROUTES[hole - 1].map(toImagePoint) as Leaflet.LatLngBoundsExpression, {
       paddingTopLeft: [34, 120],
       paddingBottomRight: [34, 132],
-      maxZoom: 1.8,
+      maxZoom: Math.min(1.8, AERIAL_MAX_ZOOM),
       animate: true,
     });
   }, [hole]);
@@ -76,7 +77,7 @@ export default function CourseMap({
       const map = L.map(host.current, {
         crs: L.CRS.Simple,
         minZoom: -1,
-        maxZoom: 4,
+        maxZoom: AERIAL_MAX_ZOOM,
         zoomControl: false,
         attributionControl: false,
         preferCanvas: true,
