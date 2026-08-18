@@ -4,17 +4,18 @@ import "leaflet/dist/leaflet.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type * as Leaflet from "leaflet";
 import {
-  AERIAL_HEIGHT,
-  AERIAL_MAX_ZOOM,
-  AERIAL_WIDTH,
+  AERIAL_FALLBACK_MAX_ZOOM,
+  AERIAL_LATLNG_BOUNDS,
   COURSE_ROUTES,
   distanceYards,
   HOLE_COUNT,
   HOLES,
   metresToYards,
   PINS,
-  toImagePoint,
+  toLatLng,
 } from "./lib/course";
+import { GOOGLE_MAPS_API_KEY } from "./lib/config";
+import { loadGoogleMaps } from "./lib/googleMaps";
 
 type GpsState =
   | { kind: "off" }
@@ -24,12 +25,21 @@ type GpsState =
   | { kind: "fixed"; lat: number; lon: number; accuracy: number };
 
 /**
- * The course, as a flat image with the routing drawn over it.
+ * The course, with the hole routing drawn over satellite imagery.
  *
- * Deliberately not a tile map. The aerial is one 400 KB file the service worker
- * precaches, so the map works standing in a dead spot on the ninth — which is
- * most of this course. `CRS.Simple` puts it on a plain pixel grid; at the scale
- * of eighteen holes the projection error is far below GPS noise.
+ * Two base layers, and which one appears is decided at runtime rather than at
+ * build time. Google satellite when there is a key and the API actually loads —
+ * far sharper than anything that can be shipped in the bundle, and it zooms to
+ * the green rather than to a blur. The precached aerial when there is not.
+ *
+ * The fallback is the point, not a nicety. This course has dead spots on most of
+ * the back nine, and the map is the screen someone opens when they are lost. A
+ * soft picture beats a grey void, so no failure here — missing key, billing off,
+ * wrong domain, one bar of signal — is allowed to leave the tab empty.
+ *
+ * The map is now in real Web Mercator rather than a flat pixel grid, because a
+ * tile layer needs it. The routing was always licensed KML in [lon, lat], so the
+ * coordinates were already geographic; only the conversion at the edge changed.
  */
 export default function CourseMap({
   hole,
@@ -49,16 +59,17 @@ export default function CourseMap({
 
   const [ready, setReady] = useState(false);
   const [gps, setGps] = useState<GpsState>({ kind: "off" });
+  const [satellite, setSatellite] = useState(false);
 
   const info = HOLES[hole - 1];
 
   const fitHole = useCallback(() => {
     const map = mapRef.current;
     if (!map) return;
-    map.fitBounds(COURSE_ROUTES[hole - 1].map(toImagePoint) as Leaflet.LatLngBoundsExpression, {
+    map.fitBounds(COURSE_ROUTES[hole - 1].map(toLatLng) as Leaflet.LatLngBoundsExpression, {
       paddingTopLeft: [34, 120],
       paddingBottomRight: [34, 132],
-      maxZoom: Math.min(1.8, AERIAL_MAX_ZOOM),
+      maxZoom: 18,
       animate: true,
     });
   }, [hole]);
@@ -73,25 +84,57 @@ export default function CourseMap({
       if (!active || !host.current) return;
       leafletRef.current = L;
 
-      const bounds = L.latLngBounds([0, 0], [AERIAL_HEIGHT, AERIAL_WIDTH]);
+      const bounds = L.latLngBounds(AERIAL_LATLNG_BOUNDS);
       const map = L.map(host.current, {
-        crs: L.CRS.Simple,
-        minZoom: -1,
-        maxZoom: AERIAL_MAX_ZOOM,
+        minZoom: 14,
+        // Raised once Google is confirmed; until then the ceiling is whatever
+        // the precached aerial can actually carry.
+        maxZoom: AERIAL_FALLBACK_MAX_ZOOM,
         zoomControl: false,
         attributionControl: false,
         preferCanvas: true,
         zoomSnap: 0.25,
         zoomDelta: 0.5,
-        maxBounds: bounds.pad(0.04),
-        maxBoundsViscosity: 1,
+        // Padded generously rather than tightly: the aerial's own extent is the
+        // limit offline, but Google has the whole world and pinning a player to
+        // a rectangle they can see past reads as a broken map.
+        maxBounds: bounds.pad(0.35),
+        maxBoundsViscosity: 0.75,
       });
       mapRef.current = map;
 
-      L.imageOverlay("/golf/trophy-club-course-aerial.webp", bounds, {
-        interactive: false,
-        className: "real-aerial-layer",
-      }).addTo(map);
+      const addAerialFallback = () => {
+        if (!active) return;
+        L.imageOverlay("/golf/trophy-club-course-aerial.webp", bounds, {
+          interactive: false,
+          className: "real-aerial-layer",
+        }).addTo(map);
+      };
+
+      // Draw the aerial first regardless. It is already in the service worker's
+      // cache, so it costs nothing and it means the tab is never empty while the
+      // Google script is still deciding whether it is going to load.
+      addAerialFallback();
+
+      void (async () => {
+        if (!GOOGLE_MAPS_API_KEY || !navigator.onLine) return;
+        const loaded = await loadGoogleMaps(GOOGLE_MAPS_API_KEY);
+        if (!loaded || !active || !mapRef.current) return;
+
+        try {
+          await import("leaflet.gridlayer.googlemutant");
+          const gridLayer = L.gridLayer as unknown as {
+            googleMutant: (o: Record<string, unknown>) => Leaflet.Layer;
+          };
+          const google = gridLayer.googleMutant({ type: "satellite", maxZoom: 21 });
+          google.addTo(map);
+          // Only now is the deeper ceiling honest.
+          map.setMaxZoom(21);
+          setSatellite(true);
+        } catch {
+          /* The aerial is already on the map; nothing further to do. */
+        }
+      })();
 
       requestAnimationFrame(() => map.invalidateSize());
       setReady(true);
@@ -121,7 +164,7 @@ export default function CourseMap({
     if (!ready || !L || !map) return;
 
     const route = COURSE_ROUTES[hole - 1];
-    const points = route.map(toImagePoint);
+    const points = route.map(toLatLng);
     const tee = points[0];
     const green = points[points.length - 1];
 
@@ -240,7 +283,7 @@ export default function CourseMap({
     const map = mapRef.current;
     if (!ready || !L || !map || gps.kind !== "fixed") return;
 
-    const point = toImagePoint([gps.lon, gps.lat]);
+    const point = toLatLng([gps.lon, gps.lat]);
     if (gpsMarker.current) {
       gpsMarker.current.setLatLng(point);
       return;
@@ -341,7 +384,14 @@ export default function CourseMap({
         </button>
       </div>
 
-      <div className="map-source">Summer aerial · USDA/USGS · GPS routing by ProVisualizer</div>
+      {/* Google's terms require their attribution to be visible wherever their
+          imagery is, so the credit follows whichever layer actually rendered
+          rather than being hardcoded to one of them. */}
+      <div className="map-source">
+        {satellite
+          ? "Imagery ©2026 Google · GPS routing by ProVisualizer"
+          : "Summer aerial · USDA/USGS · GPS routing by ProVisualizer"}
+      </div>
 
       <div className="hole-dock">
         <button className="dock-arrow" aria-label="Previous hole" onClick={() => step(-1)}>

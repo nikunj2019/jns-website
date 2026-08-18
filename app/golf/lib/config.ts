@@ -137,3 +137,13 @@ export const EVENT = {
     summary: "18 holes · Par 72",
   },
 } as const;
+
+/**
+ * Google Maps JavaScript API key, for the live satellite layer on the course map.
+ *
+ * Optional by design. Without it — or with billing off, or a domain restriction
+ * that doesn't match, or simply no signal — the map falls back to the aerial the
+ * service worker precaches. A blank Course tab on the ninth is a worse outcome
+ * than a soft one, so nothing here is allowed to be load-bearing.
+ */
+export const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";

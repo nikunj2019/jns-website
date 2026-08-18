@@ -113,6 +113,41 @@ export const AERIAL_MAX_ZOOM =
   Math.log2(AERIAL_SOURCE_WIDTH / AERIAL_WIDTH) + ZOOM_HEADROOM_STOPS;
 
 /**
+ * [lon, lat] → Leaflet [lat, lng].
+ *
+ * The hole routing is licensed KML in [longitude, latitude] order, which is the
+ * opposite of what Leaflet wants. One named conversion rather than a `.reverse()`
+ * at each call site, because getting it backwards puts the course in China and
+ * the mistake is invisible until someone opens the map.
+ */
+export function toLatLng([lon, lat]: readonly [number, number]): [number, number] {
+  return [lat, lon];
+}
+
+/** Corner bounds of the offline aerial, as real coordinates. */
+export const AERIAL_LATLNG_BOUNDS: [[number, number], [number, number]] = [
+  [AERIAL_BOUNDS.south, AERIAL_BOUNDS.west],
+  [AERIAL_BOUNDS.north, AERIAL_BOUNDS.east],
+];
+
+/**
+ * Zoom at which the offline aerial is pixel-for-pixel, plus a stop of headroom.
+ *
+ * Web Mercator resolution is `156543.03 * cos(lat) / 2^z` metres per pixel. The
+ * aerial is 0.56 m/px, which lands near z17.7 at this latitude — so the fallback
+ * is capped just above that. Google's own layer is not capped here; it carries
+ * far more detail and sets its own ceiling.
+ */
+export const AERIAL_FALLBACK_MAX_ZOOM = (() => {
+  const latMid = (AERIAL_BOUNDS.south + AERIAL_BOUNDS.north) / 2;
+  const widthM =
+    (AERIAL_BOUNDS.east - AERIAL_BOUNDS.west) * 111320 * Math.cos((latMid * Math.PI) / 180);
+  const mPerPx = widthM / AERIAL_SOURCE_WIDTH;
+  const native = Math.log2((156543.03392 * Math.cos((latMid * Math.PI) / 180)) / mPerPx);
+  return Math.round((native + 1) * 4) / 4;
+})();
+
+/**
  * [lon, lat] → Leaflet CRS.Simple [y, x].
  *
  * The map uses a flat pixel grid rather than a real projection: at the scale of
