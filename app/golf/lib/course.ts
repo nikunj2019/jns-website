@@ -81,6 +81,73 @@ export const AERIAL_WIDTH = 1440;
 export const AERIAL_HEIGHT = 1200;
 
 /**
+ * The real pixel size of the file on disk.
+ *
+ * Kept separate from the grid above because the grid is a coordinate space and
+ * this is a fact about the image. Over the extent that works out at 0.56 m per
+ * pixel — NAIP-class — so the file simply does not hold the detail a phone asks
+ * for once you are zoomed into a green.
+ *
+ * Update this when the image is replaced and the zoom ceiling follows on its
+ * own; see scripts/fetch-course-aerial.mjs.
+ */
+export const AERIAL_SOURCE_WIDTH = 2880;
+export const AERIAL_SOURCE_HEIGHT = 2400;
+
+/**
+ * How far the map may zoom before it is inventing detail.
+ *
+ * At CRS.Simple zoom z the grid is drawn at `AERIAL_WIDTH * 2^z` CSS pixels, so
+ * the image is pixel-for-pixel at `log2(source / grid)` — zoom 1 for the file
+ * that ships today. The map allowed zoom 4, which is eight times past that: not
+ * a sharper picture, just a bigger blur with the compression artefacts blown up
+ * with it.
+ *
+ * One stop of headroom is deliberate rather than a hard stop at native. Two
+ * times is still legible, players do want to lean in on a green, and a ceiling
+ * that snaps exactly at 1:1 feels broken on a phone whose device pixels are
+ * three deep anyway.
+ */
+const ZOOM_HEADROOM_STOPS = 1;
+export const AERIAL_MAX_ZOOM =
+  Math.log2(AERIAL_SOURCE_WIDTH / AERIAL_WIDTH) + ZOOM_HEADROOM_STOPS;
+
+/**
+ * [lon, lat] → Leaflet [lat, lng].
+ *
+ * The hole routing is licensed KML in [longitude, latitude] order, which is the
+ * opposite of what Leaflet wants. One named conversion rather than a `.reverse()`
+ * at each call site, because getting it backwards puts the course in China and
+ * the mistake is invisible until someone opens the map.
+ */
+export function toLatLng([lon, lat]: readonly [number, number]): [number, number] {
+  return [lat, lon];
+}
+
+/** Corner bounds of the offline aerial, as real coordinates. */
+export const AERIAL_LATLNG_BOUNDS: [[number, number], [number, number]] = [
+  [AERIAL_BOUNDS.south, AERIAL_BOUNDS.west],
+  [AERIAL_BOUNDS.north, AERIAL_BOUNDS.east],
+];
+
+/**
+ * Zoom at which the offline aerial is pixel-for-pixel, plus a stop of headroom.
+ *
+ * Web Mercator resolution is `156543.03 * cos(lat) / 2^z` metres per pixel. The
+ * aerial is 0.56 m/px, which lands near z17.7 at this latitude — so the fallback
+ * is capped just above that. Google's own layer is not capped here; it carries
+ * far more detail and sets its own ceiling.
+ */
+export const AERIAL_FALLBACK_MAX_ZOOM = (() => {
+  const latMid = (AERIAL_BOUNDS.south + AERIAL_BOUNDS.north) / 2;
+  const widthM =
+    (AERIAL_BOUNDS.east - AERIAL_BOUNDS.west) * 111320 * Math.cos((latMid * Math.PI) / 180);
+  const mPerPx = widthM / AERIAL_SOURCE_WIDTH;
+  const native = Math.log2((156543.03392 * Math.cos((latMid * Math.PI) / 180)) / mPerPx);
+  return Math.round((native + 1) * 4) / 4;
+})();
+
+/**
  * [lon, lat] → Leaflet CRS.Simple [y, x].
  *
  * The map uses a flat pixel grid rather than a real projection: at the scale of
